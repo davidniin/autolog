@@ -161,10 +161,10 @@ Run it as a service (systemd, pm2…) and put HTTPS in front as in step 3.
 
 | Problem | Fix |
 |---|---|
-| Container exits: `Falta AUTOLOG_TOKEN` / `demasiado corta` | Set a token of 16+ characters in `.env` |
+| Container exits: `AUTOLOG_TOKEN is missing` / `too short` | Set a token of 16+ characters in `.env` |
 | `/v1/health` says `"db":false` | Check `DATABASE_URL` / `POSTGRES_PASSWORD`; `docker compose logs db` |
 | The phone keeps asking for the password | The token on the phone doesn't match `AUTOLOG_TOKEN`. Open `/?token=...` again |
-| `429 demasiados intentos` | 10 wrong passwords from that IP: wait 15 minutes. Behind a proxy, set `TRUST_PROXY=1` so each device is counted separately |
+| `429 too many attempts` | 10 wrong passwords from that IP: wait 15 minutes. Behind a proxy, set `TRUST_PROXY=1` so each device is counted separately |
 | No "Install" option / no push | The page isn't on HTTPS (see step 3) |
 | Scanner says it needs a connection | The first use downloads the OCR model (~31 MB). Afterwards it works offline |
 

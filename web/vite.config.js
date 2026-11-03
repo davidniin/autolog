@@ -14,4 +14,5 @@ const dropUnusedWasm = {
 export default defineConfig({
   plugins: [vue(), dropUnusedWasm],
   server: { proxy: { '/v1': 'http://localhost:8791' } },
+  test: { setupFiles: ['test/setup.js'] },
 });

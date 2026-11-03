@@ -2,17 +2,20 @@
 // AutoLog: selector de vehículo arriba, pestañas abajo (Resumen, Repostajes, Gastos, Costes).
 import { ref, computed, onMounted } from 'vue';
 import { S, put, del, newId, setCurrent, setToken, DEMO, exitDemo } from './store.js';
-import { FORMS, KINDS, emoji } from './forms.js';
+import { FORMS, optEmoji } from './forms.js';
 import { fuelStats, currentKm, nextDue } from './calc.js';
 import { I, install, hideIosTip } from './install.js';
+import { t } from './i18n/index.js';
 import Summary from './Summary.vue';
 import FuelList from './FuelList.vue';
 import ExpenseList from './ExpenseList.vue';
 import Costs from './Costs.vue';
 import FormSheet from './FormSheet.vue';
+import Settings from './Settings.vue';
 
-const TABS = [['resumen', '🏠', 'Resumen'], ['fuel', '⛽', 'Repostajes'], ['expenses', '🧾', 'Gastos'], ['costs', '📊', 'Costes']];
+const TABS = [['resumen', '🏠'], ['fuel', '⛽'], ['expenses', '🧾'], ['costs', '📊']];
 const tab = ref('resumen');
+const settings = ref(false);
 
 const veh = computed(() => S.vehicles.find((v) => v.id === S.current) || S.vehicles[0] || null);
 const fills = computed(() => (veh.value ? S.fuel.filter((f) => f.vehicle_id === veh.value.id) : []));
@@ -21,9 +24,12 @@ const rems = computed(() => (veh.value ? S.reminders.filter((r) => r.vehicle_id 
 const stats = computed(() => fuelStats(fills.value));
 const km = computed(() => (veh.value ? currentKm(veh.value, fills.value, exps.value) : 0));
 
-const status = computed(() => DEMO ? { cls: 'demo', txt: 'Demo' } :
-  S.queue.length ? { cls: S.online ? 'busy' : 'off', txt: S.online ? 'Guardando…' : S.queue.length + ' sin enviar' }
-    : { cls: S.online ? '' : 'off', txt: S.online ? 'Al día' : 'Sin conexión' });
+const status = computed(() => DEMO ? { cls: 'demo', txt: t('app.status.demo') } :
+  S.queue.length ? { cls: S.online ? 'busy' : 'off', txt: S.online ? t('app.status.saving') : t('app.status.pending', { n: S.queue.length }) }
+    : { cls: S.online ? '' : 'off', txt: S.online ? t('app.status.synced') : t('app.status.offline') });
+
+// Textos con negrita (vienen de los diccionarios, no del usuario)
+const iosTip = computed(() => t('app.iosTip', { icon: '<span class="ios-share" aria-label="' + t('app.iosShare') + '">⬆︎</span>' }));
 
 // ------------------------------------------------------------ aviso breve tras guardar o borrar
 const toast = ref('');
@@ -33,7 +39,6 @@ function notify(msg) {
   clearTimeout(toastTimer);
   toastTimer = setTimeout(() => { toast.value = ''; }, 2400);
 }
-const cap = (s) => s.charAt(0).toUpperCase() + s.slice(1);
 
 // ------------------------------------------------------------ ficha de edición
 const sheet = ref(null); // props de FormSheet: { kind, value, isNew, ctx, heading }
@@ -56,10 +61,10 @@ function openDone(r) {
 function onSave(rec) {
   const { kind, isNew } = sheet.value;
   sheet.value = null;
-  if (kind === 'done') { markDone(doneOf, rec); return notify('✓ Hecho: ' + doneOf.title); }
+  if (kind === 'done') { markDone(doneOf, rec); return notify(t('app.toastDone', { title: doneOf.title })); }
   put(kind, rec);
   if (kind === 'vehicles') setCurrent(rec.id);
-  notify('✓ ' + cap(FORMS[kind].title) + (isNew ? ' añadido' : ' guardado'));
+  notify(t('kinds.' + kind + (isNew ? '.added' : '.saved')));
 }
 // Hecho: con importe se apunta el gasto; si se repite, se programa el siguiente aviso; si no, se borra
 function markDone(r, d) {
@@ -74,7 +79,7 @@ function onDelete() {
   const kind = sheet.value.kind;
   del(kind, sheet.value.value.id);
   sheet.value = null;
-  notify(cap(FORMS[kind].title) + ' borrado');
+  notify(t('kinds.' + kind + '.deleted'));
 }
 
 // Accesos directos del icono (manifest: /?add=fuel, /?add=expenses)
@@ -89,9 +94,9 @@ onMounted(() => {
 const token = ref('');
 const tokenTried = ref(false);
 const tokenErr = computed(() => {
-  const t = token.value.trim();
-  if (/\s/.test(t)) return 'La clave no lleva espacios';
-  if (tokenTried.value && !S.auth) return 'Clave incorrecta. Revisa el AUTOLOG_TOKEN del servidor.';
+  const tk = token.value.trim();
+  if (/\s/.test(tk)) return t('gate.noSpaces');
+  if (tokenTried.value && !S.auth) return t('gate.wrong');
   return '';
 });
 function login() {
@@ -109,25 +114,26 @@ function login() {
           <svg viewBox="0 0 512 512" aria-hidden="true"><rect width="512" height="512" rx="120" fill="var(--accent)" /><path d="M136 330a120 120 0 1 1 240 0" fill="none" stroke="#fff" stroke-width="40" stroke-linecap="round" /><path d="M256 330 330 238" stroke="#ffb547" stroke-width="34" stroke-linecap="round" /><circle cx="256" cy="330" r="28" fill="#fff" /></svg>
           AutoLog
         </h1>
-        <button v-if="I.prompt" class="install" @click="install">⬇ Instalar</button>
+        <button v-if="I.prompt" class="install" @click="install">{{ t('app.install') }}</button>
         <span class="status" :class="status.cls">{{ status.txt }}</span>
+        <button class="gear" :aria-label="t('app.settings')" :title="t('app.settings')" @click="settings = true">⚙</button>
       </div>
-      <nav class="tabs" aria-label="Vehículos">
+      <nav class="tabs" :aria-label="t('app.vehiclesNav')">
         <button v-for="v in S.vehicles" :key="v.id" :class="{ on: veh && v.id === veh.id }" @click="setCurrent(v.id)">
-          {{ emoji(KINDS, v.kind) }} {{ v.name }}
+          {{ optEmoji('kind', v.kind) }} {{ v.name }}
         </button>
-        <button class="add-veh" @click="open('vehicles')">＋ Vehículo</button>
+        <button class="add-veh" @click="open('vehicles')">{{ t('app.addVehicle') }}</button>
       </nav>
     </header>
 
     <div v-if="DEMO" class="demo-bar">
-      <span>🧪 <b>Modo demo</b>: datos inventados. Lo que cambies se borra al cerrar la pestaña.</span>
-      <button class="link" @click="exitDemo">Salir</button>
+      <span>🧪 <span v-html="t('app.demoBar')"></span></span>
+      <button class="link" @click="exitDemo">{{ t('common.exit') }}</button>
     </div>
 
     <div v-if="I.iosTip && !DEMO" class="install-tip">
-      <span>📲 Instálala en tu iPhone: pulsa <b>Compartir</b> <span class="ios-share" aria-label="icono compartir">⬆︎</span> y luego <b>Añadir a pantalla de inicio</b>.</span>
-      <button class="link" aria-label="Cerrar" @click="hideIosTip">✕</button>
+      <span>📲 <span v-html="iosTip"></span></span>
+      <button class="link" :aria-label="t('common.close')" @click="hideIosTip">✕</button>
     </div>
 
     <main v-if="veh">
@@ -140,21 +146,24 @@ function login() {
     </main>
     <div v-else class="empty welcome">
       <div class="empty-icon">🚗</div>
-      <h2>Bienvenido a AutoLog</h2>
-      <p>Apunta repostajes y gastos, mira cuánto consume y cuánto te cuesta, y que te avise de la ITV o del aceite.</p>
-      <button class="primary" @click="open('vehicles')">Añadir mi vehículo</button>
+      <h2>{{ t('app.welcomeTitle') }}</h2>
+      <p>{{ t('app.welcomeText') }}</p>
+      <button class="primary" @click="open('vehicles')">{{ t('app.welcomeBtn') }}</button>
     </div>
 
-    <button v-if="veh && FORMS[tab]" class="fab" :aria-label="'Añadir ' + FORMS[tab].title" @click="open(tab)">＋</button>
+    <button v-if="veh && FORMS[tab]" class="fab" :aria-label="t('app.fab', { what: t('kinds.' + tab + '.one') })" @click="open(tab)">＋</button>
 
-    <nav v-if="veh" class="bottom" aria-label="Secciones">
-      <button v-for="[id, icon, name] in TABS" :key="id" :class="{ on: tab === id }" :aria-current="tab === id ? 'page' : undefined" @click="tab = id">
-        <span>{{ icon }}</span>{{ name }}
+    <nav v-if="veh" class="bottom" :aria-label="t('app.sectionsNav')">
+      <button v-for="[id, icon] in TABS" :key="id" :class="{ on: tab === id }" :aria-current="tab === id ? 'page' : undefined" @click="tab = id">
+        <span>{{ icon }}</span>{{ t('app.tabs.' + id) }}
       </button>
     </nav>
 
     <Transition name="sheet">
       <FormSheet v-if="sheet" :key="sheet.value.id" v-bind="sheet" @save="onSave" @delete="onDelete" @close="sheet = null" @switch="onSwitch" />
+    </Transition>
+    <Transition name="sheet">
+      <Settings v-if="settings" @close="settings = false" />
     </Transition>
 
     <Transition name="toast">
@@ -164,11 +173,11 @@ function login() {
     <div v-if="!S.auth" class="gate">
       <form @submit.prevent="login" novalidate>
         <div class="gate-icon">🔑</div>
-        <h2>Clave de AutoLog</h2>
-        <p>Es el AUTOLOG_TOKEN del servidor. Se pide una sola vez en este móvil.</p>
-        <input v-model="token" type="password" autocomplete="off" placeholder="Clave" :aria-invalid="!!tokenErr" @input="tokenTried = false" />
+        <h2>{{ t('gate.title') }}</h2>
+        <p>{{ t('gate.text') }}</p>
+        <input v-model="token" type="password" autocomplete="off" :placeholder="t('gate.placeholder')" :aria-invalid="!!tokenErr" @input="tokenTried = false" />
         <small v-if="tokenErr" class="field-err" role="alert">{{ tokenErr }}</small>
-        <button class="primary" :disabled="!token.trim() || !!tokenErr">Entrar</button>
+        <button class="primary" :disabled="!token.trim() || !!tokenErr">{{ t('gate.enter') }}</button>
       </form>
     </div>
   </div>

@@ -5,6 +5,7 @@
 import webpush from 'web-push';
 import { CONFIG } from './config.js';
 import { sql } from './db.js';
+import { msg, cleanLang } from './messages.js';
 
 // Los mismos umbrales que la web (web/src/calc.js)
 const SOON_DAYS = 30;
@@ -13,12 +14,12 @@ const REPEAT_LATE_DAYS = 7;
 
 const today = () => new Date().toLocaleDateString('sv-SE'); // AAAA-MM-DD en la zona horaria del servidor (TZ)
 const days = (a, b) => Math.round((Date.parse(b) - Date.parse(a)) / 864e5);
-const nf = new Intl.NumberFormat('es-ES');
-const plural = (n, w) => n + ' ' + w + (n === 1 ? '' : 's');
 
 // ------------------------------------------------------------ avisos pendientes
 // Recordatorios en "pronto" o "vencido", lo más urgente primero. Los usa el push y GET /v1/alerts.
-export async function alerts() {
+// lang = idioma del texto (messages.js).
+export async function alerts(lang = 'es') {
+  const M = msg(lang);
   const rows = await sql`
     select r.id, r.title, r.due_date::text as due_date, r.due_km, v.id as vehicle_id, v.name as vehicle,
       greatest(coalesce(v.start_km, 0),
@@ -34,9 +35,9 @@ export async function alerts() {
     if (!late && !soon) continue;
     const parts = [];
     const kmFirst = k != null && (d == null || k / SOON_KM < d / SOON_DAYS);
-    const kmText = k == null ? '' : k <= 0 ? 'pasado por ' + nf.format(-k) + ' km' : 'faltan ' + nf.format(k) + ' km';
+    const kmText = k == null ? '' : k <= 0 ? M.overBy(M.km(-k)) : M.left(M.km(k));
     if (kmFirst) parts.push(kmText);
-    if (d != null) parts.push(d < 0 ? 'venció hace ' + plural(-d, 'día') : d === 0 ? 'vence hoy' : 'en ' + plural(d, 'día'));
+    if (d != null) parts.push(d < 0 ? M.ago(-d) : d === 0 ? M.today : M.in(d));
     if (k != null && !kmFirst) parts.push(kmText);
     out.push({
       id: r.id, title: r.title, vehicle_id: r.vehicle_id, vehicle: r.vehicle,
@@ -75,8 +76,9 @@ export async function initPush() {
 export async function subscribe(sub) {
   if (!sub || typeof sub.endpoint !== 'string' || !/^https:\/\//.test(sub.endpoint) || !sub.keys || !sub.keys.p256dh || !sub.keys.auth) return false;
   const keys = { p256dh: String(sub.keys.p256dh), auth: String(sub.keys.auth) };
-  await sql`insert into autolog_push (endpoint, keys) values (${sub.endpoint}, ${sql.json(keys)})
-    on conflict (endpoint) do update set keys = excluded.keys`;
+  const lang = cleanLang(sub.lang);
+  await sql`insert into autolog_push (endpoint, keys, lang) values (${sub.endpoint}, ${sql.json(keys)}, ${lang})
+    on conflict (endpoint) do update set keys = excluded.keys, lang = excluded.lang`;
   return true;
 }
 export function unsubscribe(endpoint) { return sql`delete from autolog_push where endpoint = ${String(endpoint || '')}`; }
@@ -94,15 +96,18 @@ async function send(sub, payload) {
 }
 
 export async function sendTest(endpoint) {
-  const [sub] = await sql`select endpoint, keys from autolog_push where endpoint = ${String(endpoint || '')}`;
+  const [sub] = await sql`select endpoint, keys, lang from autolog_push where endpoint = ${String(endpoint || '')}`;
   if (!sub) return false;
-  return send(sub, { title: '🔔 AutoLog', body: 'Las notificaciones funcionan en este móvil.', tag: 'test' });
+  return send(sub, { title: '🔔 AutoLog', body: msg(sub.lang).testBody, tag: 'test' });
 }
 
 // Revisión: manda lo que toque y lo apunta en autolog_notified. Devuelve cuántos avisos se han enviado.
 export async function check() {
-  const subs = await sql`select endpoint, keys from autolog_push`;
+  const subs = await sql`select endpoint, keys, lang from autolog_push`;
   if (!subs.length) return 0;
+  // El texto de cada aviso, en el idioma de cada móvil
+  const byLang = {};
+  for (const l of new Set(subs.map((s) => s.lang))) byLang[l] = Object.fromEntries((await alerts(l)).map((a) => [a.id, a]));
   const list = await alerts();
   const prev = Object.fromEntries((await sql`select reminder_id, stamp, level, sent_at from autolog_notified`).map((r) => [r.reminder_id, r]));
   const weekAgo = Date.now() - REPEAT_LATE_DAYS * 864e5;
@@ -111,8 +116,11 @@ export async function check() {
     const p = prev[a.id];
     const due = !p || p.stamp !== a.stamp || p.level !== a.level || (a.level === 'late' && +p.sent_at < weekAgo);
     if (!due) continue;
-    const payload = { title: (a.level === 'late' ? '⛔ ' : '⚠️ ') + a.title, body: a.vehicle + ' · ' + a.text, tag: 'r-' + a.id, url: '/' };
-    const sent = (await Promise.all(subs.map((s) => send(s, payload)))).some(Boolean);
+    const payload = (s) => {
+      const x = (byLang[s.lang] || {})[a.id] || a;
+      return { title: (a.level === 'late' ? '⛔ ' : '⚠️ ') + a.title, body: a.vehicle + ' · ' + x.text, tag: 'r-' + a.id, url: '/' };
+    };
+    const sent = (await Promise.all(subs.map((s) => send(s, payload(s))))).some(Boolean);
     if (!sent) continue;
     n++;
     await sql`insert into autolog_notified (reminder_id, stamp, level) values (${a.id}, ${a.stamp}, ${a.level})

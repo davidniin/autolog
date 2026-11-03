@@ -83,6 +83,7 @@ create table if not exists autolog_push (
   keys       jsonb not null,
   created_at timestamptz not null default now()
 );
+alter table autolog_push add column if not exists lang text not null default 'es';
 create table if not exists autolog_notified (
   reminder_id text primary key,
   stamp       text not null,
@@ -129,25 +130,25 @@ export const TABLES = {
 // Deja solo campos conocidos y con el tipo correcto. Devuelve { rec } o { error }.
 export function clean(kind, x) {
   const o = { id: String(x.id || '').slice(0, 64) };
-  if (!o.id) return { error: 'falta id' };
+  if (!o.id) return { error: 'missing id', code: 'bad_input' };
   for (const [k, t] of Object.entries(TABLES[kind].fields)) {
     const type = t[0], req = t.endsWith('!'), v = x[k];
     if (v === undefined || v === null || v === '') {
-      if (req) return { error: 'falta ' + k };
+      if (req) return { error: 'missing ' + k, code: 'bad_input' };
       o[k] = type === 's' ? '' : type === 'b' ? false : null;
       continue;
     }
     if (type === 's') {
       o[k] = String(v).trim().slice(0, 500);
-      if (req && !o[k]) return { error: 'falta ' + k };
+      if (req && !o[k]) return { error: 'missing ' + k, code: 'bad_input' };
     } else if (type === 'b') {
       o[k] = !!v;
     } else if (type === 'd') {
-      if (!/^\d{4}-\d{2}-\d{2}$/.test(v) || isNaN(Date.parse(v))) return { error: k + ': fecha no válida' };
+      if (!/^\d{4}-\d{2}-\d{2}$/.test(v) || isNaN(Date.parse(v))) return { error: k + ': invalid date', code: 'bad_input' };
       o[k] = v;
     } else {
       const n = +v;
-      if (!Number.isFinite(n) || n < 0 || n > 1e8) return { error: k + ': número no válido' };
+      if (!Number.isFinite(n) || n < 0 || n > 1e8) return { error: k + ': invalid number', code: 'bad_input' };
       o[k] = type === 'i' ? Math.round(n) : Math.round(n * 1000) / 1000;
     }
   }

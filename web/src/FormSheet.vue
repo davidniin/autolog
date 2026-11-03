@@ -2,8 +2,9 @@
 // Ficha inferior genérica: pinta los campos de FORMS[kind], los valida (validate.js) y devuelve el registro limpio.
 // Los errores de cada campo aparecen al salir de él o al pulsar Guardar; al guardar se salta al primer campo con error.
 import { reactive, ref, computed, nextTick } from 'vue';
-import { FORMS } from './forms.js';
-import { today } from './calc.js';
+import { FORMS, OPTIONS, optLabel, unitLabel, preset } from './forms.js';
+import { today, numInput } from './calc.js';
+import { t } from './i18n/index.js';
 import { validate, sanitizeNum } from './validate.js';
 import { delFile } from './store.js';
 import Attachments from './Attachments.vue';
@@ -32,7 +33,7 @@ if (props.prefill) applyScan({ values: props.prefill.values });
 // Plantillas (p. ej. "Aceite cada 15.000 km"): rellenan el formulario
 function fill(v) {
   Object.assign(m, v);
-  for (const f of form.fields) if (f.type === 'num' && v[f.k] != null) m[f.k] = String(v[f.k]).replace('.', ',');
+  for (const f of form.fields) if (f.type === 'num' && v[f.k] != null) m[f.k] = numInput(v[f.k]);
   for (const k in touched) delete touched[k];
   submitted.value = false;
 }
@@ -44,7 +45,7 @@ function applyScan({ values }) {
     if (v == null || v === '') continue;
     const cur = m[f.k];
     if (!(cur == null || cur === '' || cur === orig[f.k] || auto[f.k])) continue;
-    m[f.k] = f.type === 'num' ? String(v).replace('.', ',') : v;
+    m[f.k] = f.type === 'num' ? numInput(v) : v;
     auto[f.k] = true;
     touched[f.k] = true;
   }
@@ -53,6 +54,8 @@ function applyScan({ values }) {
 const result = computed(() => validate(form, m, props.ctx));
 const errOf = (k) => (touched[k] || submitted.value ? result.value.errs[k] || '' : '');
 const hint = computed(() => (form.hint ? form.hint(m) : ''));
+const presets = computed(() => (form.presets || []).map(preset));
+const chips = (f) => OPTIONS[f.options].map(([v]) => [v, optLabel(f.options, v)]);
 const dateAttr = (d) => (d === 'today' ? today() : d);
 
 function onInput(f, ev) {
@@ -96,16 +99,16 @@ function switchTo(kind, data) {
 }
 
 function remove() {
-  if (confirm('¿Borrar este ' + form.title + '?' + (props.kind === 'vehicles' ? ' Se borran también sus repostajes y gastos.' : ''))) emit('delete');
+  if (confirm(t('kinds.' + props.kind + '.confirm'))) emit('delete');
 }
 </script>
 
 <template>
   <div class="sheet-bg" @click.self="close">
     <form class="sheet" @submit.prevent="submit" novalidate>
-      <h2>{{ heading || (isNew ? 'Nuevo ' : 'Editar ') + form.title }}</h2>
-      <div v-if="isNew && form.presets" class="chips presets full">
-        <button v-for="[l, v] in form.presets" :key="l" type="button" @click="fill(v)">{{ l }}</button>
+      <h2>{{ heading || t('kinds.' + kind + (isNew ? '.new' : '.edit')) }}</h2>
+      <div v-if="isNew && presets.length" class="chips presets full">
+        <button v-for="[l, v] in presets" :key="l" type="button" @click="fill(v)">{{ l }}</button>
       </div>
       <ReceiptScan
         v-if="form.scan"
@@ -113,24 +116,24 @@ function remove() {
         @result="applyScan" @uploaded="(id) => uploaded.push(id)" @switch="switchTo"
       />
       <template v-for="f in form.fields" :key="f.k">
-        <div v-if="f.type === 'chips'" class="field full" :class="{ auto: auto[f.k] }" role="group" :aria-label="f.label">
-          <span class="lbl">{{ f.label }}<em v-if="auto[f.k]" class="auto-tag">✨ leído</em></span>
+        <div v-if="f.type === 'chips'" class="field full" :class="{ auto: auto[f.k] }" role="group" :aria-label="t(f.label)">
+          <span class="lbl">{{ t(f.label) }}<em v-if="auto[f.k]" class="auto-tag">{{ t('f.autoTag') }}</em></span>
           <div class="chips">
-            <button v-for="[v, l] in f.options" :key="v" type="button" :class="{ on: m[f.k] === v }" :aria-pressed="m[f.k] === v" @click="pickChip(f, v)">{{ l }}</button>
+            <button v-for="[v, l] in chips(f)" :key="v" type="button" :class="{ on: m[f.k] === v }" :aria-pressed="m[f.k] === v" @click="pickChip(f, v)">{{ l }}</button>
           </div>
         </div>
         <label v-else-if="f.type === 'check'" class="check full">
-          <input type="checkbox" v-model="m[f.k]" /> {{ f.label }}
+          <input type="checkbox" v-model="m[f.k]" /> {{ t(f.label) }}
         </label>
         <div v-else class="field" :class="[f.half ? 'half' : 'full', { bad: errOf(f.k), auto: auto[f.k] && !errOf(f.k) }]">
-          <label class="lbl" :for="'f-' + f.k">{{ f.label }}<i v-if="f.req" class="req" aria-hidden="true"> *</i><em v-if="auto[f.k]" class="auto-tag">✨ leído</em></label>
+          <label class="lbl" :for="'f-' + f.k">{{ t(f.label) }}<i v-if="f.req" class="req" aria-hidden="true"> *</i><em v-if="auto[f.k]" class="auto-tag">{{ t('f.autoTag') }}</em></label>
           <span class="inp">
             <input
               :id="'f-' + f.k"
               :value="m[f.k] ?? ''"
               :type="f.type === 'num' ? 'text' : f.type"
               :inputmode="f.type === 'num' ? (f.int ? 'numeric' : 'decimal') : undefined"
-              :placeholder="f.ph"
+              :placeholder="f.ph && f.ph.startsWith('f.') ? t(f.ph) : f.ph"
               :maxlength="f.len"
               :min="f.type === 'date' ? dateAttr(f.min) : undefined"
               :max="f.type === 'date' ? dateAttr(f.max) : undefined"
@@ -142,7 +145,7 @@ function remove() {
               @input="onInput(f, $event)"
               @blur="touched[f.k] = true"
             />
-            <span v-if="f.unit" class="unit" aria-hidden="true">{{ f.unit }}</span>
+            <span v-if="f.unit" class="unit" aria-hidden="true">{{ unitLabel(f.unit) }}</span>
           </span>
           <small v-if="errOf(f.k)" :id="'e-' + f.k" class="field-err" role="alert">{{ errOf(f.k) }}</small>
         </div>
@@ -153,15 +156,15 @@ function remove() {
           :vehicle-id="kind === 'vehicles' ? m.id : m.vehicle_id" :kind="kind" :parent-id="m.id"
           @uploaded="(id) => uploaded.push(id)"
         />
-        <p v-else class="form-note full">Guarda el vehículo y vuelve a abrir su ficha para adjuntar documentos.</p>
+        <p v-else class="form-note full">{{ t('f.attachLater') }}</p>
       </template>
-      <p v-if="form.note" class="form-note full">{{ form.note }}</p>
+      <p v-if="form.note" class="form-note full">{{ t(form.note) }}</p>
       <p v-if="hint" class="hint full">{{ hint }}</p>
       <p v-if="submitted && result.general" class="err full" role="alert">{{ result.general }}</p>
       <div class="actions full">
-        <button v-if="!isNew && kind !== 'done'" type="button" class="link danger" @click="remove">Borrar</button>
-        <button type="button" class="link" @click="close">Cancelar</button>
-        <button class="primary">Guardar</button>
+        <button v-if="!isNew && kind !== 'done'" type="button" class="link danger" @click="remove">{{ t('common.delete') }}</button>
+        <button type="button" class="link" @click="close">{{ t('common.cancel') }}</button>
+        <button class="primary">{{ t('common.save') }}</button>
       </div>
     </form>
   </div>

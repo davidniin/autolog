@@ -16,10 +16,10 @@ export async function initFiles() { await fs.mkdir(CONFIG.filesDir, { recursive:
 // Sube uno. form = campos multipart: file, id, vehicle_id, parent_kind, parent_id
 export async function saveFile(form) {
   const f = form.file;
-  if (!f || typeof f === 'string') return { error: 'falta el archivo' };
-  if (!OK_MIME.test(f.type)) return { error: 'solo fotos o PDF' };
-  if (f.size > MAX_BYTES) return { error: 'máximo 15 MB' };
-  if (!KINDS.includes(form.parent_kind)) return { error: 'parent_kind no válido' };
+  if (!f || typeof f === 'string') return { error: 'missing file', code: 'file_missing' };
+  if (!OK_MIME.test(f.type)) return { error: 'only images or PDF', code: 'file_type' };
+  if (f.size > MAX_BYTES) return { error: 'max 15 MB', code: 'file_too_big' };
+  if (!KINDS.includes(form.parent_kind)) return { error: 'invalid parent_kind', code: 'bad_parent' };
   const rec = {
     id: String(form.id || '').replace(/[^\w-]/g, '').slice(0, 64),
     vehicle_id: String(form.vehicle_id || ''),
@@ -29,13 +29,13 @@ export async function saveFile(form) {
     mime: f.type,
     size: f.size,
   };
-  if (!rec.id || !rec.vehicle_id || !rec.parent_id) return { error: 'faltan id, vehicle_id o parent_id' };
+  if (!rec.id || !rec.vehicle_id || !rec.parent_id) return { error: 'missing id, vehicle_id or parent_id', code: 'missing_ids' };
   await fs.writeFile(fileOf(rec.id), Buffer.from(await f.arrayBuffer()));
   try {
     await sql`insert into autolog_file ${sql(rec)} on conflict (id) do nothing`;
   } catch (e) {
     await fs.rm(fileOf(rec.id), { force: true });
-    if (e.code === '23503') return { error: 'el vehículo no existe' };
+    if (e.code === '23503') return { error: 'vehicle not found', code: 'no_vehicle' };
     throw e;
   }
   return { rec };

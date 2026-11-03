@@ -2,6 +2,7 @@
 // de inicio (iOS 16.4+). El servidor decide qué avisar y cuándo (server/src/alerts.js).
 import { reactive } from 'vue';
 import { call } from './store.js';
+import { t, L } from './i18n/index.js';
 
 export const P = reactive({
   supported: 'serviceWorker' in navigator && 'PushManager' in window && 'Notification' in window,
@@ -28,7 +29,7 @@ export async function refreshPush() {
   try {
     const sub = await current();
     P.on = !!sub && Notification.permission === 'granted';
-    if (P.on) call('POST', '/v1/push/subscribe', sub.toJSON()).catch(() => {});
+    if (P.on) call('POST', '/v1/push/subscribe', { ...sub.toJSON(), lang: L.lang }).catch(() => {});
   } catch (e) { /* sin service worker (desarrollo) */ }
 }
 
@@ -36,20 +37,20 @@ export async function enablePush() {
   P.busy = true;
   P.msg = '';
   try {
-    if ((await Notification.requestPermission()) !== 'granted') throw new Error('Permiso denegado: actívalo en los ajustes del navegador para esta web.');
+    if ((await Notification.requestPermission()) !== 'granted') throw new Error(t('rem.push.denied'));
     const reg = await navigator.serviceWorker.ready;
     const r = await call('GET', '/v1/push/key');
-    if (!r.ok) throw new Error('El servidor no responde');
+    if (!r.ok) throw new Error(t('rem.push.noServer'));
     const { key } = await r.json();
     const old = await reg.pushManager.getSubscription();
     if (old) await old.unsubscribe(); // por si las claves del servidor han cambiado
     const sub = await reg.pushManager.subscribe({ userVisibleOnly: true, applicationServerKey: b64(key) });
-    const s = await call('POST', '/v1/push/subscribe', sub.toJSON());
-    if (!s.ok) throw new Error('El servidor no ha aceptado la suscripción');
+    const s = await call('POST', '/v1/push/subscribe', { ...sub.toJSON(), lang: L.lang });
+    if (!s.ok) throw new Error(t('rem.push.rejected'));
     P.on = true;
     await testPush();
   } catch (e) {
-    P.msg = e.name === 'TypeError' ? 'Sin conexión' : e.message;
+    P.msg = e.name === 'TypeError' ? t('rem.push.offline') : e.message;
   } finally { P.busy = false; }
 }
 
@@ -70,5 +71,5 @@ export async function testPush() {
   const sub = await current();
   if (!sub) return;
   const r = await call('POST', '/v1/push/test', { endpoint: sub.endpoint }).catch(() => null);
-  P.msg = r && r.ok ? 'Enviada una notificación de prueba.' : 'No se ha podido enviar la prueba.';
+  P.msg = r && r.ok ? t('rem.push.sent') : t('rem.push.notSent');
 }

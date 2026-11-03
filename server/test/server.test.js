@@ -12,18 +12,18 @@ test('clean() keeps known fields with the right type', () => {
 });
 
 test('clean() rejects bad input', () => {
-  assert.match(clean('fuel', { id: 'f1', vehicle_id: 'v1', date: 'ayer', km: 1, liters: 1, total: 1 }).error, /fecha/);
-  assert.match(clean('fuel', { id: 'f1', vehicle_id: 'v1', date: '2024-01-02', km: -1, liters: 1, total: 1 }).error, /número/);
-  assert.match(clean('vehicles', { id: 'v1', name: '   ' }).error, /falta name/);
-  assert.match(clean('vehicles', { name: 'x' }).error, /falta id/);
+  assert.match(clean('fuel', { id: 'f1', vehicle_id: 'v1', date: 'ayer', km: 1, liters: 1, total: 1 }).error, /invalid date/);
+  assert.match(clean('fuel', { id: 'f1', vehicle_id: 'v1', date: '2024-01-02', km: -1, liters: 1, total: 1 }).error, /invalid number/);
+  assert.match(clean('vehicles', { id: 'v1', name: '   ' }).error, /missing name/);
+  assert.match(clean('vehicles', { name: 'x' }).error, /missing id/);
 });
 
 test('startup requires a long enough token unless ALLOW_NO_AUTH', () => {
   const saved = { ...CONFIG };
   Object.assign(CONFIG, { token: '', allowNoAuth: false });
-  assert.match(checkStartup(), /Falta AUTOLOG_TOKEN/);
+  assert.match(checkStartup(), /AUTOLOG_TOKEN is missing/);
   Object.assign(CONFIG, { token: 'short' });
-  assert.match(checkStartup(), /demasiado corta/);
+  assert.match(checkStartup(), /too short/);
   Object.assign(CONFIG, { token: 'x'.repeat(24) });
   assert.equal(checkStartup(), '');
   Object.assign(CONFIG, { token: '', allowNoAuth: true });

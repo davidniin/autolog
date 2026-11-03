@@ -11,8 +11,8 @@ Thanks for wanting to help! Bug reports, ideas, translations, docs and code are 
 - **Bigger changes** (new features, new dependencies, changes to the data model or the API): open an issue to discuss
   it before writing the code, so your work isn't wasted.
 - **Security problems:** never in a public issue. See [SECURITY.md](SECURITY.md).
-- Good places to start: issues labelled `good first issue` and `help wanted`, the **English translation** of the
-  interface, and **receipt-scanner rules** for your country (`web/src/receipt.js`).
+- Good places to start: issues labelled `good first issue` and `help wanted`, **a new language** (see below) and
+  **receipt-scanner rules** for your country (`web/src/receipt.js`).
 
 ## Set up
 
@@ -47,7 +47,16 @@ Without a server, `http://localhost:5173/?demo=1` opens the app with made-up dat
 - Plain JavaScript (ES modules), Vue 3 `<script setup>`, no TypeScript build step.
 - Keep it small: add a dependency only if it saves a lot of code, and pin its exact version.
 - Many code comments are in Spanish; new comments can be in English or Spanish.
-- User-facing texts are in Spanish for now (i18n is on the roadmap).
+- **No hard-coded user-facing text**: add it to `web/src/i18n/es.js` **and** `en.js` (same key) and use `t('key')`.
+  `web/test/i18n.test.js` fails if a key is missing in one language. Push-notification texts live in
+  `server/src/messages.js`.
+
+## Adding a language
+
+1. Copy `web/src/i18n/en.js` to e.g. `fr.js` and translate the values (keep the keys).
+2. Import it in `web/src/i18n/index.js` and add it to `DICTS` and `LANGS`.
+3. Add the same language to `server/src/messages.js` (push notifications).
+4. Run `npm test` in `web/` and add your language to the key check in `web/test/i18n.test.js`.
 - **Never include real personal data** in code, tests, fixtures or screenshots: no real plates, names, invoices or
   addresses. Use the demo mode for screenshots and made-up data in tests.
 
@@ -74,8 +83,8 @@ en inglés.
 - **Cambios grandes** (funciones nuevas, dependencias nuevas, cambios en el modelo de datos o en la API): abre un issue
   para hablarlo antes de programar, así no pierdes trabajo.
 - **Problemas de seguridad:** nunca en un issue público. Mira [SECURITY.md](SECURITY.md).
-- Buenos sitios para empezar: los issues con `good first issue` y `help wanted`, la **traducción al inglés** de la
-  interfaz y las **reglas del escáner** para tu país (`web/src/receipt.js`).
+- Buenos sitios para empezar: los issues con `good first issue` y `help wanted`, **un idioma nuevo** (ver abajo) y
+  las **reglas del escáner** para tu país (`web/src/receipt.js`).
 
 ## Preparar el entorno
 
@@ -110,7 +119,16 @@ Sin servidor, `http://localhost:5173/?demo=1` abre la app con datos inventados.
 - JavaScript normal (módulos ES), Vue 3 con `<script setup>`, sin compilar TypeScript.
 - Pocas dependencias: añade una solo si ahorra mucho código, y fija su versión exacta.
 - Muchos comentarios del código están en español; los nuevos pueden ir en español o en inglés.
-- Los textos de la interfaz están en español por ahora (i18n está en la hoja de ruta).
+- **Ningún texto de la interfaz escrito a mano en el código**: añádelo a `web/src/i18n/es.js` **y** `en.js` (misma
+  clave) y usa `t('clave')`. `web/test/i18n.test.js` falla si falta una clave en un idioma. Los textos de las
+  notificaciones push están en `server/src/messages.js`.
+
+## Añadir un idioma
+
+1. Copia `web/src/i18n/en.js` como, p. ej., `fr.js` y traduce los valores (sin tocar las claves).
+2. Impórtalo en `web/src/i18n/index.js` y añádelo a `DICTS` y `LANGS`.
+3. Añade el mismo idioma en `server/src/messages.js` (notificaciones push).
+4. Pasa `npm test` en `web/` y añade tu idioma a la comprobación de claves de `web/test/i18n.test.js`.
 - **Nunca pongas datos personales reales** en código, tests, datos de ejemplo o capturas: ni matrículas, ni nombres,
   ni facturas, ni direcciones reales. Usa el modo demo para las capturas y datos inventados en los tests.
 

@@ -3,7 +3,9 @@
 // porque en las tablas "TOTAL" y "123,45 €" suelen salir como trozos separados de la misma fila.
 // Salida: { values: { amount, date, km, cat, title, note, liters, total, station }, found: [campos], fuel, plate, warnings }.
 // Solo propone: el formulario los marca como "de la factura" y la persona los revisa antes de guardar.
+// Las reglas leen facturas en español; los textos que genera (concepto, avisos) salen en el idioma de la app.
 import { today } from './calc.js';
+import { t, list } from './i18n/index.js';
 
 // ------------------------------------------------------------ filas
 export function rowsOf({ text = '', lines = [] }) {
@@ -58,14 +60,14 @@ export function datesIn(s) {
 // ------------------------------------------------------------ texto
 const ITEMS = [
   // "aceite" solo cuenta si aparece fuera de "filtro de aceite"
-  [{ test: (s) => /\baceite\b/i.test(s.replace(/filtros?\s*(de\s*)?aceite/gi, '')) }, 'aceite'], [/filtros?\s*(de\s*)?aceite/i, 'filtro de aceite'],
-  [/filtros?\s*(de\s*)?aire/i, 'filtro de aire'], [/filtros?\s*(de\s*)?(habit|polen|cabina)/i, 'filtro de habitáculo'],
-  [/filtros?\s*(de\s*)?(combust|gas[oó]il|gas[oó]leo)/i, 'filtro de combustible'],
-  [/pastillas?/i, 'pastillas de freno'], [/discos?\s*(de\s*)?freno/i, 'discos de freno'], [/l[ií]quido\s*(de\s*)?frenos?/i, 'líquido de frenos'],
-  [/neum[aá]tico|cubiertas?\b/i, 'neumáticos'], [/bater[ií]a/i, 'batería'], [/correa\s*(de\s*)?distrib/i, 'correa de distribución'],
-  [/embrague/i, 'embrague'], [/amortiguador/i, 'amortiguadores'], [/escobilla|limpiaparabrisas/i, 'escobillas'],
-  [/anticongelante|refrigerante/i, 'refrigerante'], [/buj[ií]as?/i, 'bujías'], [/alineaci[oó]n|paralelo/i, 'alineación'],
-  [/equilibrado/i, 'equilibrado'], [/aire\s*acondicionado|carga\s*(de\s*)?gas/i, 'aire acondicionado'],
+  [{ test: (s) => /\baceite\b/i.test(s.replace(/filtros?\s*(de\s*)?aceite/gi, '')) }, 'oil'], [/filtros?\s*(de\s*)?aceite/i, 'oilFilter'],
+  [/filtros?\s*(de\s*)?aire/i, 'airFilter'], [/filtros?\s*(de\s*)?(habit|polen|cabina)/i, 'cabinFilter'],
+  [/filtros?\s*(de\s*)?(combust|gas[oó]il|gas[oó]leo)/i, 'fuelFilter'],
+  [/pastillas?/i, 'pads'], [/discos?\s*(de\s*)?freno/i, 'discs'], [/l[ií]quido\s*(de\s*)?frenos?/i, 'brakeFluid'],
+  [/neum[aá]tico|cubiertas?\b/i, 'tyres'], [/bater[ií]a/i, 'battery'], [/correa\s*(de\s*)?distrib/i, 'timingBelt'],
+  [/embrague/i, 'clutch'], [/amortiguador/i, 'shocks'], [/escobilla|limpiaparabrisas/i, 'wipers'],
+  [/anticongelante|refrigerante/i, 'coolant'], [/buj[ií]as?/i, 'plugs'], [/alineaci[oó]n|paralelo/i, 'alignment'],
+  [/equilibrado/i, 'balancing'], [/aire\s*acondicionado|carga\s*(de\s*)?gas/i, 'aircon'],
 ];
 const REPAIR = /reparaci|aver[ií]a|sustituci|pastillas|discos|embrague|bater[ií]a|neum[aá]tic|amortig|correa|diagnos|chapa|pintura|luna|parabrisas/i;
 const SERVICE = /revisi[oó]n|mantenimiento|\baceite\b|filtro/i;
@@ -80,7 +82,6 @@ const FUEL = /gasolina|di[eé]sel|gas[oó]leo|gasoil|sin\s*plomo|\bsp\s?9[58]\b|
 const SKIP_NAME = /factura|ticket|simplificada|fecha|hora|\bc\.?i\.?f|\bn\.?i\.?f|tel[eé]?f|tlf|www|@|calle|\bc\/|avda|avenida|total|cliente|matr[ií]cula|\bkm\b|p[aá]gina/i;
 
 const cap = (s) => s.charAt(0).toUpperCase() + s.slice(1);
-const listEs = (a) => (a.length > 1 ? a.slice(0, -1).join(', ') + ' y ' + a[a.length - 1] : a[0] || '');
 
 // ------------------------------------------------------------ análisis
 export function parseReceipt(ocr, { plate: vehPlate } = {}) {
@@ -133,7 +134,7 @@ export function parseReceipt(ocr, { plate: vehPlate } = {}) {
     if (k != null && ok(k)) v.km = k;
   }
   if (plate && vehPlate && plate.replace(/\s/g, '') !== String(vehPlate).toUpperCase().replace(/[\s-]/g, '')) {
-    warnings.push('La factura es de la matrícula ' + plate + ', no de este vehículo (' + vehPlate + ')');
+    warnings.push(t('scan.otherPlate', { plate, veh: vehPlate }));
   }
 
   // Nombre del taller o de la gasolinera: la primera fila "de letras" de la cabecera
@@ -171,14 +172,14 @@ export function parseReceipt(ocr, { plate: vehPlate } = {}) {
     v.cat = cat ? cat[0] : REPAIR.test(all) ? 'reparacion' : SERVICE.test(all) ? 'revision' : undefined;
     if (!v.cat) delete v.cat;
     const items = [];
-    for (const [re, label] of ITEMS) if (re.test(all) && !items.includes(label)) items.push(label);
-    if (items.length) v.title = cap(listEs(items.slice(0, 4))).slice(0, 80);
-    else if (v.cat === 'itv') v.title = 'ITV';
-    const note = [name, invoice ? 'Factura ' + invoice[1] : ''].filter(Boolean).join(' · ');
+    for (const [re, key] of ITEMS) if (re.test(all) && !items.includes(key)) items.push(key);
+    if (items.length) v.title = cap(list(items.slice(0, 4).map((k) => t('scan.items.' + k)))).slice(0, 80);
+    else if (v.cat === 'itv') v.title = t('scan.items.itv');
+    const note = [name, invoice ? t('scan.invoiceNo', { n: invoice[1] }) : ''].filter(Boolean).join(' · ');
     if (note) v.note = note.slice(0, 500);
   }
 
-  if (ocr.confidence != null && ocr.confidence < 0.6) warnings.push('La foto se lee regular: revisa bien los datos');
-  if (!Object.keys(v).length) warnings.push('No he encontrado datos en la foto. Prueba con más luz y la factura entera y recta.');
+  if (ocr.confidence != null && ocr.confidence < 0.6) warnings.push(t('scan.lowConfidence'));
+  if (!Object.keys(v).length) warnings.push(t('scan.nothing'));
   return { values: v, found: Object.keys(v), fuel, plate, warnings, rows };
 }

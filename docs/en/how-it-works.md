@@ -18,6 +18,14 @@ Phone (PWA) ──HTTPS──▶ autolog (Node + Hono, port 8791) ──▶ Post
 - **Server** (`server/`): Node 22+ and Hono. Serves the `/v1` API and the built web app from one container. Tables
   (`autolog_*`) are created automatically on start.
 
+## Languages
+
+The interface is in English and Spanish. It follows the phone's language the first time and can be changed in
+**⚙ Settings** (saved on each phone). Texts live in `web/src/i18n/` (`es.js`, `en.js`, same keys); dates and numbers
+use the locale of the chosen language. Push notifications are sent in the language each phone had when it
+subscribed (`server/src/messages.js`). API error responses are in English and include a stable `code` that the app
+translates.
+
 ## Consumption: full-to-full method
 
 Each fill-up says whether the tank was filled. Between two full fills, consumption is the litres added after the first

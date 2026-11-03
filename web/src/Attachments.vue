@@ -2,6 +2,7 @@
 // Adjuntos de un gasto o vehículo: miniaturas (fotos) o icono (PDF). Tocar abre; × borra; 📎 sube (cámara o archivo).
 import { ref, computed } from 'vue';
 import { S, upload, delFile, fileUrl } from './store.js';
+import { t, locale } from './i18n/index.js';
 
 const props = defineProps({ vehicleId: String, kind: String, parentId: String });
 const emit = defineEmits(['uploaded']);
@@ -24,13 +25,13 @@ async function pick(ev) {
     } finally { busy.value--; }
   }
 }
-function remove(f) { if (confirm('¿Borrar ' + f.name + '?')) delFile(f.id); }
-const kb = (n) => (n > 1048576 ? (n / 1048576).toFixed(1).replace('.', ',') + ' MB' : Math.round(n / 1024) + ' KB');
+function remove(f) { if (confirm(t('files.confirm', { name: f.name }))) delFile(f.id); }
+const kb = (n) => (n > 1048576 ? (n / 1048576).toLocaleString(locale(), { maximumFractionDigits: 1 }) + ' MB' : Math.round(n / 1024) + ' KB');
 </script>
 
 <template>
   <div class="field full">
-    Adjuntos
+    {{ t('files.title') }}
     <div class="files">
       <div v-for="f in list" :key="f.id" class="file">
         <a :href="fileUrl(f.id)" target="_blank" rel="noopener" :title="f.name">
@@ -38,11 +39,11 @@ const kb = (n) => (n > 1048576 ? (n / 1048576).toFixed(1).replace('.', ',') + ' 
           <span v-else class="file-doc">📄<small>{{ f.name }}</small></span>
         </a>
         <small class="file-size">{{ kb(f.size) }}</small>
-        <button type="button" class="file-del" :aria-label="'Borrar ' + f.name" @click="remove(f)">×</button>
+        <button type="button" class="file-del" :aria-label="t('files.deleteAria', { name: f.name })" @click="remove(f)">×</button>
       </div>
       <label class="file file-add" :class="{ busy }">
         <input type="file" accept="image/*,application/pdf" multiple @change="pick" :disabled="!!busy" />
-        <span>{{ busy ? '⏳' : '📎' }}<small>{{ busy ? 'Subiendo…' : 'Foto o PDF' }}</small></span>
+        <span>{{ busy ? '⏳' : '📎' }}<small>{{ busy ? t('files.uploading') : t('files.add') }}</small></span>
       </label>
     </div>
     <p v-if="err" class="err">{{ err }}</p>

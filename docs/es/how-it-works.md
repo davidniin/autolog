@@ -17,6 +17,13 @@ Móvil (PWA) ──HTTPS──▶ autolog (Node + Hono, puerto 8791) ──▶ P
 - **Servidor** (`server/`): Node 22+ y Hono. Sirve la API `/v1` y la web compilada en un solo contenedor. Las tablas
   (`autolog_*`) se crean solas al arrancar.
 
+## Idiomas
+
+La interfaz está en español e inglés. La primera vez sigue el idioma del móvil, y se cambia en **⚙ Ajustes** (se
+guarda en cada móvil). Los textos están en `web/src/i18n/` (`es.js`, `en.js`, mismas claves); las fechas y los números
+usan el formato del idioma elegido. Las notificaciones push llegan en el idioma que tenía cada móvil al activarlas
+(`server/src/messages.js`). Los errores de la API van en inglés con un `code` estable que la app traduce.
+
 ## Consumo: método lleno a lleno
 
 En cada repostaje se marca si se ha llenado el depósito. Entre dos llenados, el consumo es la suma de los litros

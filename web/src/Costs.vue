@@ -2,7 +2,8 @@
 // Costes: €/mes, €/km, gráfico de los últimos 12 meses (combustible + otros) y reparto por categoría.
 import { ref, computed } from 'vue';
 import { costs, fmt, monthName } from './calc.js';
-import { CATS, label } from './forms.js';
+import { optLabel } from './forms.js';
+import { t } from './i18n/index.js';
 
 const props = defineProps({ veh: Object, fills: Array, exps: Array, km: Number });
 const C = computed(() => costs(props.veh, props.fills, props.exps, props.km));
@@ -14,39 +15,39 @@ const year = computed(() => C.value.months.reduce((s, m) => s + m.fuel + m.other
 const cur = computed(() => C.value.months[sel.value]);
 const pct = (v) => (v / max.value) * 100 + '%';
 
-const catLabel = (c) => (c === 'fuel' ? '⛽ Combustible' : label(CATS, c));
+const catLabel = (c) => optLabel('cat', c);
 </script>
 
 <template>
   <div>
     <div class="stats">
-      <div class="stat big"><small>Al mes</small><b>{{ fmt.eur(C.perMonth) }}</b></div>
-      <div class="stat big"><small>Por km</small><b>{{ fmt.n3(C.perKm) }}</b><span>€/km</span></div>
-      <div class="stat"><small>Gastado en total</small><b>{{ fmt.eur(C.total) }}</b></div>
-      <div class="stat"><small>Km registrados</small><b>{{ fmt.km(C.driven) }}</b></div>
+      <div class="stat big"><small>{{ t('costs.perMonth') }}</small><b>{{ fmt.eur(C.perMonth) }}</b></div>
+      <div class="stat big"><small>{{ t('costs.perKm') }}</small><b>{{ fmt.n3(C.perKm) }}</b><span>€/km</span></div>
+      <div class="stat"><small>{{ t('costs.total') }}</small><b>{{ fmt.eur(C.total) }}</b></div>
+      <div class="stat"><small>{{ t('costs.driven') }}</small><b>{{ fmt.km(C.driven) }}</b></div>
     </div>
-    <p v-if="C.first" class="note">Desde el {{ fmt.date(C.first) }}, primer apunte de este vehículo.</p>
+    <p v-if="C.first" class="note">{{ t('costs.since', { date: fmt.date(C.first) }) }}</p>
 
     <template v-if="C.purchase">
-      <h3>Con la compra</h3>
+      <h3>{{ t('costs.withPurchase') }}</h3>
       <div class="stats">
-        <div class="stat"><small>Compra + gastos</small><b>{{ fmt.eur(C.purchase.total) }}</b></div>
-        <div class="stat"><small>Al mes desde la compra</small><b>{{ fmt.eur(C.purchase.perMonth) }}</b></div>
+        <div class="stat"><small>{{ t('costs.purchaseTotal') }}</small><b>{{ fmt.eur(C.purchase.total) }}</b></div>
+        <div class="stat"><small>{{ t('costs.purchasePerMonth') }}</small><b>{{ fmt.eur(C.purchase.perMonth) }}</b></div>
       </div>
-      <p v-if="!C.purchase.since" class="note">Pon la fecha de compra en la ficha para ver el coste al mes.</p>
+      <p v-if="!C.purchase.since" class="note">{{ t('costs.setPurchaseDate') }}</p>
     </template>
 
-    <h3>Últimos 12 meses · {{ fmt.eur(year) }}</h3>
+    <h3>{{ t('costs.last12', { total: fmt.eur(year) }) }}</h3>
     <div class="card chart">
       <div class="chart-head">
         <b>{{ monthName(cur.key, true) }}</b>
         <span>{{ fmt.eur(cur.fuel + cur.other) }}</span>
       </div>
       <div class="legend">
-        <span><i class="sw fuel"></i>Combustible {{ fmt.eur(cur.fuel) }}</span>
-        <span><i class="sw other"></i>Otros {{ fmt.eur(cur.other) }}</span>
+        <span><i class="sw fuel"></i>{{ t('costs.fuel') }} {{ fmt.eur(cur.fuel) }}</span>
+        <span><i class="sw other"></i>{{ t('costs.other') }} {{ fmt.eur(cur.other) }}</span>
       </div>
-      <div class="bars" role="img" :aria-label="'Gasto mensual de los últimos 12 meses, máximo ' + fmt.eur(max)">
+      <div class="bars" role="img" :aria-label="t('costs.chartAria', { max: fmt.eur(max) })">
         <span class="bars-max">{{ fmt.eur(max) }}</span>
         <button
           v-for="(m, i) in C.months" :key="m.key" class="col" :class="{ on: i === sel }"
@@ -61,7 +62,7 @@ const catLabel = (c) => (c === 'fuel' ? '⛽ Combustible' : label(CATS, c));
       </div>
     </div>
 
-    <h3 v-if="C.byCat.length">Por categoría</h3>
+    <h3 v-if="C.byCat.length">{{ t('costs.byCat') }}</h3>
     <div v-for="[c, v] in C.byCat" :key="c" class="cat-row">
       <span class="cat-name">{{ catLabel(c) }}</span>
       <b>{{ fmt.eur(v) }}</b>

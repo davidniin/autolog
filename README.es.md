@@ -23,7 +23,8 @@ otro.
   **en el propio móvil** ([runonweb](https://runonweb.ai/models/ocr), PP-OCRv6): la foto no sale del dispositivo.
 - **Sin cobertura**: los cambios se guardan en el móvil y se envían cuando vuelve la red.
 - **Validación** de cada campo (km imposibles, €/L poco creíble, fechas futuras…).
-- Modo claro y oscuro, instalable en Android y iPhone, varios vehículos.
+- **Español e inglés** (según el idioma del móvil; se cambia en ⚙ Ajustes), modo claro y oscuro, instalable en
+  Android y iPhone, varios vehículos.
 
 ## Pruébala
 
@@ -87,9 +88,9 @@ Las ideas, los avisos de fallos y los pull requests son bienvenidos, en español
 
 ## Hoja de ruta
 
-1. **Interfaz en inglés** (i18n): se busca ayuda.
+1. Unidades y moneda (millas, galones, mpg, cualquier moneda).
 2. Importar y exportar (CSV).
-3. Reglas del escáner para otros países y formatos (hoy: España, `1.234,56 €`).
+3. Más idiomas, y reglas del escáner para otros países (hoy: facturas en español, `1.234,56 €`): se busca ayuda.
 4. Copias de seguridad y restauración desde la app.
 5. Imagen Docker ya construida en cada versión (`ghcr.io`).
 

@@ -16,11 +16,11 @@ const WINDOW_MS = 15 * 60 * 1000;
 // Al arrancar: sin clave solo si se pide expresamente (red de casa sin acceso desde fuera)
 export function checkStartup() {
   if (!CONFIG.token && !CONFIG.allowNoAuth) {
-    return 'Falta AUTOLOG_TOKEN. Genera una con `openssl rand -hex 24` y ponla en .env. ' +
-      '(Solo en una red privada sin acceso desde internet: ALLOW_NO_AUTH=1 para arrancar sin clave.)';
+    return 'AUTOLOG_TOKEN is missing. Generate one with `openssl rand -hex 24` and put it in .env. ' +
+      '(Only on a private network with no internet access: ALLOW_NO_AUTH=1 to start without a password.)';
   }
   if (CONFIG.token && CONFIG.token.length < MIN_TOKEN) {
-    return 'AUTOLOG_TOKEN es demasiado corta (mínimo ' + MIN_TOKEN + ' caracteres). Usa `openssl rand -hex 24`.';
+    return 'AUTOLOG_TOKEN is too short (min. ' + MIN_TOKEN + ' characters). Use `openssl rand -hex 24`.';
   }
   return '';
 }
@@ -52,7 +52,7 @@ export function auth() {
     const ip = clientIp(c), f = fails.get(ip);
     if (f && f.n >= MAX_FAILS && Date.now() - f.since < WINDOW_MS) {
       c.header('Retry-After', String(Math.ceil((WINDOW_MS - (Date.now() - f.since)) / 1000)));
-      return c.json({ error: 'demasiados intentos, espera unos minutos' }, 429);
+      return c.json({ error: 'too many attempts, wait a few minutes', code: 'too_many_attempts' }, 429);
     }
     const h = c.req.header('authorization') || '';
     let given = h.startsWith('Bearer ') ? h.slice(7) : '';
@@ -60,7 +60,7 @@ export function auth() {
     if (!given || !same(given, CONFIG.token)) {
       if (!f || Date.now() - f.since > WINDOW_MS) fails.set(ip, { n: 1, since: Date.now() });
       else f.n++;
-      return c.json({ error: 'token no válido' }, 401);
+      return c.json({ error: 'invalid token', code: 'bad_token' }, 401);
     }
     if (f) fails.delete(ip);
     return next();

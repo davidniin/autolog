@@ -13,9 +13,6 @@ not on someone else's.
   <img src="docs/screenshots/dark-summary.png" width="220" alt="Dark mode">
 </p>
 
-> The interface is currently in **Spanish**. An English translation is the first item on the [roadmap](#roadmap) —
-> help is welcome.
-
 ## Features
 
 - **Fill-ups** with real consumption (full-to-full method), €/L and cost per trip.
@@ -26,7 +23,8 @@ not on someone else's.
   OCR runs **on the phone** ([runonweb](https://runonweb.ai/models/ocr), PP-OCRv6): the photo never leaves the device.
 - **Works offline**: changes are saved on the phone and synced when the connection is back.
 - **Validation** of every field (impossible mileage, unrealistic €/L, future dates…).
-- Light/dark mode, installable on Android and iPhone, several vehicles.
+- **English and Spanish** (follows the phone's language; switch it in ⚙ Settings), light/dark mode, installable on
+  Android and iPhone, several vehicles.
 
 ## Try it
 
@@ -90,9 +88,9 @@ and the [Code of Conduct](CODE_OF_CONDUCT.md).
 
 ## Roadmap
 
-1. **English interface** (i18n) — help wanted.
+1. Units and currency (miles, gallons, mpg, any currency).
 2. Import/export (CSV).
-3. Receipt-scanner rules for other countries and formats (today: Spain, `1.234,56 €`).
+3. More languages, and receipt-scanner rules for other countries (today: Spanish invoices, `1.234,56 €`) — help wanted.
 4. Backups and restore from the app.
 5. A prebuilt Docker image for every release (`ghcr.io`).
 

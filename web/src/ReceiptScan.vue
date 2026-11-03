@@ -6,6 +6,7 @@ import { ref, onMounted } from 'vue';
 import { OCRS, readImage, modelReady } from './ocr.js';
 import { parseReceipt } from './receipt.js';
 import { upload } from './store.js';
+import { t } from './i18n/index.js';
 
 const props = defineProps({
   kind: String, // 'expenses' | 'fuel'
@@ -22,7 +23,6 @@ const res = ref(null); // resultado de parseReceipt
 const attached = ref('');
 let lastFile = null;
 
-const NAMES = { amount: 'importe', total: 'importe', date: 'fecha', km: 'km', liters: 'litros', cat: 'categoría', title: 'concepto', note: 'taller y nº de factura', station: 'gasolinera' };
 
 onMounted(async () => {
   ready.value = await modelReady();
@@ -30,13 +30,13 @@ onMounted(async () => {
 });
 
 async function attach(file) {
-  attached.value = 'Guardando la foto…';
+  attached.value = t('scan.saving');
   try {
     const rec = await upload(file, { vehicle_id: props.vehicleId, parent_kind: props.kind, parent_id: props.parentId });
     emit('uploaded', rec.id);
-    attached.value = '📎 Foto guardada en los adjuntos';
+    attached.value = t('scan.saved');
   } catch (e) {
-    attached.value = '📎 ' + e.message + '. Puedes adjuntarla después.';
+    attached.value = t('scan.saveFailed', { msg: e.message });
   }
 }
 
@@ -73,7 +73,7 @@ function keepExpense() {
   r.fuel = false;
   attach(lastFile);
 }
-const foundText = (r) => [...new Set(r.found.map((k) => NAMES[k]).filter(Boolean))].join(', ');
+const foundText = (r) => [...new Set(r.found.map((k) => t('scan.names.' + k)).filter((n) => !n.startsWith('scan.')))].join(', ');
 </script>
 
 <template>
@@ -82,11 +82,11 @@ const foundText = (r) => [...new Set(r.found.map((k) => NAMES[k]).filter(Boolean
       <input type="file" accept="image/*" :disabled="OCRS.busy" @change="pick" />
       <span class="scan-ico">{{ OCRS.busy ? '⏳' : '📷' }}</span>
       <span class="scan-txt">
-        <b>{{ OCRS.busy ? (OCRS.phase === 'download' ? 'Descargando el lector… ' + OCRS.progress + ' %' : 'Leyendo la foto…') : kind === 'fuel' ? 'Escanear el ticket' : 'Escanear la factura' }}</b>
-        <small v-if="OCRS.busy && OCRS.phase === 'download'">Solo la primera vez. Luego funciona sin conexión.</small>
-        <small v-else-if="OCRS.busy">Puede tardar unos segundos</small>
-        <small v-else-if="!ready">Rellena los datos solo. La primera vez descarga el lector (31 MB).</small>
-        <small v-else>Rellena {{ kind === 'fuel' ? 'litros, importe y fecha' : 'importe, fecha, km y concepto' }}. La foto no sale del móvil.</small>
+        <b>{{ OCRS.busy ? (OCRS.phase === 'download' ? t('scan.downloading', { p: OCRS.progress }) : t('scan.reading')) : kind === 'fuel' ? t('scan.ticket') : t('scan.invoice') }}</b>
+        <small v-if="OCRS.busy && OCRS.phase === 'download'">{{ t('scan.firstTimeOnly') }}</small>
+        <small v-else-if="OCRS.busy">{{ t('scan.mayTake') }}</small>
+        <small v-else-if="!ready">{{ t('scan.firstDownload') }}</small>
+        <small v-else>{{ kind === 'fuel' ? t('scan.fillsFuel') : t('scan.fillsExpense') }}</small>
       </span>
     </label>
     <div v-if="OCRS.busy && OCRS.phase === 'download'" class="scan-bar"><i :style="{ width: OCRS.progress + '%' }"></i></div>
@@ -96,19 +96,19 @@ const foundText = (r) => [...new Set(r.found.map((k) => NAMES[k]).filter(Boolean
 
     <div v-if="res" class="scan-res">
       <template v-if="res.fuel && kind === 'expenses'">
-        <p>⛽ Parece un ticket de gasolinera. ¿Lo apunto como repostaje?</p>
+        <p>{{ t('scan.looksFuel') }}</p>
         <span class="scan-acts">
-          <button type="button" class="link" @click="keepExpense">No, es un gasto</button>
-          <button type="button" class="primary small" @click="toFuel">Sí, repostaje</button>
+          <button type="button" class="link" @click="keepExpense">{{ t('scan.keepExpense') }}</button>
+          <button type="button" class="primary small" @click="toFuel">{{ t('scan.toFuel') }}</button>
         </span>
       </template>
       <template v-else>
-        <p v-if="res.found.length">✨ He rellenado <b>{{ foundText(res) }}</b>. Revísalo antes de guardar.</p>
+        <p v-if="res.found.length" v-html="t('scan.filled', { fields: foundText(res) })"></p>
         <p v-for="w in res.warnings" :key="w" class="scan-warn">⚠ {{ w }}</p>
         <small v-if="attached">{{ attached }}</small>
       </template>
       <details>
-        <summary>Ver el texto leído</summary>
+        <summary>{{ t('scan.showText') }}</summary>
         <pre>{{ res.rows.join('\n') }}</pre>
       </details>
     </div>

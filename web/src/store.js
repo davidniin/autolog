@@ -3,6 +3,7 @@
 // cobertura. Mientras haya cambios en cola no se recarga del servidor (no se pisa lo local).
 import { reactive } from 'vue';
 import { demoData } from './demo.js';
+import { t } from './i18n/index.js';
 
 // Modo demo (/?demo=1): datos inventados, sin servidor, guardados solo en esta pestaña (sessionStorage).
 // No toca los datos de verdad del móvil (localStorage) ni manda nada a la red. Sirve para capturas y para probar.
@@ -136,7 +137,7 @@ export async function pull() {
 // ------------------------------------------------------------ adjuntos
 // Subir necesita red (un fichero no cabe en la cola). Las fotos se reducen antes: ~2000 px en JPEG.
 export async function upload(file, meta) {
-  if (DEMO) throw new Error('En el modo demo no se guardan fotos');
+  if (DEMO) throw new Error(t('files.demo'));
   const blob = file.type.startsWith('image/') ? await shrink(file) : file;
   const name = blob === file ? file.name : file.name.replace(/\.\w+$/, '') + '.jpg';
   const fd = new FormData();
@@ -145,9 +146,9 @@ export async function upload(file, meta) {
   const h = {}, token = load('token', '');
   if (token) h.Authorization = 'Bearer ' + token;
   let r;
-  try { r = await fetch('/v1/files', { method: 'POST', headers: h, body: fd }); } catch (e) { S.online = false; throw new Error('Sin conexión: los adjuntos necesitan red'); }
+  try { r = await fetch('/v1/files', { method: 'POST', headers: h, body: fd }); } catch (e) { S.online = false; throw new Error(t('files.offline')); }
   const d = await r.json().catch(() => ({}));
-  if (!r.ok) throw new Error(d.error || 'No se ha podido subir (' + r.status + ')');
+  if (!r.ok) throw new Error((d.code && t('err.' + d.code) !== 'err.' + d.code ? t('err.' + d.code) : d.error) || t('files.failed', { status: r.status }));
   S.files.push(d);
   persist();
   return d;

@@ -372,3 +372,8 @@ p.err.full { padding: 10px 12px; border-radius: 12px; background: var(--danger-s
 .demo-bar > span { flex: 1; }
 .demo-bar .link { padding: 6px 10px; }
 .status.demo::before { background: var(--alt); box-shadow: none; }
+
+/* ---- ajustes */
+.gear { display: grid; place-items: center; width: 34px; height: 34px; border-radius: 50%; background: var(--card); border: 1px solid var(--line); color: var(--muted); font-size: 17px; line-height: 1; transition: transform 0.3s var(--ease); }
+.gear:active { transform: rotate(60deg); }
+.sheet .field .form-note { display: block; margin-top: 2px; }

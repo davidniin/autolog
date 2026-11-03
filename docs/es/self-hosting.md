@@ -161,10 +161,10 @@ Déjalo como servicio (systemd, pm2…) y ponle HTTPS delante como en el paso 3.
 
 | Problema | Solución |
 |---|---|
-| El contenedor se para: `Falta AUTOLOG_TOKEN` / `demasiado corta` | Pon en `.env` una clave de 16 caracteres o más |
+| El contenedor se para: `AUTOLOG_TOKEN is missing` / `too short` | Pon en `.env` una clave de 16 caracteres o más |
 | `/v1/health` dice `"db":false` | Revisa `DATABASE_URL` / `POSTGRES_PASSWORD`; `docker compose logs db` |
 | El móvil pide la clave una y otra vez | La del móvil no coincide con `AUTOLOG_TOKEN`. Abre otra vez `/?token=...` |
-| `429 demasiados intentos` | 10 claves incorrectas desde esa IP: espera 15 minutos. Detrás de un proxy, pon `TRUST_PROXY=1` para que cada dispositivo cuente por separado |
+| `429 too many attempts` | 10 claves incorrectas desde esa IP: espera 15 minutos. Detrás de un proxy, pon `TRUST_PROXY=1` para que cada dispositivo cuente por separado |
 | No sale "Instalar" o no llegan las notificaciones | La página no va por HTTPS (ver paso 3) |
 | El escáner dice que necesita conexión | La primera vez descarga el modelo del OCR (~31 MB). Después funciona sin red |
 

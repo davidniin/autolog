@@ -1,4 +1,5 @@
 // Cálculos: consumo (método lleno a lleno), km actuales y formatos.
+import { t, locale } from './i18n/index.js';
 
 // Consumo lleno a lleno: entre dos repostajes con depósito lleno, los litros puestos después del primero
 // (incluidos los parciales intermedios y el último lleno) divididos por los km recorridos.
@@ -33,22 +34,32 @@ export function today() {
   return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
 }
 
-// ------------------------------------------------------------ formatos (es-ES)
-const EUR = new Intl.NumberFormat('es-ES', { style: 'currency', currency: 'EUR' });
-const N0 = new Intl.NumberFormat('es-ES', { maximumFractionDigits: 0 });
-const N1 = new Intl.NumberFormat('es-ES', { minimumFractionDigits: 1, maximumFractionDigits: 1 });
-const N2 = new Intl.NumberFormat('es-ES', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
-const N3 = new Intl.NumberFormat('es-ES', { minimumFractionDigits: 3, maximumFractionDigits: 3 });
+// ------------------------------------------------------------ formatos (según el idioma: i18n/index.js)
+// Los Intl.NumberFormat se crean una vez por locale y opciones.
+const NF = {};
+function nf(opts) {
+  const k = locale() + JSON.stringify(opts);
+  return NF[k] || (NF[k] = new Intl.NumberFormat(locale(), opts));
+}
+const n = (v, d0, d1 = d0) => nf({ minimumFractionDigits: d0, maximumFractionDigits: d1 }).format(v);
 
 export const fmt = {
-  eur: (n) => (n == null ? '—' : EUR.format(n)),
-  km: (n) => (n == null ? '—' : N0.format(n) + ' km'),
-  l: (n) => (n == null ? '—' : N2.format(n) + ' L'),
-  l100: (n) => (n == null ? '—' : N1.format(n)),
-  ppl: (n) => (n == null ? '—' : N3.format(n) + ' €/L'),
-  n3: (n) => (n == null ? '—' : N3.format(n)),
-  date: (s) => (s ? new Date(s + 'T12:00').toLocaleDateString('es-ES', { day: 'numeric', month: 'short', year: 'numeric' }) : ''),
+  eur: (v) => (v == null ? '—' : nf({ style: 'currency', currency: 'EUR' }).format(v)),
+  km: (v) => (v == null ? '—' : n(v, 0) + ' km'),
+  l: (v) => (v == null ? '—' : n(v, 2) + ' L'),
+  l100: (v) => (v == null ? '—' : n(v, 1)),
+  ppl: (v) => (v == null ? '—' : n(v, 3) + ' €/L'),
+  n3: (v) => (v == null ? '—' : n(v, 3)),
+  num: (v, max = 3) => (v == null ? '—' : n(v, 0, max)),
+  date: (s) => (s ? new Date(s + 'T12:00').toLocaleDateString(locale(), { day: 'numeric', month: 'short', year: 'numeric' }) : ''),
 };
+
+// Número para escribirlo en un campo del formulario, con el separador decimal del idioma (42,5 / 42.5)
+export function numInput(v) {
+  if (v == null || v === '') return '';
+  const sep = (1.5).toLocaleString(locale()).charAt(1);
+  return String(v).replace('.', sep);
+}
 
 // Acepta "42,5" o "42.5"; vacío → null; texto no numérico → NaN
 export function num(v) {
@@ -81,9 +92,13 @@ export function reminderState(r, km) {
   const parts = [];
   // Primero lo que vence antes (si van los km por delante, se dicen primero)
   const kmFirst = kmLeft != null && (days == null || kmLeft / SOON_KM < days / SOON_DAYS);
-  if (kmFirst) parts.push(kmLeft <= 0 ? 'pasado por ' + fmt.km(-kmLeft) : 'faltan ' + fmt.km(kmLeft));
-  if (days != null) parts.push(days < 0 ? 'venció hace ' + plural(-days, 'día') : days === 0 ? 'vence hoy' : days <= 60 ? 'en ' + plural(days, 'día') : fmt.date(r.due_date));
-  if (kmLeft != null && !kmFirst) parts.push(kmLeft <= 0 ? 'pasado por ' + fmt.km(-kmLeft) : 'faltan ' + fmt.km(kmLeft));
+  const kmText = () => (kmLeft <= 0 ? t('rem.overBy', { km: fmt.km(-kmLeft) }) : t('rem.left', { km: fmt.km(kmLeft) }));
+  if (kmFirst) parts.push(kmText());
+  if (days != null) {
+    parts.push(days < 0 ? t('rem.ago', { days: t('common.days', { n: -days }) }) : days === 0 ? t('rem.today')
+      : days <= 60 ? t('rem.in', { days: t('common.days', { n: days }) }) : fmt.date(r.due_date));
+  }
+  if (kmLeft != null && !kmFirst) parts.push(kmText());
   return { days, kmLeft, level: late ? 'late' : soon ? 'soon' : 'ok', score, text: parts.join(' · ') };
 }
 
@@ -96,7 +111,6 @@ export function nextDue(r, date, km) {
   };
 }
 
-function plural(n, w) { return n + ' ' + w + (n === 1 ? '' : 's'); }
 
 // ------------------------------------------------------------ costes
 // Coste por mes: total / meses desde el primer apunte. Por km: total / km recorridos desde el primer km conocido.
@@ -144,6 +158,6 @@ export function costs(veh, fills, exps, kmNow) {
 }
 
 export function monthName(key, long) {
-  const s = new Date(key + '-15T12:00').toLocaleDateString('es-ES', long ? { month: 'long', year: 'numeric' } : { month: 'short' }).replace('.', '');
+  const s = new Date(key + '-15T12:00').toLocaleDateString(locale(), long ? { month: 'long', year: 'numeric' } : { month: 'short' }).replace('.', '');
   return s.charAt(0).toUpperCase() + s.slice(1);
 }

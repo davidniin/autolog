@@ -3,6 +3,7 @@
 // navegador) y el motor onnxruntime (lo guarda sw.js). Después funciona sin cobertura.
 // La librería se carga al usarla por primera vez (import dinámico), así que no pesa al abrir la app.
 import { reactive } from 'vue';
+import { t } from './i18n/index.js';
 
 const MODEL_CACHE = 'runonweb-ppocrv6'; // el de runonweb/src/core/cache.ts
 const MAX_SIDE = 2000; // px: más no mejora la lectura y tarda más
@@ -35,7 +36,7 @@ async function engine() {
     await ocr.load();
   } catch (e) {
     ocr = null;
-    throw new Error(navigator.onLine ? 'No se ha podido cargar el lector (' + e.message + ')' : 'La primera vez el lector necesita conexión para descargarse');
+    throw new Error(navigator.onLine ? t('ocr.loadFailed', { msg: e.message }) : t('ocr.needsNet'));
   }
   OCRS.device = ocr.device || '';
   return ocr;
@@ -55,13 +56,13 @@ async function prepare(file) {
 
 // → { text, lines: [{ text, score, box }], confidence }
 export async function readImage(file) {
-  if (OCRS.busy) throw new Error('Ya estoy leyendo otra foto');
+  if (OCRS.busy) throw new Error(t('ocr.busy'));
   OCRS.busy = true;
   OCRS.phase = 'read';
   OCRS.progress = 0;
   try {
     let canvas;
-    try { canvas = await prepare(file); } catch (e) { throw new Error('No puedo abrir esta imagen. Prueba con una foto JPG o PNG.'); }
+    try { canvas = await prepare(file); } catch (e) { throw new Error(t('ocr.badImage')); }
     const o = await engine();
     OCRS.phase = 'read';
     return await o.read(canvas);

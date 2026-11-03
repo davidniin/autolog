@@ -15,6 +15,7 @@ import { CONFIG } from './config.js';
 import { sql, migrate, TABLES, clean, upsert, remove, readAll } from './db.js';
 import { MAX_BYTES, initFiles, saveFile, readFile, removeFiles } from './files.js';
 import { auth, checkStartup, CSP } from './security.js';
+import { cleanLang } from './messages.js';
 import { alerts, initPush, vapidKey, subscribe, unsubscribe, sendTest, check } from './alerts.js';
 
 const VERSION = '0.1.0';
@@ -34,7 +35,7 @@ if (CONFIG.corsOrigin) api.use('*', cors({ origin: CONFIG.corsOrigin.split(',').
 api.use('*', auth());
 api.onError((e, c) => {
   console.error('[api] ' + c.req.method + ' ' + c.req.path + ': ' + e.message);
-  return c.json({ error: 'error interno del servidor' }, 500); // el detalle va al log, no al cliente
+  return c.json({ error: 'internal server error', code: 'internal' }, 500); // el detalle va al log, no al cliente
 });
 
 api.get('/health', async (c) => {
@@ -45,11 +46,11 @@ api.get('/health', async (c) => {
 api.get('/data', async (c) => c.json(await readAll()));
 
 // ------------------------------------------------------------ avisos y push
-api.get('/alerts', async (c) => c.json((await alerts()).map(({ stamp, score, ...a }) => a)));
+api.get('/alerts', async (c) => c.json((await alerts(cleanLang(c.req.query('lang') || 'es'))).map(({ stamp, score, ...a }) => a)));
 api.get('/push/key', (c) => c.json({ key: vapidKey() }));
 api.post('/push/subscribe', async (c) => {
   const b = await c.req.json().catch(() => null);
-  if (!(await subscribe(b))) return c.json({ error: 'suscripción no válida' }, 400);
+  if (!(await subscribe(b))) return c.json({ error: 'invalid subscription', code: 'bad_input' }, 400);
   return c.json({ ok: true });
 });
 api.post('/push/unsubscribe', async (c) => {
@@ -59,20 +60,20 @@ api.post('/push/unsubscribe', async (c) => {
 });
 api.post('/push/test', async (c) => {
   const b = await c.req.json().catch(() => ({}));
-  return (await sendTest(b.endpoint)) ? c.json({ ok: true }) : c.json({ error: 'no se ha podido enviar' }, 400);
+  return (await sendTest(b.endpoint)) ? c.json({ ok: true }) : c.json({ error: 'could not send', code: 'push_failed' }, 400);
 });
 // Revisar ahora (sin esperar a la revisión diaria). No repite lo ya avisado.
 api.post('/push/check', async (c) => c.json({ sent: await check() }));
 
 // ------------------------------------------------------------ adjuntos
-api.post('/files', bodyLimit({ maxSize: MAX_BYTES + 1024 * 1024, onError: (c) => c.json({ error: 'máximo 15 MB' }, 413) }), async (c) => {
-  const { rec, error } = await saveFile(await c.req.parseBody());
-  if (error) return c.json({ error }, 400);
+api.post('/files', bodyLimit({ maxSize: MAX_BYTES + 1024 * 1024, onError: (c) => c.json({ error: 'max 15 MB', code: 'file_too_big' }, 413) }), async (c) => {
+  const { rec, error, code } = await saveFile(await c.req.parseBody());
+  if (error) return c.json({ error, code }, 400);
   return c.json(rec, 201);
 });
 api.get('/files/:id', async (c) => {
   const f = await readFile(c.req.param('id'));
-  if (!f) return c.json({ error: 'no existe' }, 404);
+  if (!f) return c.json({ error: 'not found', code: 'not_found' }, 404);
   return c.body(f.data, 200, {
     'Content-Type': f.rec.mime,
     'Content-Disposition': "inline; filename*=UTF-8''" + encodeURIComponent(f.rec.name),
@@ -88,15 +89,15 @@ api.delete('/files/:id', async (c) => {
 // ------------------------------------------------------------ colecciones
 api.put('/:kind/:id', async (c) => {
   const kind = c.req.param('kind');
-  if (!TABLES[kind]) return c.json({ error: 'no existe' }, 404);
+  if (!TABLES[kind]) return c.json({ error: 'not found', code: 'not_found' }, 404);
   let b;
-  try { b = await c.req.json(); } catch (e) { return c.json({ error: 'JSON no válido' }, 400); }
-  const { rec, error } = clean(kind, { ...b, id: c.req.param('id') });
-  if (error) return c.json({ error }, 400);
+  try { b = await c.req.json(); } catch (e) { return c.json({ error: 'invalid JSON', code: 'bad_input' }, 400); }
+  const { rec, error, code } = clean(kind, { ...b, id: c.req.param('id') });
+  if (error) return c.json({ error, code }, 400);
   try {
     await upsert(kind, rec);
   } catch (e) {
-    if (e.code === '23503') return c.json({ error: 'el vehículo no existe' }, 400);
+    if (e.code === '23503') return c.json({ error: 'vehicle not found', code: 'no_vehicle' }, 400);
     throw e;
   }
   return c.json({ ok: true });
@@ -105,7 +106,7 @@ api.put('/:kind/:id', async (c) => {
 // Borrar algo que ya no existe no es error: el móvil puede reenviar el borrado tras un corte
 api.delete('/:kind/:id', async (c) => {
   const kind = c.req.param('kind');
-  if (!TABLES[kind]) return c.json({ error: 'no existe' }, 404);
+  if (!TABLES[kind]) return c.json({ error: 'not found', code: 'not_found' }, 404);
   const id = c.req.param('id');
   await removeFiles(kind === 'vehicles' ? { vehicle_id: id } : { parent_kind: kind, parent_id: id });
   await remove(kind, id);
@@ -135,6 +136,6 @@ await migrate();
 await initFiles();
 await initPush();
 serve({ fetch: app.fetch, port: CONFIG.port }, () => {
-  console.log('autolog ' + VERSION + ' en :' + CONFIG.port + ' · clave ' + (CONFIG.token ? 'sí' : 'NO (ALLOW_NO_AUTH)') + ' · proxy ' + (CONFIG.trustProxy ? 'sí' : 'no') +
-    ' · web ' + (CONFIG.staticDir || 'no') + ' · adjuntos ' + CONFIG.filesDir);
+  console.log('autolog ' + VERSION + ' on :' + CONFIG.port + ' · password ' + (CONFIG.token ? 'yes' : 'NO (ALLOW_NO_AUTH)') + ' · proxy ' + (CONFIG.trustProxy ? 'yes' : 'no') +
+    ' · web ' + (CONFIG.staticDir || 'no') + ' · files ' + CONFIG.filesDir);
 });
