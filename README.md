@@ -19,9 +19,13 @@ not on someone else's.
 
 ## Features
 
-- **Fill-ups** with real consumption (full-to-full method), €/L and cost per trip.
+- **Fill-ups and charges** with real consumption (full-to-full): petrol, diesel, LPG, **electric and plug-in hybrid** (kWh).
 - **Expenses** by category (service, repairs, MOT/ITV, insurance, tax, parking, tolls…) with photo/PDF attachments.
-- **Reminders** by date and/or mileage (oil change, ITV, insurance…), with optional **push notifications**.
+- **Reminders** by date and/or mileage (oil change, inspection, insurance…), with **push notifications** and a
+  **calendar feed** for Google, Apple or Outlook.
+- **Tyres and parts**: wear by distance and time, and a history of how long each set lasted.
+- **History report (PDF)** to show a buyer the maintenance, mileage and parts when you sell.
+- **Several people**: shared data, each with their own password; see who logged what.
 - **Costs**: per month, per km, including the purchase price, 12-month chart and breakdown by category.
 - **Scan invoices and fuel receipts** (photo or PDF, Spanish or English): the amount, date, mileage, litres and concept
   are filled in.
@@ -101,8 +105,8 @@ and the [Code of Conduct](CODE_OF_CONDUCT.md).
 ## Roadmap
 
 1. More languages, and receipt-scanner rules for more countries — help wanted.
-2. Electric and hybrid vehicles (kWh).
-3. Tyres and parts tracking.
+2. Reminders by email.
+3. Home Assistant integration.
 4. A PDF service history to show when selling the vehicle.
 5. A prebuilt Docker image for every release (`ghcr.io`).
 

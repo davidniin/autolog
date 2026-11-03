@@ -2,7 +2,9 @@
 //   GET    /v1/data                → { vehicles, fuel, expenses, reminders, files, settings }
 //   PUT    /v1/settings            → unidades y moneda de la instalación (settings.js)
 //   GET    /v1/backup              → copia completa con fotos (ZIP)   POST /v1/restore → la restaura (fusiona)
-//   PUT    /v1/:coleccion/:id      → crea o actualiza (coleccion = vehicles | fuel | expenses | reminders);
+//   GET    /v1/calendar.ics?key=   → avisos como calendario (clave propia, solo lectura)   GET|POST /v1/calendar[/reset]
+//   GET    /v1/me                  → quién soy   GET|POST /v1/users, DELETE /v1/users/:id → personas (solo el propietario)
+//   PUT    /v1/:coleccion/:id      → crea o actualiza (coleccion = vehicles | fuel | expenses | reminders | parts);
 //                                     con base_rev, 409 si otro móvil lo cambió antes (db.js, upsert)
 //   DELETE /v1/:coleccion/:id      → borra (borrar un vehículo borra todo lo suyo)
 //   POST   /v1/files               → sube un adjunto (multipart)   GET/DELETE /v1/files/:id
@@ -17,13 +19,15 @@ import { serveStatic } from '@hono/node-server/serve-static';
 import { CONFIG } from './config.js';
 import { sql, migrate, TABLES, clean, upsert, remove, readAll } from './db.js';
 import { MAX_BYTES, initFiles, saveFile, readFile, removeFiles } from './files.js';
-import { auth, checkStartup, CSP } from './security.js';
+import { auth, ownerOnly, checkStartup, CSP } from './security.js';
+import { createUser, listUsers, deleteUser } from './users.js';
 import { cleanLang } from './messages.js';
 import { getPrefs, setPrefs, cleanPrefs } from './settings.js';
 import { backupStream, restoreStream } from './backup.js';
+import { calendarKey, checkCalendarKey, calendarICS } from './calendar.js';
 import { alerts, initPush, vapidKey, subscribe, unsubscribe, sendTest, check } from './alerts.js';
 
-const VERSION = '0.3.0';
+const VERSION = '0.4.0';
 const startupError = checkStartup();
 if (startupError) {
   console.error('[autolog] ' + startupError);
@@ -80,6 +84,30 @@ api.post('/push/test', async (c) => {
 // Revisar ahora (sin esperar a la revisión diaria). No repite lo ya avisado.
 api.post('/push/check', async (c) => c.json({ sent: await check() }));
 
+// ------------------------------------------------------------ quién soy y personas con acceso (users.js)
+api.get('/me', (c) => c.json(c.get('user')));
+api.get('/users', ownerOnly(), async (c) => c.json(await listUsers()));
+api.post('/users', ownerOnly(), async (c) => {
+  let b;
+  try { b = await c.req.json(); } catch (e) { return c.json({ error: 'invalid JSON', code: 'bad_input' }, 400); }
+  const r = await createUser(b.name);
+  return r.error ? c.json(r, 400) : c.json(r, 201);
+});
+api.delete('/users/:id', ownerOnly(), async (c) => c.json({ ok: await deleteUser(c.req.param('id')) }));
+
+// ------------------------------------------------------------ calendario de avisos (calendar.js)
+api.get('/calendar', async (c) => c.json({ key: await calendarKey() }));
+api.post('/calendar/reset', ownerOnly(), async (c) => c.json({ key: await calendarKey(true) }));
+api.get('/calendar.ics', async (c) => {
+  if (!(await checkCalendarKey(c.req.query('key')))) return c.json({ error: 'not found', code: 'not_found' }, 404);
+  const lang = cleanLang(c.req.query('lang') || 'es');
+  return c.body(await calendarICS(lang), 200, {
+    'Content-Type': 'text/calendar; charset=utf-8',
+    'Content-Disposition': 'inline; filename="autolog.ics"',
+    'Cache-Control': 'no-cache',
+  });
+});
+
 // ------------------------------------------------------------ copia completa con fotos (backup.js)
 api.get('/backup', async (c) => {
   const day = new Date().toLocaleDateString('sv-SE');
@@ -91,7 +119,7 @@ api.get('/backup', async (c) => {
     },
   });
 });
-api.post('/restore', bodyLimit({ maxSize: CONFIG.restoreMaxMb * 1024 * 1024, onError: (c) => c.json({ error: 'backup too big', code: 'backup_too_big' }, 413) }), async (c) => {
+api.post('/restore', ownerOnly(), bodyLimit({ maxSize: CONFIG.restoreMaxMb * 1024 * 1024, onError: (c) => c.json({ error: 'backup too big', code: 'backup_too_big' }, 413) }), async (c) => {
   if (!c.req.raw.body) return c.json({ error: 'missing body', code: 'bad_input' }, 400);
   try {
     return c.json(await restoreStream(c.req.raw.body, { withSettings: c.req.query('settings') === '1' }));
@@ -134,7 +162,7 @@ api.put('/:kind/:id', async (c) => {
   const base = typeof b.base_rev === 'string' && b.base_rev ? b.base_rev : null;
   let res;
   try {
-    res = await upsert(kind, rec, base);
+    res = await upsert(kind, rec, base, c.get('user').name);
   } catch (e) {
     if (e.code === '23503') return c.json({ error: 'vehicle not found', code: 'no_vehicle' }, 400);
     throw e;

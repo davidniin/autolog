@@ -114,7 +114,9 @@ const CAT_RULES = [
   ['aparcamiento', /parking|aparcamiento|estacionamiento|\bora\b|car\s*park/i],
 ];
 // Gasolinera: palabras del combustible (sin contar "filtro de gasoil / fuel filter" de una factura de taller)
-const FUEL = /gasolina|di[eé]sel|gas[oó]leo|gasoil|sin\s*plomo|\bsp\s?9[58]\b|carburante|surtidor|\blitros\b|\bltrs?\b|\bglp\b|autogas|repsol|cepsa|galp|\bbp\b|shell|petronor|ballenoil|plenoil|moeve|unleaded|gasoline|\bpetrol\b|\bpump\s*\d|\bgallons?\b|\bgals?\b|\bfuel\b|\bregular\b|esso|texaco|chevron|exxon|mobil|sunoco|valero|marathon|speedway|costco\s*gas/i;
+// Recarga eléctrica: kWh en el ticket
+const KWH = /(\d{1,3}(?:[.,]\d{1,3})?)\s*kwh\b/i;
+const FUEL = /\bkwh\b|recarga|punto\s*de\s*carga|electrolinera|charging|charge\s*point|supercharger|ionity|iberdrola|endesa\s*x|zunder|wenea|tesla|gasolina|di[eé]sel|gas[oó]leo|gasoil|sin\s*plomo|\bsp\s?9[58]\b|carburante|surtidor|\blitros\b|\bltrs?\b|\bglp\b|autogas|repsol|cepsa|galp|\bbp\b|shell|petronor|ballenoil|plenoil|moeve|unleaded|gasoline|\bpetrol\b|\bpump\s*\d|\bgallons?\b|\bgals?\b|\bfuel\b|\bregular\b|esso|texaco|chevron|exxon|mobil|sunoco|valero|marathon|speedway|costco\s*gas/i;
 const SKIP_NAME = /factura|ticket|simplificada|fecha|hora|\bc\.?i\.?f|\bn\.?i\.?f|tel[eé]?f|tlf|www|@|calle|\bc\/|avda|avenida|total|cliente|matr[ií]cula|\bkm\b|p[aá]gina|invoice|receipt|\bdate\b|\btime\b|phone|\btel\b|customer|\bvin\b|mileage|odometer|\border\b|\bpage\b|bill\s*to|\bstreet\b|\bst\.|\bave\b|\broad\b/i;
 // ¿Documento en inglés? ¿De EE. UU. (fechas mm/dd)?
 const EN = /\b(amount\s*due|balance\s*due|invoice|receipt|gallons?|mileage|odometer|labou?r|subtotal|sales\s*tax|thank\s*you)\b/i;
@@ -194,7 +196,18 @@ export function parseReceipt(ocr, { plate: vehPlate, distance = 'km', volume = '
 
   // ¿Ticket de gasolinera? Litros (o galones) y precio por unidad
   const fuel = FUEL.test(all.replace(FILTERS, ''));
-  if (fuel) {
+  if (fuel && KWH.test(all)) {
+    // kWh cargados (la cifra junto a "kWh" que no sea el precio por kWh)
+    for (const r of rows) {
+      if (/\/\s*kwh|por\s*kwh|per\s*kwh|precio|price/i.test(r)) continue;
+      const m = r.match(KWH);
+      const q = m ? +m[1].replace(',', '.') : null;
+      if (q > 0.5 && q <= 200) { v.liters = q; break; }
+    }
+    v.energy = 'kwh';
+    if (total != null) v.total = total;
+    if (name) v.station = name.slice(0, 60);
+  } else if (fuel) {
     const galL = L_PER_GAL[volume] || L_PER_GAL.gal_us; // galones del documento → litros
     for (let i = 0; i < rows.length && v.liters == null; i++) {
       const r = rows[i];

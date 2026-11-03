@@ -4,7 +4,7 @@
 import { computed, ref } from 'vue';
 import { useDialog } from './dialog.js';
 import { S, resolveConflict } from './store.js';
-import { FORMS, optLabel, labelParams } from './forms.js';
+import { FORMS, optLabel, labelParams, fieldUnit } from './forms.js';
 import { fmt } from './calc.js';
 import { t } from './i18n/index.js';
 
@@ -13,16 +13,18 @@ const c = computed(() => S.conflicts[0] || null);
 const panel = ref(null);
 useDialog(panel, () => emit('close'), { focusFirstField: false });
 
-function show(f, v) {
+function show(f, v, rec) {
+  const unit = fieldUnit(f, rec);
   if (v == null || v === '') return '—';
   if (f.type === 'date') return fmt.date(v);
   if (f.type === 'chips') return optLabel(f.options, v);
   if (f.type === 'check') return v ? t('common.yes') : t('common.no');
   if (f.type === 'num') {
-    if (f.unit === 'km') return fmt.km(v);
-    if (f.unit === 'L') return fmt.l(v);
-    if (f.unit === '€') return fmt.money(v);
-    if (f.unit === 'months') return v + ' ' + t('f.months');
+    if (unit === 'km') return fmt.km(v);
+    if (unit === 'L') return fmt.l(v);
+    if (unit === 'kWh') return fmt.kwh(v);
+    if (unit === '€') return fmt.money(v);
+    if (unit === 'months') return v + ' ' + t('f.months');
     return fmt.num(v);
   }
   return String(v);
@@ -33,7 +35,7 @@ const rows = computed(() => {
   const { mine, theirs } = c.value;
   return FORMS[c.value.kind].fields
     .filter((f) => !theirs || String(mine[f.k] ?? '') !== String(theirs[f.k] ?? ''))
-    .map((f) => ({ k: f.k, label: t(f.label, labelParams()), mine: show(f, mine[f.k]), theirs: theirs ? show(f, theirs[f.k]) : '' }));
+    .map((f) => ({ k: f.k, label: t(f.label, labelParams(mine)), mine: show(f, mine[f.k], mine), theirs: theirs ? show(f, theirs[f.k], theirs) : '' }));
 });
 const title = computed(() => (c.value ? c.value.mine.name || c.value.mine.title || fmt.date(c.value.mine.date) || '' : ''));
 

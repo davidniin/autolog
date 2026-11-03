@@ -61,6 +61,24 @@ create table if not exists autolog_reminder (
   created_at   timestamptz not null default now(),
   updated_at   timestamptz not null default now()
 );
+-- Neumáticos y piezas (v0.4): cuándo y con cuántos km se montó, vida esperada, y cuándo se quitó (historial)
+create table if not exists autolog_part (
+  id            text primary key,
+  vehicle_id    text not null references autolog_vehicle(id) on delete cascade,
+  kind          text not null default 'other',
+  name          text not null default '',
+  position      text not null default '',
+  installed_date date not null,
+  installed_km  integer,
+  life_km       integer,
+  life_months   integer,
+  removed_date  date,
+  removed_km    integer,
+  note          text not null default '',
+  updated_by    text not null default '',
+  created_at    timestamptz not null default now(),
+  updated_at    timestamptz not null default now()
+);
 -- Adjunto: el fichero está en FILES_DIR/<id>. parent = el gasto o el vehículo al que pertenece.
 create table if not exists autolog_file (
   id          text primary key,
@@ -84,6 +102,21 @@ create table if not exists autolog_push (
   created_at timestamptz not null default now()
 );
 alter table autolog_push add column if not exists lang text not null default 'es';
+-- v0.4: repostajes de combustible (litros) o recargas eléctricas (kWh, en la misma columna liters)
+alter table autolog_fuel add column if not exists energy text not null default 'fuel';
+-- v0.4: personas con acceso (clave propia; solo se guarda su hash) y quién editó cada registro por última vez
+create table if not exists autolog_user (
+  id          text primary key,
+  name        text not null,
+  token_hash  text not null unique,
+  created_at  timestamptz not null default now(),
+  last_seen   timestamptz
+);
+alter table autolog_vehicle  add column if not exists updated_by text not null default '';
+alter table autolog_fuel     add column if not exists updated_by text not null default '';
+alter table autolog_expense  add column if not exists updated_by text not null default '';
+alter table autolog_reminder add column if not exists updated_by text not null default '';
+alter table autolog_part     add column if not exists updated_by text not null default '';
 create table if not exists autolog_notified (
   reminder_id text primary key,
   stamp       text not null,
@@ -107,6 +140,7 @@ export async function migrate() {
 }
 
 // Campos de cada colección. Tipos: s texto, i entero, n número, d fecha AAAA-MM-DD, b sí/no. '!' = obligatorio.
+// enums: valores permitidos de un campo de texto; si llega otro (o nada), se usa el primero.
 // Las listas cerradas (tipo de vehículo, categoría de gasto...) las define la web: aquí solo se guardan.
 export const TABLES = {
   vehicles: {
@@ -115,7 +149,9 @@ export const TABLES = {
   },
   fuel: {
     table: 'autolog_fuel',
-    fields: { vehicle_id: 's!', date: 'd!', km: 'i!', liters: 'n!', total: 'n!', full_tank: 'b', station: 's', note: 's' },
+    fields: { vehicle_id: 's!', date: 'd!', km: 'i!', liters: 'n!', total: 'n!', full_tank: 'b', station: 's', note: 's', energy: 's' },
+    // liters = litros de combustible, o kWh si energy = 'kwh'
+    enums: { energy: ['fuel', 'kwh'] },
   },
   expenses: {
     table: 'autolog_expense',
@@ -125,14 +161,24 @@ export const TABLES = {
     table: 'autolog_reminder',
     fields: { vehicle_id: 's!', title: 's!', cat: 's', every_km: 'i', every_months: 'i', due_date: 'd', due_km: 'i', note: 's' },
   },
+  parts: {
+    table: 'autolog_part',
+    fields: {
+      vehicle_id: 's!', kind: 's', name: 's', position: 's', installed_date: 'd!', installed_km: 'i', life_km: 'i', life_months: 'i',
+      removed_date: 'd', removed_km: 'i', note: 's',
+    },
+    enums: { kind: ['other', 'tyres', 'battery', 'pads', 'discs', 'belt', 'wipers', 'oil'] },
+  },
 };
 
 // Deja solo campos conocidos y con el tipo correcto. Devuelve { rec } o { error }.
 export function clean(kind, x) {
   const o = { id: String(x.id || '').slice(0, 64) };
   if (!o.id) return { error: 'missing id', code: 'bad_input' };
+  const enums = TABLES[kind].enums || {};
   for (const [k, t] of Object.entries(TABLES[kind].fields)) {
     const type = t[0], req = t.endsWith('!'), v = x[k];
+    if (enums[k]) { o[k] = enums[k].includes(v) ? v : enums[k][0]; continue; }
     if (v === undefined || v === null || v === '') {
       if (req) return { error: 'missing ' + k, code: 'bad_input' };
       o[k] = type === 's' ? '' : type === 'b' ? false : null;
@@ -160,8 +206,11 @@ export function clean(kind, x) {
 // - Con baseRev (edición de algo leído del servidor): solo se guarda si nadie lo ha cambiado desde entonces.
 //   Si otro móvil lo cambió o lo borró → { conflict: true, current } (current = lo que hay ahora, o null).
 // → { rev } con la revisión nueva.
-export async function upsert(kind, rec, baseRev) {
-  const { table, fields } = TABLES[kind], keys = Object.keys(fields);
+// by = quién guarda (nombre de la persona; '' = el propietario). Lo pone el servidor, nunca el móvil.
+export async function upsert(kind, rec, baseRev, by = '') {
+  const { table, fields } = TABLES[kind];
+  rec = { ...rec, updated_by: String(by || '') };
+  const keys = [...Object.keys(fields), 'updated_by'];
   if (baseRev == null) {
     const [r] = await sql`
       insert into ${sql(table)} ${sql(rec, 'id', ...keys)}
@@ -186,21 +235,24 @@ export function remove(kind, id) {
 // Lo que se envía al móvil de cada colección (w = filtro opcional, p. ej. sql`where id = ...`)
 const SELECT = {
   vehicles: (w = sql``) => sql`select id, name, kind, plate, fuel_type, start_km, purchase_price::float8 as purchase_price,
-      purchase_date::text as purchase_date, note, to_char(updated_at at time zone 'UTC', 'YYYY-MM-DD"T"HH24:MI:SS.US') as rev
+      purchase_date::text as purchase_date, note, to_char(updated_at at time zone 'UTC', 'YYYY-MM-DD"T"HH24:MI:SS.US') as rev, updated_by
     from autolog_vehicle ${w} order by created_at, id`,
   fuel: (w = sql``) => sql`select id, vehicle_id, date::text as date, km, liters::float8 as liters, total::float8 as total,
-      full_tank, station, note, to_char(updated_at at time zone 'UTC', 'YYYY-MM-DD"T"HH24:MI:SS.US') as rev
+      full_tank, station, note, energy, to_char(updated_at at time zone 'UTC', 'YYYY-MM-DD"T"HH24:MI:SS.US') as rev, updated_by
     from autolog_fuel ${w} order by date desc, km desc`,
-  expenses: (w = sql``) => sql`select id, vehicle_id, date::text as date, km, cat, title, amount::float8 as amount, note, to_char(updated_at at time zone 'UTC', 'YYYY-MM-DD"T"HH24:MI:SS.US') as rev
+  expenses: (w = sql``) => sql`select id, vehicle_id, date::text as date, km, cat, title, amount::float8 as amount, note, to_char(updated_at at time zone 'UTC', 'YYYY-MM-DD"T"HH24:MI:SS.US') as rev, updated_by
     from autolog_expense ${w} order by date desc, created_at desc`,
-  reminders: (w = sql``) => sql`select id, vehicle_id, title, cat, every_km, every_months, due_date::text as due_date, due_km, note, to_char(updated_at at time zone 'UTC', 'YYYY-MM-DD"T"HH24:MI:SS.US') as rev
+  reminders: (w = sql``) => sql`select id, vehicle_id, title, cat, every_km, every_months, due_date::text as due_date, due_km, note, to_char(updated_at at time zone 'UTC', 'YYYY-MM-DD"T"HH24:MI:SS.US') as rev, updated_by
     from autolog_reminder ${w} order by created_at, id`,
+  parts: (w = sql``) => sql`select id, vehicle_id, kind, name, position, installed_date::text as installed_date, installed_km,
+      life_km, life_months, removed_date::text as removed_date, removed_km, note, to_char(updated_at at time zone 'UTC', 'YYYY-MM-DD"T"HH24:MI:SS.US') as rev, updated_by
+    from autolog_part ${w} order by installed_date desc, created_at desc`,
 };
 
 export async function readAll() {
-  const [vehicles, fuel, expenses, reminders, files] = await Promise.all([
-    SELECT.vehicles(), SELECT.fuel(), SELECT.expenses(), SELECT.reminders(),
+  const [vehicles, fuel, expenses, reminders, parts, files] = await Promise.all([
+    SELECT.vehicles(), SELECT.fuel(), SELECT.expenses(), SELECT.reminders(), SELECT.parts(),
     sql`select id, vehicle_id, parent_kind, parent_id, name, mime, size from autolog_file order by created_at, id`,
   ]);
-  return { vehicles, fuel, expenses, reminders, files };
+  return { vehicles, fuel, expenses, reminders, parts, files };
 }

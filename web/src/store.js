@@ -52,16 +52,18 @@ export const S = reactive({
   fuel: load('fuel', []),
   expenses: load('expenses', []),
   reminders: load('reminders', []),
+  parts: load('parts', []), // neumáticos y piezas (montadas y retiradas)
   files: load('files', []), // adjuntos: solo los datos; el fichero se pide a /v1/files/:id
   queue: load('queue', []),
   current: load('current', ''),
   conflicts: load('conflicts', []), // cambios que chocan con otro móvil: { kind, id, mine, theirs } (ver run)
   settings: load('settings', null), // unidades y moneda de la instalación (null = sin elegir todavía)
+  me: load('me', null), // quién soy: { name ('' = propietario), admin }
   online: true,
   auth: true, // false = falta el token o no vale
 });
 
-function persist() { for (const k of ['vehicles', 'fuel', 'expenses', 'reminders', 'files', 'queue', 'current', 'settings', 'conflicts']) save(k, S[k]); }
+function persist() { for (const k of ['vehicles', 'fuel', 'expenses', 'reminders', 'parts', 'files', 'queue', 'current', 'settings', 'conflicts']) save(k, S[k]); }
 applyPrefs(S.settings);
 
 // Unidades y moneda: para todos los móviles (se guardan en el servidor, también sin conexión vía la cola)
@@ -106,6 +108,7 @@ export function del(kind, id) {
     S.fuel = S.fuel.filter((x) => x.vehicle_id !== id);
     S.expenses = S.expenses.filter((x) => x.vehicle_id !== id);
     S.reminders = S.reminders.filter((x) => x.vehicle_id !== id);
+    S.parts = S.parts.filter((x) => x.vehicle_id !== id);
     S.files = S.files.filter((x) => x.vehicle_id !== id);
     if (S.current === id) S.current = S.vehicles[0] ? S.vehicles[0].id : '';
   }
@@ -175,10 +178,18 @@ export function resolveConflict(c, keepMine) {
   }
 }
 
+async function whoAmI() {
+  try {
+    const r = await call('GET', '/v1/me');
+    if (r.ok) { S.me = await r.json(); save('me', S.me); }
+  } catch (e) { /* sin red */ }
+}
+
 export async function pull() {
-  if (DEMO) return;
+  if (DEMO) { S.me = { id: 'owner', name: '', admin: true }; return; }
   await flush();
   if (S.queue.length) return;
+  whoAmI();
   try {
     const r = await call('GET', '/v1/data');
     if (!r.ok || S.queue.length) return;
@@ -187,6 +198,7 @@ export async function pull() {
     S.fuel = d.fuel;
     S.expenses = d.expenses;
     S.reminders = d.reminders || [];
+    S.parts = d.parts || [];
     S.files = d.files || [];
     S.settings = d.settings || null;
     applyPrefs(S.settings);
@@ -229,7 +241,7 @@ async function shrink(file, max = 2000) {
 }
 
 // Restaurar una copia con fotos (ZIP de /v1/backup): la fusiona el servidor (añade lo que falta, no pisa nada).
-// Necesita red. → { added: { vehicles, fuel, expenses, reminders, files }, skipped, invalid }
+// Necesita red. → { added: { vehicles, fuel, expenses, reminders, parts, files }, skipped, invalid }
 export async function restoreBackup(file, withSettings, { reload = true } = {}) {
   if (DEMO) throw new Error(t('files.demo'));
   const h = { 'Content-Type': 'application/zip' }, token = load('token', '');
@@ -249,7 +261,17 @@ export function delFile(id) {
 
 export function fileUrl(id) { return '/v1/files/' + encodeURIComponent(id); }
 
-export function setToken(t) { save('token', t.trim()); fileCookie(t.trim()); S.auth = true; pull(); }
+export function setToken(t) { save('token', t.trim()); fileCookie(t.trim()); S.auth = true; S.me = null; pull(); }
+
+// Salir de este móvil: se olvida la clave y los datos guardados aquí (móvil compartido o prestado). El idioma se queda.
+// Los cambios aún sin enviar se perderían: quien llama lo avisa antes (S.queue).
+export function logout() {
+  try {
+    for (const k of Object.keys(localStorage)) if (k.startsWith('autolog.') && k !== 'autolog.lang') localStorage.removeItem(k);
+  } catch (e) { /* sin almacenamiento */ }
+  fileCookie('');
+  location.replace('/');
+}
 
 export function start() {
   pull();

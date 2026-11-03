@@ -8,6 +8,7 @@ import crypto from 'node:crypto';
 import { getCookie } from 'hono/cookie';
 import { getConnInfo } from '@hono/node-server/conninfo';
 import { CONFIG } from './config.js';
+import { OWNER, findByToken } from './users.js';
 
 export const MIN_TOKEN = 16;
 const MAX_FAILS = 10;
@@ -46,9 +47,15 @@ setInterval(() => {
   for (const [ip, f] of fails) if (now - f.since > WINDOW_MS) fails.delete(ip);
 }, 60 * 1000).unref();
 
-export function auth() {
+// Quién es: la clave del propietario (AUTOLOG_TOKEN) o la de una persona (users.js). Queda en c.get('user').
+// findUser se puede sustituir en los tests (sin base de datos).
+export function auth({ findUser = findByToken } = {}) {
   return async (c, next) => {
-    if (!CONFIG.token || c.req.path === '/v1/health' || c.req.method === 'OPTIONS') return next();
+    // /v1/calendar.ics lleva su propia clave de solo lectura (la comprueba la ruta: calendar.js)
+    if (!CONFIG.token || c.req.path === '/v1/health' || c.req.path === '/v1/calendar.ics' || c.req.method === 'OPTIONS') {
+      c.set('user', OWNER);
+      return next();
+    }
     const ip = clientIp(c), f = fails.get(ip);
     if (f && f.n >= MAX_FAILS && Date.now() - f.since < WINDOW_MS) {
       c.header('Retry-After', String(Math.ceil((WINDOW_MS - (Date.now() - f.since)) / 1000)));
@@ -57,14 +64,21 @@ export function auth() {
     const h = c.req.header('authorization') || '';
     let given = h.startsWith('Bearer ') ? h.slice(7) : '';
     if (!given && c.req.method === 'GET' && (c.req.path.startsWith('/v1/files/') || c.req.path === '/v1/backup')) given = getCookie(c, 'autolog_token') || '';
-    if (!given || !same(given, CONFIG.token)) {
+    const user = !given ? null : same(given, CONFIG.token) ? OWNER : await findUser(given);
+    if (!user) {
       if (!f || Date.now() - f.since > WINDOW_MS) fails.set(ip, { n: 1, since: Date.now() });
       else f.n++;
       return c.json({ error: 'invalid token', code: 'bad_token' }, 401);
     }
     if (f) fails.delete(ip);
+    c.set('user', user);
     return next();
   };
+}
+
+// Solo el propietario (gestionar personas, restaurar copias, cambiar el enlace del calendario)
+export function ownerOnly() {
+  return async (c, next) => (c.get('user') && c.get('user').admin ? next() : c.json({ error: 'owner only', code: 'owner_only' }, 403));
 }
 
 // Content-Security-Policy de la web. El lector de facturas descarga el modelo de Hugging Face y el motor

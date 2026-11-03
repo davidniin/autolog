@@ -49,7 +49,7 @@ export const conv = {
   perDist: (perKm) => (UP.distance === 'mi' ? perKm * KM_PER_MI : perKm), // coste por km → por milla
 };
 
-// Para los campos de formularios.js: unit 'km' = distancia, 'L' = volumen, '€' = moneda
+// Para los campos de formularios.js: unit 'km' = distancia, 'L' = volumen, '€' = moneda, 'kWh' = energía (sin conversión)
 export function toDisplay(unit, v) {
   if (v == null || Number.isNaN(v)) return v;
   return unit === 'km' ? conv.dist(v) : unit === 'L' ? conv.vol(v) : v;
@@ -63,6 +63,9 @@ export function fromDisplay(unit, v) {
 export const distUnit = () => UP.distance; // 'km' | 'mi'
 export const volUnit = () => (UP.volume === 'l' ? 'L' : 'gal');
 export const consUnit = () => ({ l100: 'L/100 km', kml: 'km/L', mpg_us: 'mpg', mpg_uk: 'mpg' })[UP.consumption];
+// Electricidad: kWh/100 km (se guarda así) o mi/kWh si la distancia va en millas (lo habitual en EE. UU. y R. Unido)
+export const econs = (kwh100) => (kwh100 == null || !(kwh100 > 0) ? null : UP.distance === 'mi' ? 100 / (kwh100 * KM_PER_MI) : kwh100);
+export const econsUnit = () => (UP.distance === 'mi' ? 'mi/kWh' : 'kWh/100 km');
 export function currencySymbol(code = UP.currency) {
   try {
     const part = new Intl.NumberFormat(locale(), { style: 'currency', currency: code }).formatToParts(0).find((x) => x.type === 'currency');
