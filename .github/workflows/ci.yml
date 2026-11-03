@@ -1,0 +1,61 @@
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+          cache-dependency-path: |
+            web/package-lock.json
+            server/package-lock.json
+      - name: Web — install, test, build
+        working-directory: web
+        run: |
+          npm ci
+          npm test
+          npm run build
+      - name: Server — install, test
+        working-directory: server
+        run: |
+          npm ci
+          npm test
+      - name: Audit production dependencies
+        run: |
+          (cd web && npm audit --omit=dev --audit-level=high)
+          (cd server && npm audit --omit=dev --audit-level=high)
+
+  docker:
+    runs-on: ubuntu-latest
+    env:
+      # Throwaway value for the temporary test container only (not a real secret)
+      CI_TOKEN: ci-test-token-not-a-secret
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build the image
+        run: docker build -t autolog:ci .
+      - name: Smoke test with PostgreSQL
+        run: |
+          docker network create ci
+          docker run -d --name db --network ci -e POSTGRES_USER=autolog -e POSTGRES_PASSWORD=ci -e POSTGRES_DB=autolog postgres:17-alpine
+          docker run -d --name app --network ci -p 8791:8791 \
+            -e AUTOLOG_TOKEN="$CI_TOKEN" -e DATABASE_URL=postgres://autolog:ci@db:5432/autolog autolog:ci
+          for i in $(seq 1 40); do curl -sf http://localhost:8791/v1/health && break; sleep 2; done
+          curl -sf http://localhost:8791/v1/health | grep '"db":true'
+          test "$(curl -s -o /dev/null -w '%{http_code}' http://localhost:8791/v1/data)" = 401
+          curl -sf -H "Authorization: Bearer $CI_TOKEN" http://localhost:8791/v1/data
+          curl -sf http://localhost:8791/ | grep -q '<div id="app">'
+      - name: Logs on failure
+        if: failure()
+        run: docker logs app

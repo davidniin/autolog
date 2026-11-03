@@ -1,0 +1,27 @@
+name: 💡 Idea / Propuesta de mejora
+description: Suggest an improvement or a new feature / Propón una mejora o algo nuevo
+labels: [enhancement]
+body:
+  - type: textarea
+    id: problem
+    attributes:
+      label: What problem does it solve? / ¿Qué problema resuelve?
+      description: Tell us what you're trying to do / Cuéntanos qué intentas hacer
+    validations:
+      required: true
+  - type: textarea
+    id: proposal
+    attributes:
+      label: Your proposal / Tu propuesta
+    validations:
+      required: true
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Alternatives you considered (optional) / Alternativas (opcional)
+  - type: checkboxes
+    id: help
+    attributes:
+      label: Contribution / Aportación
+      options:
+        - label: I'd like to implement it myself / Me gustaría programarlo yo

@@ -1,0 +1,51 @@
+name: 🐞 Bug report / Fallo
+description: Something doesn't work as expected / Algo no funciona como debería
+labels: [bug]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        **Security problem?** Don't report it here: see SECURITY.md. / **¿Problema de seguridad?** No lo pongas aquí: mira SECURITY.md.
+        ⚠️ Don't paste your `AUTOLOG_TOKEN`, `.env`, real invoices, plates or other personal data. / No pegues tu `AUTOLOG_TOKEN`, el `.env`, facturas reales, matrículas ni otros datos personales.
+  - type: textarea
+    id: what
+    attributes:
+      label: What happened? / ¿Qué ha pasado?
+      description: And what did you expect? / ¿Y qué esperabas?
+    validations:
+      required: true
+  - type: textarea
+    id: steps
+    attributes:
+      label: Steps to reproduce / Pasos para reproducirlo
+      placeholder: |
+        1. Open… / Abre…
+        2. Tap… / Pulsa…
+    validations:
+      required: true
+  - type: input
+    id: version
+    attributes:
+      label: AutoLog version / Versión
+      description: "`/v1/health` shows it / la muestra `/v1/health`"
+  - type: dropdown
+    id: hosting
+    attributes:
+      label: Where does it run? / ¿Dónde está instalada?
+      options:
+        - Docker Compose (bundled PostgreSQL)
+        - Docker Compose (external PostgreSQL)
+        - Cloud platform / Nube
+        - Without Docker / Sin Docker
+        - Other / Otro
+  - type: input
+    id: device
+    attributes:
+      label: Phone and browser / Móvil y navegador
+      placeholder: "Android 15 · Chrome 140 / iPhone · iOS 26 · Safari"
+  - type: textarea
+    id: logs
+    attributes:
+      label: Logs (optional) / Logs (opcional)
+      description: "`docker compose logs autolog` — remove anything personal / quita lo que sea personal"
+      render: text

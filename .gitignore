@@ -1,0 +1,27 @@
+# Secrets / Secretos
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+
+# Your data: never commit it / Tus datos: nunca al repositorio
+data/
+backups/
+*.tgz
+*.tar.gz
+*.sql
+*.sql.gz
+*.dump
+
+# Build and dependencies
+node_modules/
+dist/
+coverage/
+
+# Editors and OS
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+*.log

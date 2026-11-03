@@ -1,0 +1,22 @@
+{
+  "name": "autolog-server",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "description": "AutoLog API (Node + Hono + PostgreSQL)",
+  "scripts": {
+    "start": "node src/index.js",
+    "dev": "node --watch --env-file-if-exists=.env src/index.js",
+    "test": "node --test \"test/**/*.test.js\""
+  },
+  "engines": {
+    "node": ">=22"
+  },
+  "dependencies": {
+    "@hono/node-server": "^2.1.5",
+    "hono": "^4.13.13",
+    "postgres": "^3.4.5",
+    "web-push": "^3.6.7"
+  },
+  "license": "MIT"
+}

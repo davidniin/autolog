@@ -1,0 +1,24 @@
+{
+  "id": "/",
+  "name": "AutoLog — El historial de tu vehículo",
+  "short_name": "AutoLog",
+  "description": "Repostajes, gastos, consumo y avisos de tu coche o tu moto.",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#f3f5f9",
+  "theme_color": "#f3f5f9",
+  "lang": "es",
+  "dir": "ltr",
+  "categories": ["utilities", "lifestyle", "finance"],
+  "icons": [
+    { "src": "/icon-192.png", "sizes": "192x192", "type": "image/png" },
+    { "src": "/icon-512.png", "sizes": "512x512", "type": "image/png" },
+    { "src": "/icon-maskable.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ],
+  "shortcuts": [
+    { "name": "Nuevo repostaje", "short_name": "Repostaje", "url": "/?add=fuel", "icons": [{ "src": "/icon-192.png", "sizes": "192x192" }] },
+    { "name": "Nuevo gasto", "short_name": "Gasto", "url": "/?add=expenses", "icons": [{ "src": "/icon-192.png", "sizes": "192x192" }] }
+  ]
+}

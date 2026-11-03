@@ -1,0 +1,33 @@
+# AutoLog using a PostgreSQL you already run (on this host or a managed one in the cloud).
+#   cp .env.example .env   # fill in AUTOLOG_TOKEN and DATABASE_URL
+#   docker compose -f docker-compose.external-db.yml up -d --build
+# Create the database and user first: see docs/en/self-hosting.md ("Existing PostgreSQL").
+services:
+  autolog:
+    build: .
+    restart: unless-stopped
+    environment:
+      AUTOLOG_TOKEN: ${AUTOLOG_TOKEN:?Set AUTOLOG_TOKEN in .env (openssl rand -hex 24)}
+      DATABASE_URL: ${DATABASE_URL:?Set DATABASE_URL in .env}
+      PUSH_CONTACT: ${PUSH_CONTACT:-}
+      PUSH_HOUR: ${PUSH_HOUR:-9}
+      TRUST_PROXY: ${TRUST_PROXY:-0}
+      ALLOW_NO_AUTH: ${ALLOW_NO_AUTH:-0}
+      TZ: ${TZ:-Europe/Madrid}
+    ports:
+      - "${BIND_ADDR:-127.0.0.1}:${HOST_PORT:-8791}:8791"
+    volumes:
+      - autolog-data:/data # photos and PDFs (attachments)
+    # host.docker.internal = this host, to reach a PostgreSQL published on its port 5432.
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    # Or join the Docker network of your PostgreSQL container (and use its container name in DATABASE_URL):
+    # networks: [db]
+
+# networks:
+#   db:
+#     external: true
+#     name: postgres_default
+
+volumes:
+  autolog-data:
