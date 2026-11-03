@@ -2,7 +2,7 @@
 # Usage: docker compose up -d --build   (see docker-compose.yml, .env.example and docs/)
 
 # ---- 1. web
-FROM node:24-alpine AS web
+FROM node:26-alpine AS web
 WORKDIR /src/web
 COPY web/package.json web/package-lock.json ./
 RUN npm ci
@@ -10,7 +10,7 @@ COPY web ./
 RUN npm run build
 
 # ---- 2. server
-FROM node:24-alpine
+FROM node:26-alpine
 LABEL org.opencontainers.image.title="AutoLog"       org.opencontainers.image.description="Self-hosted vehicle logbook: fill-ups, expenses, reminders and costs"       org.opencontainers.image.licenses="MIT"
 ENV NODE_ENV=production \
     TZ=Europe/Madrid \
