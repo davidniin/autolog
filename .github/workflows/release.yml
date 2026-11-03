@@ -1,5 +1,5 @@
 # Publishes the Docker image to GitHub Container Registry when a version tag is pushed:
-#   git tag v0.2.0 && git push origin v0.2.0   →   ghcr.io/<owner>/autolog:0.2.0 and :latest
+#   git tag v0.2.0 && git push origin v0.2.0   →   ghcr.io/davidniin/autolog:0.2.0 and :latest
 # Multi-arch (amd64 + arm64, e.g. Raspberry Pi). Make the package public in GitHub → Packages after the first run.
 name: Release image
 

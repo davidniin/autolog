@@ -2,7 +2,7 @@
 
 **English** · [Español](README.es.md)
 
-[![Live demo](https://img.shields.io/badge/live%20demo-try%20it-2f5fd0)](https://<owner>.github.io/autolog/)
+[![Live demo](https://img.shields.io/badge/live%20demo-try%20it-2f5fd0)](https://davidniin.github.io/autolog/)
 [![License: MIT](https://img.shields.io/badge/license-MIT-blue)](LICENSE)
 [![Buy me a coffee](https://img.shields.io/badge/buy%20me%20a%20coffee-☕-ffdd00)](https://buymeacoffee.com/davidniin)
 
@@ -34,7 +34,7 @@ not on someone else's.
 
 ## Try it
 
-**[Live demo](https://<owner>.github.io/autolog/)** — the real app with made-up data, right in your browser. Nothing is
+**[Live demo](https://davidniin.github.io/autolog/)** — the real app with made-up data, right in your browser. Nothing is
 saved and nothing is sent anywhere.
 
 Locally: run it (see [Development](#development)) and open `http://localhost:5173/?demo=1`.
@@ -51,7 +51,7 @@ AutoLog is **self-hosted**: everyone runs their own copy. There is no central se
 Quick start with Docker:
 
 ```sh
-git clone https://github.com/<owner>/autolog.git && cd autolog
+git clone https://github.com/davidniin/autolog.git && cd autolog
 cp .env.example .env          # set AUTOLOG_TOKEN (openssl rand -hex 24) and POSTGRES_PASSWORD
 docker compose up -d --build  # app on 127.0.0.1:8791 + its own PostgreSQL
 ```

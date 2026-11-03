@@ -43,7 +43,7 @@ El Dockerfile ya define `STATIC_DIR` y `FILES_DIR=/data/files`. **Nunca** pongas
 
 ## Pasos (en general)
 
-1. Haz un **fork** de este repositorio (o usa la imagen de `ghcr.io/<owner>/autolog` si los mantenedores la publican).
+1. Haz un **fork** de este repositorio (o usa la imagen de `ghcr.io/davidniin/autolog` si los mantenedores la publican).
 2. **Crea la base de datos**: un PostgreSQL gestionado, o un contenedor de PostgreSQL con su propio volumen. Copia la
    URL de conexión. Las gestionadas suelen necesitar `?sslmode=require` al final.
 3. **Crea la app** desde tu fork con el `Dockerfile`. Añade las variables de arriba, un volumen en `/data` y el health

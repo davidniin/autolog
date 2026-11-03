@@ -1,4 +1,4 @@
-# Landing page + live demo on GitHub Pages: https://<owner>.github.io/<repo>/  (demo at /demo/)
+# Landing page + live demo on GitHub Pages: https://davidniin.github.io/autolog/  (demo at /demo/)
 # Enable it once in Settings → Pages → Source: "GitHub Actions".
 name: Pages
 

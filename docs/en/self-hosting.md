@@ -15,7 +15,7 @@ For a cloud platform without a shell (PaaS), see [cloud.md](cloud.md).
 ## 1. Configure
 
 ```sh
-git clone https://github.com/<owner>/autolog.git
+git clone https://github.com/davidniin/autolog.git
 cd autolog
 cp .env.example .env
 ```

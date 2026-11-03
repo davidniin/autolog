@@ -2,7 +2,7 @@
 
 [English](README.md) · **Español**
 
-[![Demo en vivo](https://img.shields.io/badge/demo%20en%20vivo-pru%C3%A9bala-2f5fd0)](https://<owner>.github.io/autolog/)
+[![Demo en vivo](https://img.shields.io/badge/demo%20en%20vivo-pru%C3%A9bala-2f5fd0)](https://davidniin.github.io/autolog/)
 [![Licencia: MIT](https://img.shields.io/badge/licencia-MIT-blue)](LICENSE)
 [![Invítame a un café](https://img.shields.io/badge/inv%C3%ADtame%20a%20un%20caf%C3%A9-☕-ffdd00)](https://buymeacoffee.com/davidniin)
 
@@ -34,7 +34,7 @@ otro.
 
 ## Pruébala
 
-**[Demo en vivo](https://<owner>.github.io/autolog/)**: la app de verdad con datos inventados, en tu navegador. No se
+**[Demo en vivo](https://davidniin.github.io/autolog/)**: la app de verdad con datos inventados, en tu navegador. No se
 guarda nada ni se envía nada.
 
 En local: arráncala (ver [Desarrollo](#desarrollo)) y abre `http://localhost:5173/?demo=1`.
@@ -51,7 +51,7 @@ AutoLog es **autoalojada**: cada persona monta su propia copia. No hay un servic
 Inicio rápido con Docker:
 
 ```sh
-git clone https://github.com/<owner>/autolog.git && cd autolog
+git clone https://github.com/davidniin/autolog.git && cd autolog
 cp .env.example .env          # pon AUTOLOG_TOKEN (openssl rand -hex 24) y POSTGRES_PASSWORD
 docker compose up -d --build  # la app en 127.0.0.1:8791 + su propio PostgreSQL
 ```

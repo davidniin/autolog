@@ -15,7 +15,7 @@ Para una plataforma en la nube sin acceso por terminal (PaaS), mira [cloud.md](c
 ## 1. Configurar
 
 ```sh
-git clone https://github.com/<owner>/autolog.git
+git clone https://github.com/davidniin/autolog.git
 cd autolog
 cp .env.example .env
 ```

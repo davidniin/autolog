@@ -1,6 +1,6 @@
 // AutoLog landing page: language (EN/ES), repository links and the live demo (lazy iframe).
-// ⚠ Set REPO to the real repository URL once it exists: every GitHub link on the page comes from here.
-const REPO = 'https://github.com/<owner>/autolog';
+// Every GitHub link on the page comes from here.
+const REPO = 'https://github.com/davidniin/autolog';
 
 const ES = {
   'nav.features': 'Funciones', 'nav.demo': 'Demo', 'nav.install': 'Instalar', 'nav.github': 'GitHub',
