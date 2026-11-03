@@ -9,6 +9,7 @@ import { t } from './i18n/index.js';
 import { validate, sanitizeNum } from './validate.js';
 import { delFile } from './store.js';
 import Attachments from './Attachments.vue';
+import { useDialog } from './dialog.js';
 import ReceiptScan from './ReceiptScan.vue';
 
 const props = defineProps({
@@ -23,6 +24,8 @@ const props = defineProps({
 const emit = defineEmits(['save', 'delete', 'close', 'switch']);
 
 const form = FORMS[props.kind];
+const panel = ref(null);
+useDialog(panel, () => close());
 const m = reactive({});
 const touched = reactive({});
 const auto = reactive({}); // campos rellenados por el escáner (se marcan hasta que se tocan)
@@ -112,9 +115,9 @@ function remove() {
 </script>
 
 <template>
-  <div class="sheet-bg" @click.self="close">
+  <div ref="panel" class="sheet-bg" role="dialog" aria-modal="true" aria-labelledby="sheet-title" tabindex="-1" @click.self="close">
     <form class="sheet" @submit.prevent="submit" novalidate>
-      <h2>{{ heading || t('kinds.' + kind + (isNew ? '.new' : '.edit')) }}</h2>
+      <h2 id="sheet-title">{{ heading || t('kinds.' + kind + (isNew ? '.new' : '.edit')) }}</h2>
       <div v-if="isNew && presets.length" class="chips presets full">
         <button v-for="[l, v] in presets" :key="l" type="button" @click="fill(v)">{{ l }}</button>
       </div>

@@ -30,7 +30,7 @@ const catLabel = (c) => optLabel('cat', c);
     <p v-if="C.first" class="note">{{ t('costs.since', { date: fmt.date(C.first) }) }}</p>
 
     <template v-if="C.purchase">
-      <h3>{{ t('costs.withPurchase') }}</h3>
+      <h2 class="sec">{{ t('costs.withPurchase') }}</h2>
       <div class="stats">
         <div class="stat"><small>{{ t('costs.purchaseTotal') }}</small><b>{{ fmt.money(C.purchase.total) }}</b></div>
         <div class="stat"><small>{{ t('costs.purchasePerMonth') }}</small><b>{{ fmt.money(C.purchase.perMonth) }}</b></div>
@@ -38,7 +38,7 @@ const catLabel = (c) => optLabel('cat', c);
       <p v-if="!C.purchase.since" class="note">{{ t('costs.setPurchaseDate') }}</p>
     </template>
 
-    <h3>{{ t('costs.last12', { total: fmt.money(year) }) }}</h3>
+    <h2 class="sec">{{ t('costs.last12', { total: fmt.money(year) }) }}</h2>
     <div class="card chart">
       <div class="chart-head">
         <b>{{ monthName(cur.key, true) }}</b>
@@ -48,11 +48,11 @@ const catLabel = (c) => optLabel('cat', c);
         <span><i class="sw fuel"></i>{{ t('costs.fuel') }} {{ fmt.money(cur.fuel) }}</span>
         <span><i class="sw other"></i>{{ t('costs.other') }} {{ fmt.money(cur.other) }}</span>
       </div>
-      <div class="bars" role="img" :aria-label="t('costs.chartAria', { max: fmt.money(max) })">
-        <span class="bars-max">{{ fmt.money(max) }}</span>
+      <div class="bars" role="group" :aria-label="t('costs.chartAria', { max: fmt.money(max) })">
+        <span class="bars-max" aria-hidden="true">{{ fmt.money(max) }}</span>
         <button
           v-for="(m, i) in C.months" :key="m.key" class="col" :class="{ on: i === sel }"
-          :aria-label="monthName(m.key, true) + ': ' + fmt.money(m.fuel + m.other)" @click="sel = i"
+          :aria-label="monthName(m.key, true) + ': ' + fmt.money(m.fuel + m.other)" :aria-pressed="i === sel" @click="sel = i"
         >
           <span class="stack">
             <i v-if="m.other" class="seg other" :style="{ height: pct(m.other) }"></i>
@@ -63,7 +63,7 @@ const catLabel = (c) => optLabel('cat', c);
       </div>
     </div>
 
-    <h3 v-if="C.byCat.length">{{ t('costs.byCat') }}</h3>
+    <h2 class="sec" v-if="C.byCat.length">{{ t('costs.byCat') }}</h2>
     <div v-for="[c, v] in C.byCat" :key="c" class="cat-row">
       <span class="cat-name">{{ catLabel(c) }}</span>
       <b>{{ fmt.money(v) }}</b>

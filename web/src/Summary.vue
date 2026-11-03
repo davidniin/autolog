@@ -22,14 +22,14 @@ const recent = computed(() =>
 
 <template>
   <div>
-    <section class="hero" role="button" tabindex="0" :aria-label="t('summary.editAria', { name: veh.name })" @click="emit('edit', 'vehicles', veh)" @keydown.enter="emit('edit', 'vehicles', veh)">
+    <section class="hero" :aria-label="veh.name" @click="emit('edit', 'vehicles', veh)">
       <div class="hero-top">
         <span class="hero-icon">{{ optEmoji('kind', veh.kind) }}</span>
         <div class="hero-name">
           <b>{{ veh.name }}</b>
           <small>{{ optText('fuel', veh.fuel_type) }}</small>
         </div>
-        <span class="hero-edit">{{ t('summary.edit') }}</span>
+        <button type="button" class="hero-edit" :aria-label="t('summary.editAria', { name: veh.name })" @click.stop="emit('edit', 'vehicles', veh)">{{ t('summary.edit') }}</button>
       </div>
       <div class="hero-bottom">
         <div class="odo"><small>{{ t('summary.odometer') }}</small><b>{{ fmt.km(km) }}</b></div>
@@ -44,7 +44,7 @@ const recent = computed(() =>
 
     <Reminders :reminders="reminders" :km="km" @edit="(k, r) => emit('edit', k, r)" @add="(k) => emit('add', k)" @done="(r) => emit('done', r)" />
 
-    <h3>{{ t('summary.heading') }}</h3>
+    <h2 class="sec">{{ t('summary.heading') }}</h2>
     <div class="stats">
       <div class="stat big"><small>{{ t('summary.avg') }}</small><b>{{ fmt.cons(stats.avg) }}</b><span>{{ fmt.consUnit() }}</span></div>
       <div class="stat big"><small>{{ t('summary.last') }}</small><b>{{ fmt.cons(stats.last) }}</b><span>{{ fmt.consUnit() }}</span></div>
@@ -55,7 +55,7 @@ const recent = computed(() =>
     </div>
     <p v-if="stats.avg == null" class="note">{{ t('summary.noConsumption') }}</p>
 
-    <h3 v-if="recent.length">{{ t('summary.recent') }}</h3>
+    <h2 class="sec" v-if="recent.length">{{ t('summary.recent') }}</h2>
     <button v-for="r in recent" :key="r.kind + r.rec.id" class="item" @click="emit('edit', r.kind, r.rec)">
       <span class="item-icon">{{ r.icon }}</span>
       <span class="item-body">{{ r.title }}<small>{{ fmt.date(r.rec.date) }}</small></span>

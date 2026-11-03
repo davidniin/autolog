@@ -1,8 +1,8 @@
 // Seguridad de la API: clave (AUTOLOG_TOKEN), límite de intentos fallidos y comprobaciones al arrancar.
 //
 // - La clave va en la cabecera Authorization: Bearer <clave>.
-// - Los adjuntos (/v1/files/:id) se abren con <img> o en otra pestaña, sin cabeceras: ahí la clave va en la cookie
-//   autolog_token (la pone la web, solo para /v1/files). Ya no va en la URL, que acaba en historiales y logs.
+// - Los adjuntos (/v1/files/:id) y la copia con fotos (/v1/backup) se abren con <img> o un enlace, sin cabeceras: ahí la
+//   clave va en la cookie autolog_token (la pone la web, solo para esas rutas). Nunca en la URL (historiales, logs).
 // - Tras MAX_FAILS intentos fallidos desde la misma IP en WINDOW_MS, esa IP recibe 429 durante WINDOW_MS.
 import crypto from 'node:crypto';
 import { getCookie } from 'hono/cookie';
@@ -56,7 +56,7 @@ export function auth() {
     }
     const h = c.req.header('authorization') || '';
     let given = h.startsWith('Bearer ') ? h.slice(7) : '';
-    if (!given && c.req.method === 'GET' && c.req.path.startsWith('/v1/files/')) given = getCookie(c, 'autolog_token') || '';
+    if (!given && c.req.method === 'GET' && (c.req.path.startsWith('/v1/files/') || c.req.path === '/v1/backup')) given = getCookie(c, 'autolog_token') || '';
     if (!given || !same(given, CONFIG.token)) {
       if (!f || Date.now() - f.since > WINDOW_MS) fails.set(ip, { n: 1, since: Date.now() });
       else f.n++;

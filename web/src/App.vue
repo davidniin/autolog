@@ -13,10 +13,12 @@ import Costs from './Costs.vue';
 import FormSheet from './FormSheet.vue';
 import Settings from './Settings.vue';
 import Wizard from './Wizard.vue';
+import Conflicts from './Conflicts.vue';
 
 const TABS = [['resumen', '🏠'], ['fuel', '⛽'], ['expenses', '🧾'], ['costs', '📊']];
 const tab = ref('resumen');
 const settings = ref(false);
+const conflicts = ref(false); // ficha de cambios que chocan con otro móvil
 
 const veh = computed(() => S.vehicles.find((v) => v.id === S.current) || S.vehicles[0] || null);
 const fills = computed(() => (veh.value ? S.fuel.filter((f) => f.vehicle_id === veh.value.id) : []));
@@ -127,6 +129,12 @@ function login() {
       </nav>
     </header>
 
+    <main>
+    <div v-if="S.conflicts.length" class="conflict-bar" role="alert">
+      <span>⚠ {{ t('conflict.bar', { n: S.conflicts.length }) }}</span>
+      <button class="link" @click="conflicts = true">{{ t('conflict.review') }}</button>
+    </div>
+
     <div v-if="DEMO" class="demo-bar">
       <span>🧪 <span v-html="t('app.demoBar')"></span></span>
       <button class="link" @click="exitDemo">{{ DEMO_ONLY ? t('app.demoReset') : t('common.exit') }}</button>
@@ -137,15 +145,16 @@ function login() {
       <button class="link" :aria-label="t('common.close')" @click="hideIosTip">✕</button>
     </div>
 
-    <main v-if="veh">
+    <template v-if="veh">
       <Transition name="fade" mode="out-in">
         <Summary v-if="tab === 'resumen'" :veh="veh" :fills="fills" :exps="exps" :reminders="rems" :stats="stats" :km="km" @edit="open" @add="open" @done="openDone" />
         <FuelList v-else-if="tab === 'fuel'" :fills="fills" :stats="stats" @edit="open" />
         <ExpenseList v-else-if="tab === 'expenses'" :exps="exps" @edit="open" />
         <Costs v-else :veh="veh" :fills="fills" :exps="exps" :km="km" />
       </Transition>
+    </template>
+    <Wizard v-else @vehicle="open('vehicles')" @restored="notify" />
     </main>
-    <Wizard v-else @vehicle="open('vehicles')" />
 
     <button v-if="veh && FORMS[tab]" class="fab" :aria-label="t('app.fab', { what: t('kinds.' + tab + '.one') })" @click="open(tab)">＋</button>
 
@@ -157,6 +166,9 @@ function login() {
 
     <Transition name="sheet">
       <FormSheet v-if="sheet" :key="sheet.value.id" v-bind="sheet" @save="onSave" @delete="onDelete" @close="sheet = null" @switch="onSwitch" />
+    </Transition>
+    <Transition name="sheet">
+      <Conflicts v-if="conflicts && S.conflicts.length" @close="conflicts = false" />
     </Transition>
     <Transition name="sheet">
       <Settings v-if="settings" :vehicle-id="veh && veh.id" @close="settings = false" />

@@ -4,11 +4,11 @@
 // También se puede restaurar una copia o ver la demo.
 import { ref, computed } from 'vue';
 import { t, L, LANGS, setLang } from './i18n/index.js';
-import { S, putSettings, DEMO } from './store.js';
+import { S, putSettings, DEMO, restoreBackup, pull } from './store.js';
 import { PRESETS, currencyList, defaultPrefs } from './units.js';
 import { planImport, planCounts, applyImport } from './dataio.js';
 
-const emit = defineEmits(['vehicle']);
+const emit = defineEmits(['vehicle', 'restored']);
 const step = ref(1);
 
 // Unidades: se proponen las típicas del país del móvil
@@ -29,13 +29,21 @@ async function restore(ev) {
   ev.target.value = '';
   if (!f) return;
   try {
+    if (/\.zip$/i.test(f.name) || f.type === 'application/zip') {
+      restoreMsg.value = t('io.zipUploading');
+      const r = await restoreBackup(f, true, { reload: false });
+      // Al recargar, ya hay vehículos y el asistente desaparece: el aviso lo enseña la pantalla principal
+      emit('restored', t('io.zipDone', { n: Object.values(r.added).reduce((a, b) => a + b, 0) - r.added.files, files: r.added.files }));
+      pull();
+      return;
+    }
     const plan = planImport(f.name, await f.text());
     if (plan.kind !== 'backup') throw new Error('backup');
     const n = Object.values(planCounts(plan)).reduce((a, b) => a + b, 0);
     applyImport(plan, { withSettings: true });
-    restoreMsg.value = t('io.done', { n });
+    emit('restored', t('io.done', { n }));
   } catch (e) {
-    restoreMsg.value = t('io.err.backup');
+    restoreMsg.value = e.message && !/^(backup|Unexpected)/.test(e.message) ? e.message : t('io.err.backup');
   }
 }
 </script>
@@ -53,7 +61,7 @@ async function restore(ev) {
       </div>
       <button class="primary wiz-main" @click="next">{{ t('wizard.start') }}</button>
       <div class="wiz-alt">
-        <label class="link">📥 {{ t('wizard.restore') }}<input type="file" accept=".json,application/json" @change="restore" /></label>
+        <label class="link">📥 {{ t('wizard.restore') }}<input type="file" accept=".zip,.json,application/zip,application/json" @change="restore" /></label>
         <a v-if="!DEMO" class="link" href="/?demo=1">🧪 {{ t('wizard.demo') }}</a>
       </div>
       <p v-if="restoreMsg" class="hint">{{ restoreMsg }}</p>

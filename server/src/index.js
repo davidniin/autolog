@@ -1,7 +1,9 @@
 // API de AutoLog (/v1) + la web del móvil compilada. Ver README.md.
 //   GET    /v1/data                → { vehicles, fuel, expenses, reminders, files, settings }
 //   PUT    /v1/settings            → unidades y moneda de la instalación (settings.js)
-//   PUT    /v1/:coleccion/:id      → crea o actualiza (coleccion = vehicles | fuel | expenses | reminders)
+//   GET    /v1/backup              → copia completa con fotos (ZIP)   POST /v1/restore → la restaura (fusiona)
+//   PUT    /v1/:coleccion/:id      → crea o actualiza (coleccion = vehicles | fuel | expenses | reminders);
+//                                     con base_rev, 409 si otro móvil lo cambió antes (db.js, upsert)
 //   DELETE /v1/:coleccion/:id      → borra (borrar un vehículo borra todo lo suyo)
 //   POST   /v1/files               → sube un adjunto (multipart)   GET/DELETE /v1/files/:id
 //   GET    /v1/alerts              → avisos pendientes (pronto / vencido) de todos los vehículos
@@ -18,9 +20,10 @@ import { MAX_BYTES, initFiles, saveFile, readFile, removeFiles } from './files.j
 import { auth, checkStartup, CSP } from './security.js';
 import { cleanLang } from './messages.js';
 import { getPrefs, setPrefs, cleanPrefs } from './settings.js';
+import { backupStream, restoreStream } from './backup.js';
 import { alerts, initPush, vapidKey, subscribe, unsubscribe, sendTest, check } from './alerts.js';
 
-const VERSION = '0.2.0';
+const VERSION = '0.3.0';
 const startupError = checkStartup();
 if (startupError) {
   console.error('[autolog] ' + startupError);
@@ -77,6 +80,27 @@ api.post('/push/test', async (c) => {
 // Revisar ahora (sin esperar a la revisión diaria). No repite lo ya avisado.
 api.post('/push/check', async (c) => c.json({ sent: await check() }));
 
+// ------------------------------------------------------------ copia completa con fotos (backup.js)
+api.get('/backup', async (c) => {
+  const day = new Date().toLocaleDateString('sv-SE');
+  return new Response(await backupStream(), {
+    headers: {
+      'Content-Type': 'application/zip',
+      'Content-Disposition': 'attachment; filename="autolog-backup-' + day + '.zip"',
+      'Cache-Control': 'no-store',
+    },
+  });
+});
+api.post('/restore', bodyLimit({ maxSize: CONFIG.restoreMaxMb * 1024 * 1024, onError: (c) => c.json({ error: 'backup too big', code: 'backup_too_big' }, 413) }), async (c) => {
+  if (!c.req.raw.body) return c.json({ error: 'missing body', code: 'bad_input' }, 400);
+  try {
+    return c.json(await restoreStream(c.req.raw.body, { withSettings: c.req.query('settings') === '1' }));
+  } catch (e) {
+    if (e.code === 'not_backup' || /zip|entry too big|invalid/i.test(e.message)) return c.json({ error: e.message, code: 'not_backup' }, 400);
+    throw e;
+  }
+});
+
 // ------------------------------------------------------------ adjuntos
 api.post('/files', bodyLimit({ maxSize: MAX_BYTES + 1024 * 1024, onError: (c) => c.json({ error: 'max 15 MB', code: 'file_too_big' }, 413) }), async (c) => {
   const { rec, error, code } = await saveFile(await c.req.parseBody());
@@ -106,13 +130,17 @@ api.put('/:kind/:id', async (c) => {
   try { b = await c.req.json(); } catch (e) { return c.json({ error: 'invalid JSON', code: 'bad_input' }, 400); }
   const { rec, error, code } = clean(kind, { ...b, id: c.req.param('id') });
   if (error) return c.json({ error, code }, 400);
+  // base_rev: la revisión que tenía el móvil al editar (ver upsert en db.js). Si alguien lo cambió antes → 409.
+  const base = typeof b.base_rev === 'string' && b.base_rev ? b.base_rev : null;
+  let res;
   try {
-    await upsert(kind, rec);
+    res = await upsert(kind, rec, base);
   } catch (e) {
     if (e.code === '23503') return c.json({ error: 'vehicle not found', code: 'no_vehicle' }, 400);
     throw e;
   }
-  return c.json({ ok: true });
+  if (res.conflict) return c.json({ error: 'changed on another device', code: 'conflict', current: res.current }, 409);
+  return c.json({ ok: true, rev: res.rev });
 });
 
 // Borrar algo que ya no existe no es error: el móvil puede reenviar el borrado tras un corte

@@ -89,3 +89,50 @@ describe('other documents', () => {
     expect(parseReceipt({ text: '' }).warnings[0]).toMatch(/No he encontrado/);
   });
 });
+
+describe('English and other formats', () => {
+  const US_SHOP = `JOE'S AUTO REPAIR
+123 Main St, Springfield
+Invoice # 10457      Date: 03/05/2024
+Vehicle: 2018 Civic   Mileage In: 45,210
+Oil change (5W-20 synthetic)        49.99
+Oil filter                          12.50
+Cabin air filter                    24.00
+Labor                               60.00
+Subtotal                           146.49
+Sales tax                            9.52
+Amount Due                       $156.01`;
+  const US_GAS = `SHELL
+1200 Ocean Ave
+03/02/2024  14:05
+PUMP 4  REGULAR
+GALLONS 10.523
+PRICE/GAL $3.459
+TOTAL $36.40`;
+
+  it('US workshop invoice: $ amounts, mm/dd dates, miles → km', () => {
+    const r = parseReceipt({ text: US_SHOP }, { distance: 'mi', volume: 'gal_us' });
+    expect(r.fuel).toBe(false);
+    expect(r.values).toMatchObject({ amount: 156.01, date: '2024-03-05', km: Math.round(45210 * 1.609344), cat: 'revision' });
+    expect(r.values.title).toBe('Aceite, filtro de aceite y filtro de habitáculo');
+    expect(r.values.note).toBe("JOE'S AUTO REPAIR · Factura 10457");
+  });
+  it('US fuel receipt: gallons → litres', () => {
+    const r = parseReceipt({ text: US_GAS }, { distance: 'mi', volume: 'gal_us' });
+    expect(r.fuel).toBe(true);
+    expect(r.values).toMatchObject({ total: 36.4, date: '2024-03-02', station: 'SHELL' });
+    expect(r.values.liters).toBeCloseTo(10.523 * 3.785411784, 2);
+  });
+  it('UK MOT certificate in English', () => {
+    const r = parseReceipt({ text: 'CITY MOT CENTRE\nMOT test certificate\nDate of test: 5 March 2024\nExpiry date: 4 March 2025\nTotal paid £54.85' });
+    expect(r.values).toMatchObject({ cat: 'itv', amount: 54.85, date: '2024-03-05' });
+  });
+  it('a "filtro de gasoil" in a workshop invoice is not a fuel ticket', () => {
+    const r = parseReceipt({ text: 'TALLER SOL\nFecha 01/02/2024\nFiltro de gasoil 30,00\nTOTAL 30,00' });
+    expect(r.fuel).toBe(false);
+    expect(r.values).toMatchObject({ amount: 30, title: 'Filtro de combustible' });
+  });
+  it('money with comma thousands and dot decimals', () => {
+    expect(moneyIn('Total $1,234.56 and 2.345,67 €')).toEqual([1234.56, 2345.67]);
+  });
+});

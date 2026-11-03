@@ -100,6 +100,9 @@ Database changes are applied automatically on start.
 
 ## Backups
 
+The easiest: **⚙ Settings → Your data → Backup with photos (ZIP)** downloads everything (data, photos and PDFs); you
+restore it from the same menu. For automatic server-side backups:
+
 Your data is in two places: the database and the attachments volume. Keep the backups **outside the repository
 folder** (they contain your personal data).
 

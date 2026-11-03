@@ -23,12 +23,15 @@ otro.
 - **Gastos** por categoría (revisión, reparación, ITV, seguro, impuestos, aparcamiento, peajes…) con fotos y PDF.
 - **Avisos** por fecha y/o km (aceite, ITV, seguro…), con **notificaciones push** si quieres.
 - **Costes**: al mes, por km, con el precio de compra, gráfico de 12 meses y reparto por categoría.
-- **Escanear facturas y tickets**: haces la foto y se rellenan importe, fecha, km, litros y concepto. El OCR funciona
+- **Escanear facturas y tickets** (foto o PDF, en español o en inglés): se rellenan importe, fecha, km, litros y
+  concepto. El OCR funciona
   **en el propio móvil** ([runonweb](https://runonweb.ai/models/ocr), PP-OCRv6): la foto no sale del dispositivo.
 - **Sin cobertura**: los cambios se guardan en el móvil y se envían cuando vuelve la red.
 - **Validación** de cada campo (km imposibles, €/L poco creíble, fechas futuras…).
 - **Tus unidades**: km o millas, litros o galones, L/100 km, km/L o mpg, y cualquier moneda.
-- **Tus datos, contigo**: copia completa en JSON y exportar/importar CSV (Excel, Google Sheets).
+- **Tus datos, contigo**: copia con fotos (ZIP) y restauración, exportar/importar CSV (Excel, Google Sheets).
+- **Varios móviles**: si dos móviles editan lo mismo, eliges con qué versión quedarte; no se pierde nada sin avisar.
+- **Accesible**: revisada con axe-core (WCAG 2.1 AA), se usa bien con teclado y lector de pantalla.
 - **Español e inglés** (según el idioma del móvil; se cambia en ⚙ Ajustes), modo claro y oscuro, instalable en
   Android y iPhone, varios vehículos.
 
@@ -97,9 +100,9 @@ Las ideas, los avisos de fallos y los pull requests son bienvenidos, en español
 
 ## Hoja de ruta
 
-1. Más idiomas, y reglas del escáner para otros países (hoy: facturas en español, `1.234,56 €`): se busca ayuda.
-2. Copias de seguridad con fotos, y restauración desde la app.
-3. Coches eléctricos e híbridos (kWh).
+1. Más idiomas, y reglas del escáner para más países: se busca ayuda.
+2. Coches eléctricos e híbridos (kWh).
+3. Seguimiento de neumáticos y piezas.
 4. Historial en PDF para enseñarlo al vender el vehículo.
 5. Imagen Docker ya construida en cada versión (`ghcr.io`).
 

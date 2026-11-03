@@ -41,14 +41,26 @@ check only applies to currencies with euro-like prices (EUR, USD, GBP, CHF, CAD,
 
 In **⚙ Settings → Your data**:
 
-- **Full backup (JSON):** vehicles, fill-ups, expenses, reminders and settings — to restore or move to another server.
-  Photos and PDFs are not included (back up the attachments volume, see the install guides).
+- **Backup with photos (ZIP):** everything — data, settings, photos and PDFs. Downloaded straight from the server
+  (`GET /v1/backup`, streamed). Restore it from the same menu or from the first-run wizard ("I have a backup"):
+  the server **merges** it (`POST /v1/restore`): it adds whatever is missing and never changes or deletes what you
+  already have, so restoring twice is safe. Max size `RESTORE_MAX_MB` (default 2048). Code: `server/src/backup.js`.
+- **Backup without photos (JSON):** the same data without attachments; works offline.
 - **CSV of fill-ups / expenses** for Excel or Google Sheets, always in km, litres and the installation's currency:
   - fill-ups: `vehicle, date, km, liters, total, full_tank, station, note`
   - expenses: `vehicle, date, km, category, title, amount, note`
 - **Import** a backup or one of those CSVs (comma or semicolon, `YYYY-MM-DD` or `DD/MM/YYYY`, decimal comma or point).
   A summary is shown before anything changes. Records that already exist are skipped, so importing the same file
   twice is safe. A CSV without a `vehicle` column goes into the current vehicle. Code: `web/src/dataio.js`.
+
+## Several phones at once
+
+Each record has a revision (`rev`). When a phone saves an edit, it sends the revision it had (`base_rev`); if another
+phone changed or deleted that record in the meantime, the server doesn't overwrite it and answers `409` with the
+current version. The phone keeps the clash aside and shows **⚠ 1 change clashes with another phone · Review**, with
+the fields that differ side by side, to keep one version or the other (or create it again / leave it deleted).
+Edits made twice while offline are chained, not a conflict. Deleting always wins. Code: `server/src/db.js` (`upsert`),
+`web/src/store.js` (`run`, `resolveConflict`) and `web/src/Conflicts.vue`.
 
 ## First run
 
@@ -100,7 +112,13 @@ Uploading needs a connection. Deleting an expense, fill-up or vehicle deletes it
 
 ## Scanning invoices and receipts
 
-In a new expense or fill-up, **📷 Escanear la factura** reads the photo and fills in the form.
+In a new expense or fill-up, **📷 Scan the invoice** reads a **photo or a PDF** and fills in the form.
+
+- **PDF with text** (most digital invoices): the text is read directly with [pdf.js](https://mozilla.github.io/pdf.js/)
+  — exact, instant and without downloading the OCR model. **Scanned PDF**: the first page is drawn and read with the
+  OCR. Code: `web/src/pdf.js` (loaded only when used; `isEvalSupported: false`).
+- Reads **Spanish and English** documents: `1.234,56 €` and `$1,234.56`; `dd/mm/yyyy`, and `mm/dd/yyyy` on US
+  documents; "5 de marzo de 2024" and "Mar 5, 2024"; km or miles and litres or gallons (converted to km and litres).
 
 - **Expense:** total amount, date, km, category, concept, workshop and invoice number.
 - **Fill-up:** litres, amount, date and station; litres are computed from €/L if missing.
@@ -110,8 +128,10 @@ In a new expense or fill-up, **📷 Escanear la factura** reads the photo and fi
 - **On-device OCR** with [runonweb](https://runonweb.ai/models/ocr) (PP-OCRv6 by PaddleOCR, WebGPU or WASM). The photo
   is never sent anywhere. The first time it downloads the model from Hugging Face (~31 MB) and the onnxruntime engine
   from jsdelivr; both are cached on the phone and it works offline afterwards.
-- **Code:** `web/src/ocr.js` (loaded only when used), `web/src/receipt.js` (extracts the data from the text; Spanish
-  rules today) and `web/src/ReceiptScan.vue`. Tests with sample invoices: `web/test/receipt.test.js`.
+- **Code:** `web/src/ocr.js` (loaded only when used), `web/src/receipt.js` (extracts the data from the text) and
+  `web/src/ReceiptScan.vue`. Tests with sample invoices: `web/test/receipt.test.js` — to support another country or
+  format, add its words to the rules and a sample invoice to the tests.
+- **Pinned:** `pdfjs-dist` 6.4.299.
 - **Pinned versions:** `runonweb` 0.1.0 and `onnxruntime-web` 1.30.0 (in `overrides`): the WASM loaded from the CDN must
   match the JS version. When upgrading runonweb, check its `ORT_WASM` constant and update the override and the CSP.
 
@@ -126,12 +146,22 @@ Fill-ups also check that the mileage fits between the previous and next fill-ups
 
 - `AUTOLOG_TOKEN` is required (16+ characters); the server refuses to start without it unless `ALLOW_NO_AUTH=1`.
 - Every API route except `/v1/health` needs `Authorization: Bearer <token>`. Attachments (opened by `<img>` or in a new
-  tab) use the `autolog_token` cookie, limited to `/v1/files`. Tokens are never accepted in URLs, except the one-time
+  tab) and the backup download use the `autolog_token` cookie, limited to `/v1/files` and `/v1/backup`. Tokens are never accepted in URLs, except the one-time
   `/?token=` link that the web app stores and removes from the address bar.
 - 10 failed attempts from one IP within 15 minutes → `429` for 15 minutes. Behind a proxy set `TRUST_PROXY=1`, and
   only then, so the real client IP is used.
 - Security headers on every response; a Content-Security-Policy on the web app (see `server/src/security.js`).
 - Same-origin only: no CORS unless `CORS_ORIGIN` is set. Internal errors are logged, not returned to the client.
+- Restoring a backup only accepts attachments of the same types as uploads (images and PDF) and ignores any other
+  path in the ZIP, so a crafted backup can't plant files or pages on your server.
+
+## Accessibility
+
+Checked with [axe-core](https://github.com/dequelabs/axe-core) on every screen, light and dark (WCAG 2.1 AA: no
+violations): colour contrast ≥ 4.5:1, landmarks and heading order, labelled controls (`aria-pressed`, `aria-current`,
+`aria-invalid` + error text). Sheets are dialogs: focus moves in when they open and back when they close, `Esc` closes
+them and `Tab` stays inside (`web/src/dialog.js`). Motion is reduced if the system asks for it. Please report anything
+that is hard to use with a screen reader or keyboard.
 
 ## Demo mode and landing page
 
@@ -151,10 +181,12 @@ accepts `?lang=es|en`.
 | GET | `/v1/health` | Status (no password) |
 | GET | `/v1/data` | `{ vehicles, fuel, expenses, reminders, files, settings }`, all at once |
 | PUT | `/v1/settings` | Units and currency: `{ distance: km\|mi, volume: l\|gal_us\|gal_uk, consumption: l100\|kml\|mpg_us\|mpg_uk, currency: "EUR" }` |
-| PUT | `/v1/{vehicles,fuel,expenses,reminders}/:id` | Create or update (idempotent: the id comes from the client) |
+| PUT | `/v1/{vehicles,fuel,expenses,reminders}/:id` | Create or update (idempotent: the id comes from the client). With `base_rev`, `409` if another phone changed it |
 | DELETE | `/v1/{vehicles,fuel,expenses,reminders}/:id` | Delete. Deleting a vehicle deletes everything it has |
 | POST | `/v1/files` | Upload an attachment (multipart: `file`, `id`, `vehicle_id`, `parent_kind` = vehicles · expenses · fuel, `parent_id`) |
 | GET / DELETE | `/v1/files/:id` | Open or delete an attachment |
+| GET | `/v1/backup` | Backup with photos (ZIP: `autolog.json` + `files/<id>`) |
+| POST | `/v1/restore` | Restore that ZIP (body = the ZIP), merging. `?settings=1` also applies its units/currency |
 | GET | `/v1/alerts` | Pending reminders (*soon* / *overdue*) of every vehicle, e.g. for a home dashboard |
 | GET | `/v1/push/key` | Public VAPID key |
 | POST | `/v1/push/subscribe` · `/unsubscribe` · `/test` · `/check` | Push subscriptions and sending |
@@ -173,5 +205,6 @@ accepts `?lang=es|en`.
 | `TZ` | `Europe/Madrid` | Server time zone |
 | `STATIC_DIR` | empty (`web` in Docker) | Built web app to serve |
 | `FILES_DIR` | `./data/files` (`/data/files` in Docker) | Attachments folder |
+| `RESTORE_MAX_MB` | `2048` | Largest backup (ZIP) accepted when restoring |
 | `ALLOW_NO_AUTH` | `0` | `1` = start without a password. Only on a private network with no internet access |
 | `BIND_ADDR` / `HOST_PORT` | `127.0.0.1` / `8791` | Docker Compose only: where the port is published on the host |

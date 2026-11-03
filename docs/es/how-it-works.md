@@ -40,14 +40,27 @@ de «€/L poco creíble» solo se hace en monedas con precios parecidos al euro
 
 En **⚙ Ajustes → Tus datos**:
 
-- **Copia completa (JSON):** vehículos, repostajes, gastos, avisos y ajustes, para restaurar o cambiar de servidor. Las
-  fotos y los PDF no van dentro (haz copia del volumen de adjuntos, ver las guías de instalación).
+- **Copia con fotos (ZIP):** todo: datos, ajustes, fotos y PDF. Se descarga directamente del servidor
+  (`GET /v1/backup`, en streaming). Se restaura desde el mismo menú o desde el asistente de la primera vez («Tengo una
+  copia»): el servidor la **fusiona** (`POST /v1/restore`): añade lo que falta y nunca cambia ni borra lo que ya tienes,
+  así que restaurar dos veces no pasa nada. Tamaño máximo `RESTORE_MAX_MB` (2048 por defecto). Código:
+  `server/src/backup.js`.
+- **Copia sin fotos (JSON):** los mismos datos sin adjuntos; funciona sin conexión.
 - **CSV de repostajes / gastos** para Excel o Google Sheets, siempre en km, litros y la moneda de la instalación:
   - repostajes: `vehicle, date, km, liters, total, full_tank, station, note`
   - gastos: `vehicle, date, km, category, title, amount, note`
 - **Importar** una copia o uno de esos CSV (coma o punto y coma, `AAAA-MM-DD` o `DD/MM/AAAA`, coma o punto decimal).
   Antes de cambiar nada se enseña un resumen. Lo que ya existe se salta, así que importar dos veces el mismo fichero
   no duplica nada. Un CSV sin columna `vehicle` se importa en el vehículo actual. Código: `web/src/dataio.js`.
+
+## Varios móviles a la vez
+
+Cada registro tiene una revisión (`rev`). Al guardar una edición, el móvil envía la revisión que tenía (`base_rev`); si
+otro móvil lo cambió o lo borró mientras tanto, el servidor no lo pisa y responde `409` con la versión actual. El móvil
+aparta el choque y avisa: **⚠ 1 cambio choca con otro móvil · Revisar**, con los datos que difieren lado a lado, para
+quedarte con una versión o con la otra (o volver a crearlo / dejarlo borrado). Editar dos veces sin conexión se
+encadena y no es un conflicto. Borrar siempre gana. Código: `server/src/db.js` (`upsert`), `web/src/store.js` (`run`,
+`resolveConflict`) y `web/src/Conflicts.vue`.
 
 ## La primera vez
 
@@ -101,7 +114,14 @@ queda en unos 300 KB). Subir necesita conexión. Al borrar un gasto, repostaje o
 
 ## Escanear facturas y tickets
 
-En un gasto o repostaje nuevo, **📷 Escanear la factura** lee la foto y rellena el formulario.
+En un gasto o repostaje nuevo, **📷 Escanear la factura** lee una **foto o un PDF** y rellena el formulario.
+
+- **PDF con texto** (la mayoría de facturas digitales): el texto se lee directamente con
+  [pdf.js](https://mozilla.github.io/pdf.js/): exacto, al momento y sin descargar el modelo del OCR. **PDF escaneado**:
+  se dibuja la primera página y se lee con el OCR. Código: `web/src/pdf.js` (se carga solo al usarlo;
+  `isEvalSupported: false`).
+- Lee documentos **en español y en inglés**: `1.234,56 €` y `$1,234.56`; `dd/mm/aaaa`, y `mm/dd/aaaa` en documentos de
+  EE. UU.; «5 de marzo de 2024» y «Mar 5, 2024»; km o millas y litros o galones (se pasan a km y litros).
 
 - **Gasto:** importe total, fecha, km, categoría, concepto, taller y nº de factura.
 - **Repostaje:** litros, importe, fecha y gasolinera; si faltan los litros, los calcula con el €/L.
@@ -112,8 +132,10 @@ En un gasto o repostaje nuevo, **📷 Escanear la factura** lee la foto y rellen
 - **OCR en el móvil** con [runonweb](https://runonweb.ai/models/ocr) (PP-OCRv6 de PaddleOCR, WebGPU o WASM). La foto
   no se envía a ningún sitio. La primera vez descarga el modelo de Hugging Face (~31 MB) y el motor onnxruntime de
   jsdelivr; los dos se guardan en el móvil y después funciona sin conexión.
-- **Código:** `web/src/ocr.js` (se carga solo al usarlo), `web/src/receipt.js` (saca los datos del texto; hoy con
-  reglas para España) y `web/src/ReceiptScan.vue`. Tests con facturas de ejemplo: `web/test/receipt.test.js`.
+- **Código:** `web/src/ocr.js` (se carga solo al usarlo), `web/src/receipt.js` (saca los datos del texto) y
+  `web/src/ReceiptScan.vue`. Tests con facturas de ejemplo: `web/test/receipt.test.js`: para otro país o formato, añade
+  sus palabras a las reglas y una factura de ejemplo a los tests.
+- **Versión fijada:** `pdfjs-dist` 6.4.299.
 - **Versiones fijadas:** `runonweb` 0.1.0 y `onnxruntime-web` 1.30.0 (en `overrides`): el WASM que se carga del CDN
   tiene que ser de la misma versión que el JS. Al actualizar runonweb, revisa su constante `ORT_WASM` y ajusta el
   override y la CSP.
@@ -129,12 +151,23 @@ que el €/L sea creíble (0,30–5 €/L). El servidor hace su propia comprobac
 
 - `AUTOLOG_TOKEN` es obligatoria (16 caracteres o más); sin ella el servidor no arranca, salvo con `ALLOW_NO_AUTH=1`.
 - Todas las rutas de la API excepto `/v1/health` piden `Authorization: Bearer <clave>`. Los adjuntos (que se abren con
-  `<img>` o en otra pestaña) usan la cookie `autolog_token`, limitada a `/v1/files`. La clave nunca se acepta en la URL,
+  `<img>` o en otra pestaña) y la descarga de la copia usan la cookie `autolog_token`, limitada a `/v1/files` y
+  `/v1/backup`. La clave nunca se acepta en la URL,
   salvo el enlace `/?token=` de la primera vez, que la web guarda y quita de la barra de direcciones.
 - 10 intentos fallidos desde una IP en 15 minutos → `429` durante 15 minutos. Detrás de un proxy pon `TRUST_PROXY=1`
   (y solo entonces) para usar la IP real del cliente.
 - Cabeceras de seguridad en todas las respuestas y Content-Security-Policy en la web (ver `server/src/security.js`).
 - Solo mismo origen: sin CORS salvo que se defina `CORS_ORIGIN`. Los errores internos van al log, no al cliente.
+- Al restaurar una copia solo se aceptan adjuntos de los mismos tipos que al subirlos (imágenes y PDF) y se ignora
+  cualquier otra ruta del ZIP: una copia manipulada no puede colar ficheros ni páginas en tu servidor.
+
+## Accesibilidad
+
+Revisada con [axe-core](https://github.com/dequelabs/axe-core) en todas las pantallas, en claro y oscuro (WCAG 2.1 AA:
+sin incidencias): contraste de color ≥ 4,5:1, regiones y orden de títulos, controles etiquetados (`aria-pressed`,
+`aria-current`, `aria-invalid` + texto del error). Las fichas son diálogos: el foco entra al abrirlas y vuelve al
+cerrarlas, `Esc` las cierra y `Tab` no se sale de ellas (`web/src/dialog.js`). Las animaciones se reducen si el sistema
+lo pide. Avisa si algo es difícil de usar con lector de pantalla o teclado.
 
 ## Modo demo y landing page
 
@@ -154,10 +187,12 @@ acepta `?lang=es|en`.
 | GET | `/v1/health` | Estado (sin clave) |
 | GET | `/v1/data` | `{ vehicles, fuel, expenses, reminders, files, settings }`, todo de una vez |
 | PUT | `/v1/settings` | Unidades y moneda: `{ distance: km\|mi, volume: l\|gal_us\|gal_uk, consumption: l100\|kml\|mpg_us\|mpg_uk, currency: "EUR" }` |
-| PUT | `/v1/{vehicles,fuel,expenses,reminders}/:id` | Crea o actualiza (idempotente: el id lo pone el cliente) |
+| PUT | `/v1/{vehicles,fuel,expenses,reminders}/:id` | Crea o actualiza (idempotente: el id lo pone el cliente). Con `base_rev`, `409` si otro móvil lo cambió |
 | DELETE | `/v1/{vehicles,fuel,expenses,reminders}/:id` | Borra. Borrar un vehículo borra todo lo suyo |
 | POST | `/v1/files` | Sube un adjunto (multipart: `file`, `id`, `vehicle_id`, `parent_kind` = vehicles · expenses · fuel, `parent_id`) |
 | GET / DELETE | `/v1/files/:id` | Abre o borra un adjunto |
+| GET | `/v1/backup` | Copia con fotos (ZIP: `autolog.json` + `files/<id>`) |
+| POST | `/v1/restore` | Restaura ese ZIP (el cuerpo es el ZIP), fusionándolo. `?settings=1` aplica también sus unidades y moneda |
 | GET | `/v1/alerts` | Avisos pendientes (*pronto* / *vencido*) de todos los vehículos, p. ej. para un panel en casa |
 | GET | `/v1/push/key` | Clave pública VAPID |
 | POST | `/v1/push/subscribe` · `/unsubscribe` · `/test` · `/check` | Suscripciones y envío |
@@ -176,5 +211,6 @@ acepta `?lang=es|en`.
 | `TZ` | `Europe/Madrid` | Zona horaria del servidor |
 | `STATIC_DIR` | vacío (`web` en Docker) | Web compilada que se sirve |
 | `FILES_DIR` | `./data/files` (`/data/files` en Docker) | Carpeta de los adjuntos |
+| `RESTORE_MAX_MB` | `2048` | Tamaño máximo de una copia (ZIP) al restaurarla |
 | `ALLOW_NO_AUTH` | `0` | `1` = arrancar sin clave. Solo en una red privada sin acceso desde internet |
 | `BIND_ADDR` / `HOST_PORT` | `127.0.0.1` / `8791` | Solo Docker Compose: dónde se publica el puerto en la máquina |

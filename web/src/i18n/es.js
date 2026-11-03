@@ -4,7 +4,7 @@ import { plural } from './plural.js';
 export default {
   common: {
     and: 'y', save: 'Guardar', cancel: 'Cancelar', delete: 'Borrar', close: 'Cerrar', exit: 'Salir', edit: 'Editar',
-    add: 'Añadir', required: '*',
+    add: 'Añadir', required: '*', yes: 'Sí', no: 'No',
     days: (p) => plural(p.n, 'día', 'días'),
   },
   app: {
@@ -24,6 +24,17 @@ export default {
     tabs: { resumen: 'Resumen', fuel: 'Repostajes', expenses: 'Gastos', costs: 'Costes' },
     fab: 'Añadir {what}',
     toastDone: '✓ Hecho: {title}',
+  },
+  conflict: {
+    bar: (p) => (p.n === 1 ? '1 cambio choca con otro móvil' : p.n + ' cambios chocan con otro móvil'),
+    review: 'Revisar',
+    changed: 'Este {what} se cambió en otro móvil',
+    deleted: 'Este {what} se borró en otro móvil',
+    explain: 'Elige con qué versión te quedas. Solo salen los datos que no coinciden.',
+    count: (p) => 'quedan ' + p.n,
+    mine: 'Este móvil', theirs: 'El otro',
+    keepMine: 'Quedarme con el mío', keepTheirs: 'Quedarme con el otro',
+    restore: 'Volver a crearlo', keepDeleted: 'Dejarlo borrado',
   },
   wizard: {
     start: 'Empezar', restore: 'Tengo una copia', demo: 'Ver la demo',
@@ -57,9 +68,12 @@ export default {
     coffee: 'Apoya el proyecto: invítame a un café',
   },
   io: {
-    title: 'Tus datos', backup: 'Copia completa (JSON)', fuelCsv: 'Repostajes (CSV)', expensesCsv: 'Gastos (CSV)',
+    title: 'Tus datos', zip: 'Copia con fotos (ZIP)', backup: 'Copia sin fotos (JSON)',
+    zipUploading: 'Restaurando la copia…',
+    zipConfirm: 'Se añadirá lo que falte de la copia (datos, fotos y PDF). No se cambia ni se borra nada de lo que ya tienes. ¿Seguimos?',
+    zipDone: (p) => '✓ Copia restaurada: ' + p.n + (p.n === 1 ? ' registro' : ' registros') + ' añadidos, ' + p.files + (p.files === 1 ? ' adjunto.' : ' adjuntos.'), fuelCsv: 'Repostajes (CSV)', expensesCsv: 'Gastos (CSV)',
     import: 'Importar…',
-    note: 'La copia sirve para restaurar o cambiar de servidor (las fotos y PDF no van dentro). Los CSV se abren con Excel o Google Sheets y se pueden volver a importar; un CSV sin columna «vehicle» se importa en el vehículo actual.',
+    note: 'La copia con fotos (ZIP) guarda todo y sirve para restaurar o cambiar de servidor. La copia sin fotos (JSON) funciona sin conexión. Los CSV se abren con Excel o Google Sheets y se pueden volver a importar; un CSV sin columna «vehicle» se importa en el vehículo actual.',
     willAdd: 'Se añadirán:', nothingNew: 'No hay nada nuevo: ya tienes todo lo que trae el fichero.',
     count: {
       vehicles: (p) => p.n + (p.n === 1 ? ' vehículo' : ' vehículos'), fuel: (p) => p.n + (p.n === 1 ? ' repostaje' : ' repostajes'),
@@ -178,14 +192,16 @@ export default {
     file_missing: 'Falta el archivo', file_type: 'Solo fotos o PDF', file_too_big: 'Máximo 15 MB',
     bad_parent: 'No se puede adjuntar aquí', missing_ids: 'Faltan datos del adjunto', no_vehicle: 'El vehículo no existe',
     too_many_attempts: 'Demasiados intentos: espera unos minutos', bad_token: 'Clave incorrecta',
+    not_backup: 'No es una copia de AutoLog (ZIP).', backup_too_big: 'La copia es más grande de lo que admite el servidor (RESTORE_MAX_MB).',
   },
   scan: {
     invoice: 'Escanear la factura', ticket: 'Escanear el ticket',
-    downloading: 'Descargando el lector… {p} %', reading: 'Leyendo la foto…',
+    downloading: 'Descargando el lector… {p} %', reading: 'Leyendo la foto…', readingPdf: 'Leyendo el PDF…',
+    pdfText: '📄 Leído del texto del PDF: exacto, sin OCR.', pdfBad: 'No puedo abrir este PDF.',
     firstTimeOnly: 'Solo la primera vez. Luego funciona sin conexión.', mayTake: 'Puede tardar unos segundos',
     firstDownload: 'Rellena los datos solo. La primera vez descarga el lector (31 MB).',
-    fillsFuel: 'Rellena litros, importe y fecha. La foto no sale del móvil.',
-    fillsExpense: 'Rellena importe, fecha, km y concepto. La foto no sale del móvil.',
+    fillsFuel: 'Foto o PDF: rellena cantidad, importe y fecha. No sale del móvil.',
+    fillsExpense: 'Foto o PDF: rellena importe, fecha, km y concepto. No sale del móvil.',
     looksFuel: '⛽ Parece un ticket de gasolinera. ¿Lo apunto como repostaje?',
     keepExpense: 'No, es un gasto', toFuel: 'Sí, repostaje',
     filled: '✨ He rellenado <b>{fields}</b>. Revísalo antes de guardar.',

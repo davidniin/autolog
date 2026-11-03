@@ -100,6 +100,9 @@ Los cambios de la base de datos se aplican solos al arrancar.
 
 ## Copias de seguridad
 
+Lo más fácil: **⚙ Ajustes → Tus datos → Copia con fotos (ZIP)** lo descarga todo (datos, fotos y PDF), y se restaura
+desde el mismo menú. Para copias automáticas en el servidor:
+
 Tus datos están en dos sitios: la base de datos y el volumen de adjuntos. Guarda las copias **fuera de la carpeta del
 repositorio** (tienen tus datos personales).
 
