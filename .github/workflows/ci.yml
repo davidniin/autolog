@@ -12,7 +12,7 @@ jobs:
   test:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - uses: actions/setup-node@v4
         with:
           node-version: 24
@@ -42,7 +42,7 @@ jobs:
       # Throwaway value for the temporary test container only (not a real secret)
       CI_TOKEN: ci-test-token-not-a-secret
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - name: Build the image
         run: docker build -t autolog:ci .
       - name: Smoke test with PostgreSQL
