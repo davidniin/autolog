@@ -10,7 +10,7 @@
 // Los mensajes salen del idioma actual (i18n, claves "v.*").
 import { num, today, fmt } from './calc.js';
 import { t } from './i18n/index.js';
-import { OPTIONS, unitLabel } from './forms.js';
+import { OPTIONS, unitLabel, fieldUnit } from './forms.js';
 import { toDisplay, fromDisplay } from './units.js';
 
 const day = (d) => (d === 'today' ? today() : d);
@@ -22,7 +22,8 @@ const amount = (n, unit) => {
 };
 const DATE = /^\d{4}-\d{2}-\d{2}$/;
 
-export function parseField(f, raw) {
+export function parseField(f, raw, rec = {}) {
+  const unit = fieldUnit(f, rec); // la del campo, o la de la cantidad de este registro (litros o kWh)
   if (f.type === 'check') return { v: !!raw };
   if (f.type === 'chips') {
     const opts = typeof f.options === 'string' ? OPTIONS[f.options] : f.options;
@@ -48,12 +49,12 @@ export function parseField(f, raw) {
     if (f.dec != null && decimals > f.dec) return { v, err: t('v.maxDecimals', { n: f.dec }) };
     if (f.pos && !(v > 0)) return { v, err: t('v.positive') };
     // Lo escrito está en las unidades elegidas (millas, galones); se guarda en km y litros
-    let stored = fromDisplay(f.unit, v);
-    if (f.unit === 'km') stored = Math.round(stored);
-    else if (f.unit === 'L') stored = Math.round(stored * 1000) / 1000;
+    let stored = fromDisplay(unit, v);
+    if (unit === 'km') stored = Math.round(stored);
+    else if (unit === 'L') stored = Math.round(stored * 1000) / 1000;
     const min = val(f.min), max = val(f.max);
-    if (min != null && stored < min) return { v: stored, err: t('v.min', { v: amount(min, f.unit) }) };
-    if (max != null && stored > max) return { v: stored, err: t('v.max', { v: amount(max, f.unit) }) };
+    if (min != null && stored < min) return { v: stored, err: t('v.min', { v: amount(min, unit) }) };
+    if (max != null && stored > max) return { v: stored, err: t('v.max', { v: amount(max, unit) }) };
     return { v: stored };
   }
 
@@ -69,7 +70,7 @@ export function parseField(f, raw) {
 export function validate(form, m, ctx) {
   const r = { ...m }, errs = {};
   for (const f of form.fields) {
-    const { v, err } = parseField(f, m[f.k]);
+    const { v, err } = parseField(f, m[f.k], m);
     r[f.k] = v;
     if (err) errs[f.k] = err;
   }

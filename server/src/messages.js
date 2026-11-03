@@ -15,6 +15,8 @@ export const MESSAGES = {
     today: 'vence hoy',
     in: (d) => 'en ' + plural(d, 'día', 'días'),
     testBody: 'Las notificaciones funcionan en este móvil.',
+    calName: 'AutoLog · avisos',
+    estimated: 'Fecha estimada por los km que haces al día.',
   },
   en: {
     dist: dist('en'),
@@ -24,6 +26,8 @@ export const MESSAGES = {
     today: 'due today',
     in: (d) => 'in ' + plural(d, 'day', 'days'),
     testBody: 'Notifications work on this phone.',
+    calName: 'AutoLog · reminders',
+    estimated: 'Estimated date from the distance you drive per day.',
   },
 };
 

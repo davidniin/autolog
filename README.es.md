@@ -19,9 +19,14 @@ otro.
 
 ## Qué hace
 
-- **Repostajes** con el consumo real (método lleno a lleno), €/L y coste de cada tramo.
+- **Repostajes y recargas** con el consumo real (lleno a lleno): gasolina, diésel, GLP, **eléctricos e híbridos
+  enchufables** (kWh).
 - **Gastos** por categoría (revisión, reparación, ITV, seguro, impuestos, aparcamiento, peajes…) con fotos y PDF.
-- **Avisos** por fecha y/o km (aceite, ITV, seguro…), con **notificaciones push** si quieres.
+- **Avisos** por fecha y/o km (aceite, ITV, seguro…), con **notificaciones push** y **calendario** para Google, Apple
+  u Outlook.
+- **Neumáticos y piezas**: desgaste por km y por tiempo, e historial de lo que duró cada juego.
+- **Informe del historial (PDF)** para enseñar a quien compra el mantenimiento, los km y las piezas.
+- **Varias personas**: mismos datos, cada una con su clave; se ve quién apuntó cada cosa.
 - **Costes**: al mes, por km, con el precio de compra, gráfico de 12 meses y reparto por categoría.
 - **Escanear facturas y tickets** (foto o PDF, en español o en inglés): se rellenan importe, fecha, km, litros y
   concepto. El OCR funciona
@@ -101,8 +106,8 @@ Las ideas, los avisos de fallos y los pull requests son bienvenidos, en español
 ## Hoja de ruta
 
 1. Más idiomas, y reglas del escáner para más países: se busca ayuda.
-2. Coches eléctricos e híbridos (kWh).
-3. Seguimiento de neumáticos y piezas.
+2. Avisos por email.
+3. Integración con Home Assistant.
 4. Historial en PDF para enseñarlo al vender el vehículo.
 5. Imagen Docker ya construida en cada versión (`ghcr.io`).
 

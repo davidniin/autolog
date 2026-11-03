@@ -1,6 +1,6 @@
 // Cálculos: consumo (método lleno a lleno), km actuales y formatos.
 import { t, locale } from './i18n/index.js';
-import { UP, conv, distUnit, volUnit, consUnit } from './units.js';
+import { UP, conv, distUnit, volUnit, consUnit, econs, econsUnit } from './units.js';
 
 // Consumo lleno a lleno: entre dos repostajes con depósito lleno, los litros puestos después del primero
 // (incluidos los parciales intermedios y el último lleno) divididos por los km recorridos.
@@ -23,6 +23,16 @@ export function fuelStats(fills) {
   const spent = sum(fills, 'total'), L = sum(fills, 'liters');
   return { per, avg: dist ? (liters / dist) * 100 : null, last, spent, liters: L, pricePerL: L ? spent / L : null };
 }
+
+// Por tipo de energía: combustible (litros) y electricidad (kWh), cada uno con su consumo lleno a lleno.
+// → { fuel, kwh, per: { id: consumo del tramo }, spent }
+export function energyStats(fills) {
+  const fuel = fuelStats(fills.filter((f) => f.energy !== 'kwh'));
+  const kwh = fuelStats(fills.filter((f) => f.energy === 'kwh'));
+  return { fuel, kwh, per: { ...fuel.per, ...kwh.per }, spent: fuel.spent + kwh.spent };
+}
+// Qué energías usa un vehículo: gasolina/diésel/GLP → combustible; eléctrico → kWh; híbrido enchufable → las dos
+export const energiesOf = (veh) => (!veh ? ['fuel'] : veh.fuel_type === 'electrico' ? ['kwh'] : veh.fuel_type === 'hibrido' ? ['fuel', 'kwh'] : ['fuel']);
 
 export function currentKm(v, fills, exps) {
   return Math.max(v.start_km || 0, ...fills.map((f) => f.km), ...exps.map((e) => e.km || 0));
@@ -53,6 +63,15 @@ export const fmt = {
   cons: (l100) => { const c = conv.cons(l100); return c == null ? '—' : n(c, 1); },
   consUnit: () => consUnit(),
   ppl: (perL) => (perL == null ? '—' : money(conv.perVol(perL), 3) + '/' + volUnit()),
+  kwh: (v) => (v == null ? '—' : n(v, 1) + ' kWh'),
+  ppkwh: (v) => (v == null ? '—' : money(v, 3) + '/kWh'),
+  econs: (kwh100) => { const c = econs(kwh100); return c == null ? '—' : n(c, 1); },
+  econsUnit: () => econsUnit(),
+  // cantidad y precio de un repostaje o de una recarga
+  qty: (f) => (f.energy === 'kwh' ? n(f.liters, 1) + ' kWh' : n(conv.vol(f.liters), 2) + ' ' + volUnit()),
+  unitPrice: (f) => (f.energy === 'kwh' ? money(f.total / f.liters, 3) + '/kWh' : money(conv.perVol(f.total / f.liters), 3) + '/' + volUnit()),
+  // corto, para las etiquetas de cada tramo: "6,2 L/100", "15,2 kWh/100", "42,1 mpg"
+  consOf: (f, v) => (f.energy === 'kwh' ? fmt.econs(v) + ' ' + econsUnit() : fmt.cons(v) + ' ' + consUnit()).replace(/\/100 (km|mi)$/, '/100'),
   perDist: (perKm) => (perKm == null ? '—' : money(conv.perDist(perKm), 3) + '/' + distUnit()),
   num: (v, max = 3) => (v == null ? '—' : n(v, 0, max)),
   date: (s) => (s ? new Date(s + 'T12:00').toLocaleDateString(locale(), { day: 'numeric', month: 'short', year: 'numeric' }) : ''),
@@ -104,6 +123,19 @@ export function reminderState(r, km) {
   }
   if (kmLeft != null && !kmFirst) parts.push(kmText());
   return { days, kmLeft, level: late ? 'late' : soon ? 'soon' : 'ok', score, text: parts.join(' · ') };
+}
+
+// Desgaste de una pieza: lo que lleva (km y meses) frente a su vida esperada. El mayor de los dos manda.
+// → { km, months, pct (0–∞, null si no hay vida esperada), level: ok | soon (≥ 85 %) | late (≥ 100 %) }
+export function partState(p, kmNow) {
+  const endKm = p.removed_km ?? kmNow, endDate = p.removed_date || today();
+  const km = p.installed_km != null && endKm != null ? Math.max(0, endKm - p.installed_km) : null;
+  const months = Math.max(0, daysBetween(p.installed_date, endDate) / 30.44);
+  const pcts = [];
+  if (p.life_km && km != null) pcts.push(km / p.life_km);
+  if (p.life_months) pcts.push(months / p.life_months);
+  const pct = pcts.length ? Math.max(...pcts) : null;
+  return { km, months, pct, level: pct == null ? 'ok' : pct >= 1 ? 'late' : pct >= 0.85 ? 'soon' : 'ok' };
 }
 
 // Siguiente vencimiento al marcarlo como hecho en `date` con `km`. null = no se repite.

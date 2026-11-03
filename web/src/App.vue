@@ -3,7 +3,7 @@
 import { ref, computed, onMounted } from 'vue';
 import { S, put, del, newId, setCurrent, setToken, DEMO, DEMO_ONLY, exitDemo } from './store.js';
 import { FORMS, optEmoji } from './forms.js';
-import { fuelStats, currentKm, nextDue } from './calc.js';
+import { energyStats, energiesOf, currentKm, nextDue } from './calc.js';
 import { I, install, hideIosTip } from './install.js';
 import { t } from './i18n/index.js';
 import Summary from './Summary.vue';
@@ -14,17 +14,22 @@ import FormSheet from './FormSheet.vue';
 import Settings from './Settings.vue';
 import Wizard from './Wizard.vue';
 import Conflicts from './Conflicts.vue';
+import Report from './Report.vue';
 
 const TABS = [['resumen', '🏠'], ['fuel', '⛽'], ['expenses', '🧾'], ['costs', '📊']];
 const tab = ref('resumen');
 const settings = ref(false);
 const conflicts = ref(false); // ficha de cambios que chocan con otro móvil
+const report = ref(false); // informe del historial (para imprimir / PDF)
 
 const veh = computed(() => S.vehicles.find((v) => v.id === S.current) || S.vehicles[0] || null);
 const fills = computed(() => (veh.value ? S.fuel.filter((f) => f.vehicle_id === veh.value.id) : []));
 const exps = computed(() => (veh.value ? S.expenses.filter((e) => e.vehicle_id === veh.value.id) : []));
 const rems = computed(() => (veh.value ? S.reminders.filter((r) => r.vehicle_id === veh.value.id) : []));
-const stats = computed(() => fuelStats(fills.value));
+const stats = computed(() => energyStats(fills.value));
+const energies = computed(() => energiesOf(veh.value)); // ['fuel'], ['kwh'] o las dos (híbrido enchufable)
+// Pestaña y mensajes: "Recargas" en un eléctrico
+const tabLabel = (id) => (id === 'fuel' && energies.value[0] === 'kwh' && energies.value.length === 1 ? t('app.tabs.charges') : t('app.tabs.' + id));
 const km = computed(() => (veh.value ? currentKm(veh.value, fills.value, exps.value) : 0));
 
 const status = computed(() => DEMO ? { cls: 'demo', txt: t('app.status.demo') } :
@@ -50,12 +55,21 @@ let doneOf = null; // recordatorio que se está marcando como hecho
 function open(kind, rec, prefill) {
   const isNew = !rec;
   const value = rec ? { ...rec } : { ...FORMS[kind].blank(veh.value && veh.value.id), id: newId() };
+  if (kind === 'fuel' && !rec) value.energy = energies.value[0]; // en un eléctrico, una recarga
+  if (kind === 'parts' && !rec) value.installed_km = km.value || null;
+  if (kind === 'fuel' && !value.energy) value.energy = 'fuel';
   const others = kind === 'fuel' ? fills.value.filter((f) => f.id !== value.id) : [];
-  sheet.value = { kind, value, isNew, ctx: { others, km: km.value }, plate: veh.value && veh.value.plate, prefill };
+  sheet.value = { kind, value, isNew, ctx: { others, km: km.value, energies: energies.value }, plate: veh.value && veh.value.plate, prefill };
 }
 // El escáner de un gasto ha visto un ticket de gasolinera: se abre un repostaje con esos datos y la foto
 function onSwitch(kind, data) {
   open(kind, null, data);
+}
+// Pieza cambiada: se guarda cuándo se quitó y, si se pide, se abre la ficha de la nueva (mismo tipo, posición y vida)
+let partOf = null;
+function openPartOff(p) {
+  partOf = p;
+  sheet.value = { kind: 'partOff', value: { ...FORMS.partOff.blank(km.value), id: 'partoff' }, isNew: true, heading: '🔁 ' + (p.name || t('opt.part.' + p.kind)) };
 }
 function openDone(r) {
   doneOf = r;
@@ -65,9 +79,17 @@ function onSave(rec) {
   const { kind, isNew } = sheet.value;
   sheet.value = null;
   if (kind === 'done') { markDone(doneOf, rec); return notify(t('app.toastDone', { title: doneOf.title })); }
+  if (kind === 'partOff') {
+    const p = partOf;
+    put('parts', { ...p, removed_date: rec.removed_date, removed_km: rec.removed_km });
+    if (!rec.replace) return notify(t('parts.retired'));
+    const next = { ...FORMS.parts.blank(p.vehicle_id, rec.removed_km), id: newId(), kind: p.kind, position: p.position, life_km: p.life_km, life_months: p.life_months, installed_date: rec.removed_date };
+    sheet.value = { kind: 'parts', value: next, isNew: true, ctx: { others: [], km: km.value } };
+    return;
+  }
   put(kind, rec);
   if (kind === 'vehicles') setCurrent(rec.id);
-  notify(t('kinds.' + kind + (isNew ? '.added' : '.saved')));
+  notify(t('kinds.' + (kind === 'fuel' && rec.energy === 'kwh' ? 'charge' : kind) + (isNew ? '.added' : '.saved')));
 }
 // Hecho: con importe se apunta el gasto; si se repite, se programa el siguiente aviso; si no, se borra
 function markDone(r, d) {
@@ -79,10 +101,10 @@ function markDone(r, d) {
   else del('reminders', r.id);
 }
 function onDelete() {
-  const kind = sheet.value.kind;
+  const kind = sheet.value.kind, charge = kind === 'fuel' && sheet.value.value.energy === 'kwh';
   del(kind, sheet.value.value.id);
   sheet.value = null;
-  notify(t('kinds.' + kind + '.deleted'));
+  notify(t('kinds.' + (charge ? 'charge' : kind) + '.deleted'));
 }
 
 // Accesos directos del icono (manifest: /?add=fuel, /?add=expenses)
@@ -147,8 +169,8 @@ function login() {
 
     <template v-if="veh">
       <Transition name="fade" mode="out-in">
-        <Summary v-if="tab === 'resumen'" :veh="veh" :fills="fills" :exps="exps" :reminders="rems" :stats="stats" :km="km" @edit="open" @add="open" @done="openDone" />
-        <FuelList v-else-if="tab === 'fuel'" :fills="fills" :stats="stats" @edit="open" />
+        <Summary v-if="tab === 'resumen'" :veh="veh" :fills="fills" :exps="exps" :reminders="rems" :stats="stats" :km="km" :energies="energies" @edit="open" @add="open" @done="openDone" @report="report = true" @part-off="openPartOff" />
+        <FuelList v-else-if="tab === 'fuel'" :fills="fills" :stats="stats" :energies="energies" @edit="open" />
         <ExpenseList v-else-if="tab === 'expenses'" :exps="exps" @edit="open" />
         <Costs v-else :veh="veh" :fills="fills" :exps="exps" :km="km" />
       </Transition>
@@ -160,7 +182,7 @@ function login() {
 
     <nav v-if="veh" class="bottom" :aria-label="t('app.sectionsNav')">
       <button v-for="[id, icon] in TABS" :key="id" :class="{ on: tab === id }" :aria-current="tab === id ? 'page' : undefined" @click="tab = id">
-        <span>{{ icon }}</span>{{ t('app.tabs.' + id) }}
+        <span>{{ id === 'fuel' && energies.length === 1 && energies[0] === 'kwh' ? '⚡' : icon }}</span>{{ tabLabel(id) }}
       </button>
     </nav>
 
@@ -173,6 +195,8 @@ function login() {
     <Transition name="sheet">
       <Settings v-if="settings" :vehicle-id="veh && veh.id" @close="settings = false" />
     </Transition>
+
+    <Report v-if="report && veh" :veh="veh" :km="km" @close="report = false" />
 
     <Transition name="toast">
       <div v-if="toast" class="toast" role="status">{{ toast }}</div>

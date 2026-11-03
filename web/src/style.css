@@ -430,3 +430,78 @@ p.err.full { padding: 10px 12px; border-radius: 12px; background: var(--danger-s
 .diff td { font-weight: 600; }
 .conflict-actions { flex-wrap: wrap; }
 .sheet:focus, .sheet-bg:focus { outline: none; }
+
+/* ---- informe del historial (Report.vue): en pantalla, una hoja; al imprimir, solo la hoja */
+.report-btn { margin-top: 14px; }
+.report-wrap { position: fixed; inset: 0; z-index: 15; overflow-y: auto; background: var(--bg); }
+.report-wrap:focus { outline: none; }
+.report-bar { position: sticky; top: 0; z-index: 1; display: flex; flex-wrap: wrap; align-items: center; gap: 8px 14px; padding: calc(env(safe-area-inset-top) + 10px) 16px 10px;
+  background: var(--card); border-bottom: 1px solid var(--line); }
+.report-opts { display: flex; flex-wrap: wrap; gap: 6px 14px; font-size: 14px; }
+.report-opts label { display: inline-flex; align-items: center; gap: 6px; }
+.report-opts input { width: 18px; height: 18px; accent-color: var(--accent); }
+.report-acts { display: flex; align-items: center; gap: 8px; margin-left: auto; }
+.report-help { flex-basis: 100%; color: var(--muted); font-size: 12.5px; }
+.report { max-width: 800px; margin: 16px auto 40px; padding: 32px 30px; background: #fff; color: #151a24; border-radius: 6px;
+  box-shadow: 0 6px 30px rgba(0, 0, 0, 0.12); font-size: 13px; line-height: 1.45; }
+.report h1 { margin: 2px 0 0; font-size: 26px; letter-spacing: -0.02em; }
+.report h2 { margin: 22px 0 8px; font-size: 13px; text-transform: uppercase; letter-spacing: 0.06em; color: #2148b8; }
+.rp-head { display: flex; justify-content: space-between; align-items: flex-end; gap: 16px; padding-bottom: 14px; border-bottom: 3px solid #2148b8; }
+.rp-kicker { margin: 0; color: #596274; font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.08em; }
+.rp-sub { margin: 4px 0 0; color: #596274; }
+.rp-odo { text-align: right; }
+.rp-odo small, .rp-grid small { display: block; color: #596274; font-size: 11px; }
+.rp-odo b { font-size: 22px; font-variant-numeric: tabular-nums; }
+.rp-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 10px; margin-top: 16px; }
+.rp-grid > div { padding: 8px 10px; border: 1px solid #e3e7ee; border-radius: 6px; }
+.rp-grid b { font-size: 15px; font-variant-numeric: tabular-nums; }
+.rp-table { width: 100%; border-collapse: collapse; }
+.rp-table th, .rp-table td { padding: 6px 8px; border-bottom: 1px solid #e3e7ee; text-align: left; vertical-align: top; }
+.rp-table thead th { color: #596274; font-size: 11px; text-transform: uppercase; letter-spacing: 0.05em; border-bottom: 1.5px solid #c9d0db; }
+.rp-table td small { display: block; color: #596274; }
+.rp-table td:nth-child(-n+2) { white-space: nowrap; }
+.rp-table .num { text-align: right; font-variant-numeric: tabular-nums; white-space: nowrap; }
+.rp-table.compact th { font-weight: 600; width: 45%; }
+.rp-clip { color: #596274; font-size: 11px; }
+.rp-cols { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; }
+.rp-empty { color: #596274; }
+.rp-foot { margin-top: 26px; padding-top: 10px; border-top: 1px solid #e3e7ee; color: #596274; font-size: 11px; }
+@media (max-width: 600px) { .report { margin: 0; padding: 20px 16px; border-radius: 0; } .rp-cols { grid-template-columns: 1fr; } .rp-table { font-size: 12px; } }
+@media print {
+  @page { margin: 14mm; }
+  html, body { background: #fff !important; }
+  .app > *:not(.report-wrap) { display: none !important; }
+  .report-wrap { position: static; overflow: visible; background: #fff; }
+  .report-bar { display: none; }
+  .report { max-width: none; margin: 0; padding: 0; box-shadow: none; border-radius: 0; }
+  .rp-table tr, .rp-grid > div { break-inside: avoid; }
+}
+.settings-cal { gap: 8px; }
+.settings-cal .inp input { font-size: 13px; }
+.link.danger-soft { justify-self: start; padding: 4px 0; color: var(--muted); font-size: 13px; font-weight: 600; text-align: left; }
+
+/* ---- neumáticos y piezas */
+.part { cursor: pointer; border-left: 4px solid var(--ok); }
+.part.soon { border-left-color: var(--warn); }
+.part.late { border-left-color: var(--danger); }
+.part .lvl { font-size: 14px; color: var(--ok); }
+.part.soon .lvl { color: var(--warn); }
+.part.late .lvl { color: var(--danger); }
+.part-end { display: grid; justify-items: end; gap: 4px; flex: none; }
+.wear { display: block; height: 6px; margin-top: 6px; border-radius: 3px; background: var(--line); overflow: hidden; }
+.wear i { display: block; height: 100%; border-radius: 3px; background: var(--ok); }
+.part.soon .wear i { background: var(--warn); }
+.part.late .wear i { background: var(--danger); }
+.part-history { margin-top: 4px; }
+.part-history summary { padding: 6px 2px; color: var(--muted); font-size: 14px; font-weight: 600; cursor: pointer; }
+
+/* ---- personas con acceso */
+.settings-people { gap: 8px; }
+.people { display: grid; gap: 6px; margin: 0; padding: 0; list-style: none; }
+.people li { display: flex; align-items: center; gap: 8px; padding: 8px 10px; border-radius: 12px; background: var(--field); border: 1px solid var(--line); color: var(--text); font-size: 15px; }
+.people li > span { flex: 1; min-width: 0; }
+.people li small { display: block; color: var(--muted); font-size: 12px; }
+.people li .link { padding: 4px 0; font-size: 13px; }
+.people-add { display: flex; gap: 8px; align-items: center; }
+.people-add .inp { flex: 1; min-width: 0; min-height: 44px; }
+.people-add .inp input { min-height: 41px; }

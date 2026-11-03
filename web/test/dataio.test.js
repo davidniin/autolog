@@ -8,15 +8,16 @@ beforeEach(() => {
   S.fuel = [{ id: 'f1', vehicle_id: 'v1', date: '2024-01-10', km: 1000, liters: 40, total: 60, full_tank: true, station: 'Repsol, Centro', note: '' }];
   S.expenses = [{ id: 'e1', vehicle_id: 'v2', date: '2024-02-01', km: null, cat: 'seguro', title: 'Seguro "todo riesgo"', amount: 120, note: '' }];
   S.reminders = [];
+  S.parts = [];
   S.queue = [];
 });
 
 describe('CSV', () => {
   it('exports with header, BOM and quoting, and parses it back', () => {
     const csv = fuelCSV();
-    expect(csv.startsWith('\ufeffvehicle,date,km,liters,total,full_tank,station,note')).toBe(true);
+    expect(csv.startsWith('\ufeffvehicle,date,km,liters,total,full_tank,station,note,energy')).toBe(true);
     const rows = parseCSV(csv);
-    expect(rows[1]).toEqual(['Golf', '2024-01-10', '1000', '40', '60', '1', 'Repsol, Centro', '']);
+    expect(rows[1]).toEqual(['Golf', '2024-01-10', '1000', '40', '60', '1', 'Repsol, Centro', '', 'fuel']);
     expect(parseCSV(expensesCSV())[1][4]).toBe('Seguro "todo riesgo"');
   });
   it('re-importing an export adds nothing', () => {
@@ -42,8 +43,8 @@ describe('CSV', () => {
 describe('backup', () => {
   it('a backup of the same data adds nothing; into an empty app it adds everything', () => {
     const json = backupJSON();
-    expect(planCounts(planImport('b.json', json))).toEqual({ vehicles: 0, fuel: 0, expenses: 0, reminders: 0 });
+    expect(planCounts(planImport('b.json', json))).toEqual({ vehicles: 0, fuel: 0, expenses: 0, reminders: 0, parts: 0 });
     S.vehicles = []; S.fuel = []; S.expenses = [];
-    expect(planCounts(planImport('b.json', json))).toEqual({ vehicles: 2, fuel: 1, expenses: 1, reminders: 0 });
+    expect(planCounts(planImport('b.json', json))).toEqual({ vehicles: 2, fuel: 1, expenses: 1, reminders: 0, parts: 0 });
   });
 });

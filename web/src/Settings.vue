@@ -4,9 +4,10 @@ import { computed, ref } from 'vue';
 import { useDialog } from './dialog.js';
 import { t, L, LANGS, setLang } from './i18n/index.js';
 import { refreshPush } from './push.js';
-import { putSettings, restoreBackup, DEMO } from './store.js';
+import { S, putSettings, restoreBackup, DEMO, call, logout } from './store.js';
 import { backupJSON, fuelCSV, expensesCSV, download, fileName, planImport, planCounts, applyImport } from './dataio.js';
 import { UP, UNIT_OPTIONS, PRESETS, currencyList } from './units.js';
+import { fmt } from './calc.js';
 
 const props = defineProps({ vehicleId: String }); // vehículo actual: destino de un CSV sin columna "vehicle"
 const emit = defineEmits(['close', 'imported']);
@@ -23,6 +24,57 @@ const prefs = () => ({ distance: UP.distance, volume: UP.volume, consumption: UP
 const setPref = (k, v) => putSettings({ ...prefs(), [k]: v });
 const applyPreset = (p) => putSettings({ ...prefs(), ...p });
 const isPreset = (p) => Object.entries(p).every(([k, v]) => UP[k] === v);
+
+// ------------------------------------------------------------ calendario de avisos (enlace con clave propia, solo lectura)
+const cal = ref(''); // URL del calendario
+const calMsg = ref('');
+const calUrl = (key) => location.origin + '/v1/calendar.ics?key=' + encodeURIComponent(key) + '&lang=' + L.lang;
+async function calendar(reset = false) {
+  calMsg.value = '';
+  if (reset && !confirm(t('cal.resetConfirm'))) return;
+  try {
+    const r = await call(reset ? 'POST' : 'GET', '/v1/calendar' + (reset ? '/reset' : ''));
+    if (!r.ok) throw new Error();
+    cal.value = calUrl((await r.json()).key);
+    if (reset) calMsg.value = t('cal.resetDone');
+  } catch (e) { calMsg.value = t('files.offline'); }
+}
+async function copyCal() {
+  try { await navigator.clipboard.writeText(cal.value); calMsg.value = t('cal.copied'); } catch (e) { calMsg.value = t('cal.copyManual'); }
+}
+
+// ------------------------------------------------------------ personas con acceso (solo el propietario) y salir
+const people = ref(null); // null = sin cargar
+const newName = ref('');
+const invite = ref(null); // { name, url }: el enlace se enseña una sola vez
+const peopleMsg = ref('');
+async function loadPeople() {
+  try { const r = await call('GET', '/v1/users'); if (r.ok) people.value = await r.json(); } catch (e) { peopleMsg.value = t('files.offline'); }
+}
+async function addPerson() {
+  peopleMsg.value = '';
+  const name = newName.value.trim();
+  if (!name) return;
+  try {
+    const r = await call('POST', '/v1/users', { name });
+    if (!r.ok) throw new Error();
+    const d = await r.json();
+    invite.value = { name: d.user.name, url: location.origin + '/?token=' + encodeURIComponent(d.token) };
+    newName.value = '';
+    loadPeople();
+  } catch (e) { peopleMsg.value = t('files.offline'); }
+}
+async function removePerson(u) {
+  if (!confirm(t('people.removeConfirm', { name: u.name }))) return;
+  try { await call('DELETE', '/v1/users/' + encodeURIComponent(u.id)); loadPeople(); } catch (e) { peopleMsg.value = t('files.offline'); }
+}
+async function copyInvite() {
+  try { await navigator.clipboard.writeText(invite.value.url); peopleMsg.value = t('cal.copied'); } catch (e) { peopleMsg.value = t('cal.copyManual'); }
+}
+function leave() {
+  if (confirm(S.queue.length ? t('people.logoutPending', { n: S.queue.length }) : t('people.logoutConfirm'))) logout();
+}
+const seen = (u) => (u.last_seen ? fmt.date(u.last_seen.slice(0, 10)) : t('people.never'));
 
 // ------------------------------------------------------------ tus datos
 const plan = ref(null); // importación pendiente de confirmar
@@ -104,6 +156,22 @@ const currencies = computed(() => currencyList(L.lang));
         <small class="form-note">{{ t('settings.unitsNote') }} {{ t('settings.currencyNote') }}</small>
       </div>
 
+      <div v-if="!DEMO" class="field full settings-cal">
+        <span class="lbl">📅 {{ t('cal.title') }}</span>
+        <small class="form-note">{{ t('cal.text') }}</small>
+        <button v-if="!cal" type="button" class="io-btn" @click="calendar()">{{ t('cal.get') }}</button>
+        <template v-else>
+          <span class="inp"><input :value="cal" readonly :aria-label="t('cal.title')" @focus="$event.target.select()" /></span>
+          <div class="io-btns">
+            <button type="button" class="io-btn" @click="copyCal">📋 {{ t('cal.copy') }}</button>
+            <a class="io-btn" :href="cal.replace(/^https?:/, 'webcal:')">📅 {{ t('cal.open') }}</a>
+          </div>
+          <small class="form-note">{{ t('cal.google') }}</small>
+          <button v-if="S.me && S.me.admin" type="button" class="link danger-soft" @click="calendar(true)">{{ t('cal.reset') }}</button>
+        </template>
+        <p v-if="calMsg" class="hint">{{ calMsg }}</p>
+      </div>
+
       <div class="field full settings-data">
         <span class="lbl">{{ t('io.title') }}</span>
         <div class="io-btns">
@@ -126,6 +194,34 @@ const currencies = computed(() => currencyList(L.lang));
           </span>
         </div>
         <p v-if="ioMsg" class="hint">{{ ioMsg }}</p>
+      </div>
+
+      <div v-if="!DEMO" class="field full settings-people">
+        <span class="lbl">👥 {{ t('people.title') }}</span>
+        <small class="form-note">{{ S.me && !S.me.admin ? t('people.youAre', { name: S.me.name }) : t('people.youAreOwner') }}</small>
+        <template v-if="S.me && S.me.admin">
+          <small class="form-note">{{ t('people.text') }}</small>
+          <button v-if="people === null" type="button" class="io-btn" @click="loadPeople">{{ t('people.manage') }}</button>
+          <template v-else>
+            <ul class="people">
+              <li v-for="u in people" :key="u.id"><span><b>{{ u.name }}</b><small>{{ t('people.lastSeen', { when: seen(u) }) }}</small></span>
+                <button type="button" class="link danger" @click="removePerson(u)">{{ t('people.remove') }}</button></li>
+              <li v-if="!people.length" class="form-note">{{ t('people.none') }}</li>
+            </ul>
+            <form class="people-add" @submit.prevent="addPerson">
+              <span class="inp"><input v-model="newName" maxlength="40" :placeholder="t('people.namePh')" :aria-label="t('people.namePh')" /></span>
+              <button class="primary small" :disabled="!newName.trim()">{{ t('people.add') }}</button>
+            </form>
+            <div v-if="invite" class="io-plan" role="status">
+              <p v-html="t('people.inviteTitle', { name: invite.name })"></p>
+              <span class="inp"><input :value="invite.url" readonly :aria-label="t('people.inviteLink')" @focus="$event.target.select()" /></span>
+              <span class="scan-acts"><button type="button" class="primary small" @click="copyInvite">📋 {{ t('cal.copy') }}</button></span>
+              <small>{{ t('people.inviteNote') }}</small>
+            </div>
+          </template>
+        </template>
+        <p v-if="peopleMsg" class="hint">{{ peopleMsg }}</p>
+        <button type="button" class="link danger-soft" @click="leave">↩ {{ t('people.logout') }}</button>
       </div>
 
       <div class="field full about">

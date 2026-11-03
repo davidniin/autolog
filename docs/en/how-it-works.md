@@ -68,6 +68,47 @@ With no vehicles yet, a short wizard asks for the language, the units and curren
 chose them) and opens the form for the first vehicle. It can also restore a backup or open the demo. The password
 screen explains where to find `AUTOLOG_TOKEN`.
 
+## Electric and plug-in hybrid vehicles
+
+Set the vehicle's fuel to **Electric** or **Plug-in hybrid**. Each fill-up then has an energy: fuel (litres) or
+electricity (kWh) — always kWh for an electric car, chosen on each one for a plug-in hybrid. Consumption is computed
+separately, full-to-full ("Charged to 100%"): L/100 km for fuel and kWh/100 km (mi/kWh with miles) for electricity. The
+form, lists, costs and the scanner (kWh on charging receipts) adapt. Stored in the same table with `energy = kwh`.
+
+## History report (PDF for selling)
+
+**Summary → History for selling** opens a report made to show a buyer: vehicle data, distance recorded, average
+consumption, the **maintenance, repairs and inspections** with date, mileage and invoice, **tyres and parts** (what was
+fitted and how long the old ones lasted), **mileage recorded per year** (consistent odometer) and upcoming reminders.
+Choose whether to show amounts, all expenses and notes (they can be personal). It's printed with the browser: *Print →
+Save as PDF* (on iPhone: *Share → Print*, then share the PDF). Code: `web/src/Report.vue`.
+
+## Reminder calendar
+
+**⚙ Settings → Reminder calendar** gives a URL to subscribe from Google Calendar, Apple Calendar or Outlook; it updates
+by itself (`GET /v1/calendar.ics`). Reminders with a date are all-day events with an alert a week before; mileage-only
+reminders get an **estimated date** from the distance driven per day in the last months (marked "~"). Calendar apps
+can't send the password, so the URL has **its own key: read-only and only for this feed**. The owner can replace it,
+which stops the old URL. **Google Calendar downloads the feed from Google's servers**: it only works if AutoLog is
+reachable from the internet; with a private setup (Tailscale) use Apple Calendar or Outlook on the phone. Code:
+`server/src/calendar.js`.
+
+## Tyres and parts
+
+**Summary → Tyres and parts**: tyres, battery, brake pads and discs, timing belt, wipers… with the date and mileage
+they were fitted and their expected life (km and/or months, templates with typical values). Wear is whichever is
+closer: distance or time (⚠ from 85 %, ⛔ from 100 %). **Replaced** records when and at what mileage it was removed,
+moves it to the history ("lasted 38,100 km") and offers to fit the new one with the same position and life.
+
+## People with access
+
+The installation's `AUTOLOG_TOKEN` is the **owner's** password. In **⚙ Settings → People with access** the owner adds
+people by name; each gets **their own password**, shown once as an invitation link (`/?token=…`). Everyone shares the
+same data; removing someone signs them out immediately without changing anyone else's password. Only the **SHA-256
+hash** of each password is stored. Every record shows who edited it last ("Last edited: Ana · 3 Nov") — set by the
+server, not the phone. Only the owner can manage people, restore a backup or replace the calendar link. **Sign out
+of this phone** removes the password and the data stored on that phone. Code: `server/src/users.js`.
+
 ## Consumption: full-to-full method
 
 Each fill-up says whether the tank was filled. Between two full fills, consumption is the litres added after the first
@@ -179,14 +220,19 @@ accepts `?lang=es|en`.
 | Method | Path | |
 |---|---|---|
 | GET | `/v1/health` | Status (no password) |
-| GET | `/v1/data` | `{ vehicles, fuel, expenses, reminders, files, settings }`, all at once |
+| GET | `/v1/data` | `{ vehicles, fuel, expenses, reminders, parts, files, settings }`, all at once |
 | PUT | `/v1/settings` | Units and currency: `{ distance: km\|mi, volume: l\|gal_us\|gal_uk, consumption: l100\|kml\|mpg_us\|mpg_uk, currency: "EUR" }` |
-| PUT | `/v1/{vehicles,fuel,expenses,reminders}/:id` | Create or update (idempotent: the id comes from the client). With `base_rev`, `409` if another phone changed it |
-| DELETE | `/v1/{vehicles,fuel,expenses,reminders}/:id` | Delete. Deleting a vehicle deletes everything it has |
+| PUT | `/v1/{vehicles,fuel,expenses,reminders,parts}/:id` | Create or update (idempotent: the id comes from the client). With `base_rev`, `409` if another phone changed it |
+| DELETE | `/v1/{vehicles,fuel,expenses,reminders,parts}/:id` | Delete. Deleting a vehicle deletes everything it has |
 | POST | `/v1/files` | Upload an attachment (multipart: `file`, `id`, `vehicle_id`, `parent_kind` = vehicles · expenses · fuel, `parent_id`) |
 | GET / DELETE | `/v1/files/:id` | Open or delete an attachment |
 | GET | `/v1/backup` | Backup with photos (ZIP: `autolog.json` + `files/<id>`) |
 | POST | `/v1/restore` | Restore that ZIP (body = the ZIP), merging. `?settings=1` also applies its units/currency |
+| GET | `/v1/me` | Who am I: `{ id, name, admin }` (`name` empty = the owner) |
+| GET · POST | `/v1/users` | People with access (owner only). POST `{ name }` → `{ user, token }`, the token is shown only here |
+| DELETE | `/v1/users/:id` | Remove a person's access (owner only) |
+| GET | `/v1/calendar` | The calendar key · POST `/v1/calendar/reset` replaces it (owner only) |
+| GET | `/v1/calendar.ics?key=…&lang=es\|en` | Reminders as an iCalendar feed (its own read-only key, no password) |
 | GET | `/v1/alerts` | Pending reminders (*soon* / *overdue*) of every vehicle, e.g. for a home dashboard |
 | GET | `/v1/push/key` | Public VAPID key |
 | POST | `/v1/push/subscribe` · `/unsubscribe` · `/test` · `/check` | Push subscriptions and sending |

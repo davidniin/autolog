@@ -3,15 +3,15 @@
 //   Las fotos y PDF adjuntos NO van dentro (están en el servidor: ver docs, "Copias de seguridad").
 // - CSV de repostajes y de gastos (para Excel / Google Sheets). Siempre en km, litros y la moneda de la instalación,
 //   con estas columnas (las mismas al importar):
-//     repostajes: vehicle, date, km, liters, total, full_tank, station, note
+//     repostajes: vehicle, date, km, liters, total, full_tank, station, note, energy (fuel | kwh: liters son kWh)
 //     gastos:     vehicle, date, km, category, title, amount, note
 // Importar es seguro de repetir: los registros que ya existen (mismo id, o mismos datos) se saltan.
 import { S, putMany, newId, putSettings } from './store.js';
 import { num, today } from './calc.js';
 import { OPTIONS } from './forms.js';
 
-export const KINDS = ['vehicles', 'fuel', 'expenses', 'reminders'];
-const FUEL_COLS = ['vehicle', 'date', 'km', 'liters', 'total', 'full_tank', 'station', 'note'];
+export const KINDS = ['vehicles', 'fuel', 'expenses', 'reminders', 'parts'];
+const FUEL_COLS = ['vehicle', 'date', 'km', 'liters', 'total', 'full_tank', 'station', 'note', 'energy'];
 const EXP_COLS = ['vehicle', 'date', 'km', 'category', 'title', 'amount', 'note'];
 
 // ------------------------------------------------------------ exportar
@@ -29,7 +29,7 @@ const vehName = (id) => (S.vehicles.find((v) => v.id === id) || {}).name || '';
 
 export function fuelCSV() {
   const rows = [...S.fuel].sort((a, b) => a.date.localeCompare(b.date) || a.km - b.km)
-    .map((f) => [vehName(f.vehicle_id), f.date, f.km, f.liters, f.total, f.full_tank ? 1 : 0, f.station, f.note]);
+    .map((f) => [vehName(f.vehicle_id), f.date, f.km, f.liters, f.total, f.full_tank ? 1 : 0, f.station, f.note, f.energy === 'kwh' ? 'kwh' : 'fuel']);
   return toCSV(FUEL_COLS, rows);
 }
 export function expensesCSV() {
@@ -108,7 +108,8 @@ export function planImport(name, text, vehicleId) {
       if (!veh || !date || !(km > 0) || !(liters > 0) || !(total > 0)) { plan.invalid++; continue; }
       rec = { id: newId(), vehicle_id: veh.id, date, km: Math.round(km), liters, total,
         full_tank: head.includes('full_tank') ? yes(col(r, 'full_tank')) : true,
-        station: (col(r, 'station') || '').trim().slice(0, 60), note: (col(r, 'note') || '').trim().slice(0, 500) };
+        station: (col(r, 'station') || '').trim().slice(0, 60), note: (col(r, 'note') || '').trim().slice(0, 500),
+        energy: /^kwh$/i.test((col(r, 'energy') || '').trim()) ? 'kwh' : 'fuel' };
       const dup = S.fuel.some((f) => f.vehicle_id === rec.vehicle_id && f.date === rec.date && f.km === rec.km && Math.abs(f.liters - rec.liters) < 0.01);
       if (dup || plan.add.fuel.some((f) => f.vehicle_id === rec.vehicle_id && f.date === rec.date && f.km === rec.km)) { plan.skipped++; continue; }
       plan.add.fuel.push(rec);
@@ -138,7 +139,7 @@ function planBackup(d) {
   }
   // Lo que no tenga su vehículo (ni en los datos ni en la copia) no se puede importar
   const vids = new Set([...S.vehicles, ...plan.add.vehicles].map((v) => v.id));
-  for (const k of ['fuel', 'expenses', 'reminders']) {
+  for (const k of ['fuel', 'expenses', 'reminders', 'parts']) {
     const ok = plan.add[k].filter((x) => vids.has(x.vehicle_id));
     plan.invalid += plan.add[k].length - ok.length;
     plan.add[k] = ok;

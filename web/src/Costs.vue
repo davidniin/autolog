@@ -1,7 +1,7 @@
 <script setup>
 // Costes: €/mes, €/km, gráfico de los últimos 12 meses (combustible + otros) y reparto por categoría.
 import { ref, computed } from 'vue';
-import { costs, fmt, monthName } from './calc.js';
+import { costs, fmt, monthName, energiesOf } from './calc.js';
 import { optLabel } from './forms.js';
 import { t } from './i18n/index.js';
 import { distUnit } from './units.js';
@@ -16,7 +16,10 @@ const year = computed(() => C.value.months.reduce((s, m) => s + m.fuel + m.other
 const cur = computed(() => C.value.months[sel.value]);
 const pct = (v) => (v / max.value) * 100 + '%';
 
-const catLabel = (c) => optLabel('cat', c);
+// "Combustible" en Costes: combustible, electricidad o las dos, según el vehículo
+const energies = computed(() => energiesOf(props.veh));
+const fuelKey = computed(() => (energies.value.length > 1 ? 'fuelAndCharge' : energies.value[0] === 'kwh' ? 'charge' : 'fuel'));
+const catLabel = (c) => optLabel('cat', c === 'fuel' ? fuelKey.value : c);
 </script>
 
 <template>
@@ -45,7 +48,7 @@ const catLabel = (c) => optLabel('cat', c);
         <span>{{ fmt.money(cur.fuel + cur.other) }}</span>
       </div>
       <div class="legend">
-        <span><i class="sw fuel"></i>{{ t('costs.fuel') }} {{ fmt.money(cur.fuel) }}</span>
+        <span><i class="sw fuel"></i>{{ t('opt.cat.' + fuelKey) }} {{ fmt.money(cur.fuel) }}</span>
         <span><i class="sw other"></i>{{ t('costs.other') }} {{ fmt.money(cur.other) }}</span>
       </div>
       <div class="bars" role="group" :aria-label="t('costs.chartAria', { max: fmt.money(max) })">

@@ -13,7 +13,7 @@ import { sql, TABLES, clean, readAll } from './db.js';
 import { fileOf, KINDS as FILE_KINDS, OK_MIME, MAX_BYTES } from './files.js';
 import { getPrefs, setPrefs, cleanPrefs } from './settings.js';
 
-const ORDER = ['vehicles', 'fuel', 'expenses', 'reminders']; // vehicles first: the rest point to them
+const ORDER = ['vehicles', 'fuel', 'expenses', 'reminders', 'parts']; // vehicles first: the rest point to them
 const ID = /^[\w-]{1,64}$/;
 
 // ------------------------------------------------------------ backup (stream)
@@ -91,7 +91,7 @@ export async function restoreStream(body, { withSettings = false } = {}) {
 }
 
 async function merge(d, tmp, withSettings) {
-  const added = { vehicles: 0, fuel: 0, expenses: 0, reminders: 0, files: 0 };
+  const added = { vehicles: 0, fuel: 0, expenses: 0, reminders: 0, parts: 0, files: 0 };
   let skipped = 0, invalid = 0;
   await sql.begin(async (tx) => {
     for (const kind of ORDER) {

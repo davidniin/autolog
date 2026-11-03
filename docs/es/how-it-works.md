@@ -68,6 +68,50 @@ Si aún no hay vehículos, un asistente corto pide el idioma, las unidades y la 
 eligió) y abre la ficha del primer vehículo. También permite restaurar una copia o abrir la demo. La pantalla de la
 clave explica dónde se encuentra `AUTOLOG_TOKEN`.
 
+## Coches eléctricos e híbridos enchufables
+
+Pon como combustible del vehículo **Eléctrico** o **Híbrido enchufable**. Cada repostaje lleva entonces una energía:
+combustible (litros) o electricidad (kWh); en un eléctrico siempre es kWh, y en un híbrido enchufable se elige en cada
+uno. El consumo se calcula por separado, lleno a lleno («Cargado al 100 %»): L/100 km para el combustible y kWh/100 km
+(mi/kWh con millas) para la electricidad. El formulario, las listas, los costes y el escáner (kWh en los tickets de
+recarga) se adaptan. Se guarda en la misma tabla con `energy = kwh`.
+
+## Informe del historial (PDF para vender)
+
+**Resumen → Historial para vender** abre un informe pensado para enseñarlo a quien compra: datos del vehículo,
+recorrido registrado, consumo medio, el **mantenimiento, las reparaciones y las ITV** con fecha, km y factura, los
+**neumáticos y piezas** (lo que se montó y lo que duraron los anteriores), el **kilometraje registrado por año**
+(cuentakilómetros coherente) y los próximos avisos. Se elige si se enseñan los importes, todos los gastos y las notas
+(pueden ser personales). Se imprime con el navegador: *Imprimir → Guardar como PDF* (en iPhone: *Compartir →
+Imprimir* y se comparte el PDF). Código: `web/src/Report.vue`.
+
+## Calendario de avisos
+
+**⚙ Ajustes → Calendario de avisos** da una URL para suscribirse desde Google Calendar, Apple o Outlook; se actualiza
+sola (`GET /v1/calendar.ics`). Los avisos con fecha son eventos de día completo con una alerta una semana antes; los
+que van solo por km llevan una **fecha estimada** por los km que haces al día en los últimos meses (marcada con «~»).
+Los calendarios no pueden enviar la clave, así que la URL lleva **su propia clave: solo de lectura y solo para esto**.
+El propietario puede cambiarla, y la URL anterior deja de funcionar. **Google Calendar descarga el calendario desde
+los servidores de Google**: solo funciona si AutoLog es accesible desde internet; con una instalación privada
+(Tailscale) usa Apple Calendar u Outlook en el móvil. Código: `server/src/calendar.js`.
+
+## Neumáticos y piezas
+
+**Resumen → Neumáticos y piezas**: neumáticos, batería, pastillas y discos, correa de distribución, escobillas… con la
+fecha y los km de montaje y su vida esperada (km y/o meses; plantillas con valores típicos). El desgaste es lo que más
+se acerque: los km o el tiempo (⚠ desde el 85 %, ⛔ desde el 100 %). **Cambiada** guarda cuándo y con cuántos km se
+quitó, la pasa al historial («duró 38.100 km») y ofrece montar la nueva con la misma posición y vida.
+
+## Personas con acceso
+
+El `AUTOLOG_TOKEN` de la instalación es la clave del **propietario**. En **⚙ Ajustes → Personas con acceso** el
+propietario añade personas por su nombre; cada una tiene **su propia clave**, que se enseña una sola vez como enlace de
+invitación (`/?token=…`). Todos comparten los mismos datos; quitar el acceso a alguien lo desconecta al momento sin
+cambiar la clave de nadie más. Solo se guarda el **hash SHA-256** de cada clave. Cada registro dice quién lo editó por
+última vez («Última edición: Ana · 3 nov»), y eso lo pone el servidor, no el móvil. Solo el propietario puede gestionar
+personas, restaurar una copia o cambiar el enlace del calendario. **Salir de este móvil** borra la clave y los datos
+guardados en ese móvil. Código: `server/src/users.js`.
+
 ## Consumo: método lleno a lleno
 
 En cada repostaje se marca si se ha llenado el depósito. Entre dos llenados, el consumo es la suma de los litros
@@ -185,14 +229,19 @@ acepta `?lang=es|en`.
 | Método | Ruta | |
 |---|---|---|
 | GET | `/v1/health` | Estado (sin clave) |
-| GET | `/v1/data` | `{ vehicles, fuel, expenses, reminders, files, settings }`, todo de una vez |
+| GET | `/v1/data` | `{ vehicles, fuel, expenses, reminders, parts, files, settings }`, todo de una vez |
 | PUT | `/v1/settings` | Unidades y moneda: `{ distance: km\|mi, volume: l\|gal_us\|gal_uk, consumption: l100\|kml\|mpg_us\|mpg_uk, currency: "EUR" }` |
-| PUT | `/v1/{vehicles,fuel,expenses,reminders}/:id` | Crea o actualiza (idempotente: el id lo pone el cliente). Con `base_rev`, `409` si otro móvil lo cambió |
-| DELETE | `/v1/{vehicles,fuel,expenses,reminders}/:id` | Borra. Borrar un vehículo borra todo lo suyo |
+| PUT | `/v1/{vehicles,fuel,expenses,reminders,parts}/:id` | Crea o actualiza (idempotente: el id lo pone el cliente). Con `base_rev`, `409` si otro móvil lo cambió |
+| DELETE | `/v1/{vehicles,fuel,expenses,reminders,parts}/:id` | Borra. Borrar un vehículo borra todo lo suyo |
 | POST | `/v1/files` | Sube un adjunto (multipart: `file`, `id`, `vehicle_id`, `parent_kind` = vehicles · expenses · fuel, `parent_id`) |
 | GET / DELETE | `/v1/files/:id` | Abre o borra un adjunto |
 | GET | `/v1/backup` | Copia con fotos (ZIP: `autolog.json` + `files/<id>`) |
 | POST | `/v1/restore` | Restaura ese ZIP (el cuerpo es el ZIP), fusionándolo. `?settings=1` aplica también sus unidades y moneda |
+| GET | `/v1/me` | Quién soy: `{ id, name, admin }` (`name` vacío = el propietario) |
+| GET · POST | `/v1/users` | Personas con acceso (solo el propietario). POST `{ name }` → `{ user, token }`, la clave solo sale aquí |
+| DELETE | `/v1/users/:id` | Quita el acceso a una persona (solo el propietario) |
+| GET | `/v1/calendar` | La clave del calendario · POST `/v1/calendar/reset` la cambia (solo el propietario) |
+| GET | `/v1/calendar.ics?key=…&lang=es\|en` | Avisos como calendario iCalendar (clave propia de solo lectura, sin la clave de la app) |
 | GET | `/v1/alerts` | Avisos pendientes (*pronto* / *vencido*) de todos los vehículos, p. ej. para un panel en casa |
 | GET | `/v1/push/key` | Clave pública VAPID |
 | POST | `/v1/push/subscribe` · `/unsubscribe` · `/test` · `/check` | Suscripciones y envío |
