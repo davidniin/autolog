@@ -2,7 +2,8 @@
 // Ficha inferior genérica: pinta los campos de FORMS[kind], los valida (validate.js) y devuelve el registro limpio.
 // Los errores de cada campo aparecen al salir de él o al pulsar Guardar; al guardar se salta al primer campo con error.
 import { reactive, ref, computed, nextTick } from 'vue';
-import { FORMS, OPTIONS, optLabel, unitLabel, preset } from './forms.js';
+import { FORMS, OPTIONS, optLabel, unitLabel, labelParams, preset } from './forms.js';
+import { toDisplay } from './units.js';
 import { today, numInput } from './calc.js';
 import { t } from './i18n/index.js';
 import { validate, sanitizeNum } from './validate.js';
@@ -30,10 +31,17 @@ fill(props.value);
 const orig = { ...m }; // valores iniciales: el escáner puede sustituirlos (p. ej. la fecha de hoy)
 if (props.prefill) applyScan({ values: props.prefill.values });
 
+// Valor guardado (km, litros) → texto del campo en las unidades elegidas, redondeado como se escribe
+function show(f, v) {
+  const d = toDisplay(f.unit, Number(v));
+  const dec = f.int ? 0 : f.dec ?? 3;
+  return numInput(Math.round(d * 10 ** dec) / 10 ** dec);
+}
+
 // Plantillas (p. ej. "Aceite cada 15.000 km"): rellenan el formulario
 function fill(v) {
   Object.assign(m, v);
-  for (const f of form.fields) if (f.type === 'num' && v[f.k] != null) m[f.k] = numInput(v[f.k]);
+  for (const f of form.fields) if (f.type === 'num' && v[f.k] != null) m[f.k] = show(f, v[f.k]);
   for (const k in touched) delete touched[k];
   submitted.value = false;
 }
@@ -45,7 +53,7 @@ function applyScan({ values }) {
     if (v == null || v === '') continue;
     const cur = m[f.k];
     if (!(cur == null || cur === '' || cur === orig[f.k] || auto[f.k])) continue;
-    m[f.k] = f.type === 'num' ? numInput(v) : v;
+    m[f.k] = f.type === 'num' ? show(f, v) : v;
     auto[f.k] = true;
     touched[f.k] = true;
   }
@@ -117,16 +125,16 @@ function remove() {
       />
       <template v-for="f in form.fields" :key="f.k">
         <div v-if="f.type === 'chips'" class="field full" :class="{ auto: auto[f.k] }" role="group" :aria-label="t(f.label)">
-          <span class="lbl">{{ t(f.label) }}<em v-if="auto[f.k]" class="auto-tag">{{ t('f.autoTag') }}</em></span>
+          <span class="lbl">{{ t(f.label, labelParams()) }}<em v-if="auto[f.k]" class="auto-tag">{{ t('f.autoTag') }}</em></span>
           <div class="chips">
             <button v-for="[v, l] in chips(f)" :key="v" type="button" :class="{ on: m[f.k] === v }" :aria-pressed="m[f.k] === v" @click="pickChip(f, v)">{{ l }}</button>
           </div>
         </div>
         <label v-else-if="f.type === 'check'" class="check full">
-          <input type="checkbox" v-model="m[f.k]" /> {{ t(f.label) }}
+          <input type="checkbox" v-model="m[f.k]" /> {{ t(f.label, labelParams()) }}
         </label>
         <div v-else class="field" :class="[f.half ? 'half' : 'full', { bad: errOf(f.k), auto: auto[f.k] && !errOf(f.k) }]">
-          <label class="lbl" :for="'f-' + f.k">{{ t(f.label) }}<i v-if="f.req" class="req" aria-hidden="true"> *</i><em v-if="auto[f.k]" class="auto-tag">{{ t('f.autoTag') }}</em></label>
+          <label class="lbl" :for="'f-' + f.k">{{ t(f.label, labelParams()) }}<i v-if="f.req" class="req" aria-hidden="true"> *</i><em v-if="auto[f.k]" class="auto-tag">{{ t('f.autoTag') }}</em></label>
           <span class="inp">
             <input
               :id="'f-' + f.k"

@@ -4,6 +4,7 @@ import { computed } from 'vue';
 import { reminderState } from './calc.js';
 import { P, enablePush, disablePush, testPush } from './push.js';
 import { t } from './i18n/index.js';
+import { DEMO } from './store.js';
 
 const props = defineProps({ reminders: Array, km: Number });
 const emit = defineEmits(['edit', 'done', 'add']);
@@ -29,7 +30,7 @@ const rows = computed(() =>
       </span>
       <button class="done-btn" @click.stop="emit('done', r)">{{ t('rem.done') }}</button>
     </div>
-    <div v-if="P.supported || P.iosBrowser" class="push">
+    <div v-if="!DEMO && (P.supported || P.iosBrowser)" class="push">
       <template v-if="!P.supported">{{ t('rem.push.iosHint') }}</template>
       <template v-else-if="P.on">
         {{ t('rem.push.on') }}

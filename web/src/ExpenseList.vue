@@ -27,7 +27,7 @@ const rows = computed(() =>
       <button :class="{ on: !cat }" @click="cat = ''">{{ t('expList.all') }}</button>
       <button v-for="[c, l] in used" :key="c" :class="{ on: cat === c }" @click="cat = c">{{ l }}</button>
     </nav>
-    <p class="totals" v-if="rows.length">{{ t('expList.totals', { n: rows.length }) }} · <b>{{ fmt.eur(sum(rows, 'amount')) }}</b></p>
+    <p class="totals" v-if="rows.length">{{ t('expList.totals', { n: rows.length }) }} · <b>{{ fmt.money(sum(rows, 'amount')) }}</b></p>
     <div v-else class="empty"><div class="empty-icon">🧾</div><p>{{ t('expList.empty') }}</p></div>
     <button v-for="e in rows" :key="e.id" class="item" @click="emit('edit', 'expenses', e)">
       <span class="item-icon">{{ optEmoji('cat', e.cat) }}</span>
@@ -35,7 +35,7 @@ const rows = computed(() =>
         {{ e.title || optText('cat', e.cat) }}<span v-if="clips[e.id]" class="clip" :title="t('fuelList.clips', { n: clips[e.id] })"> 📎{{ clips[e.id] > 1 ? clips[e.id] : '' }}</span>
         <small>{{ [fmt.date(e.date), e.km ? fmt.km(e.km) : '', e.title ? optText('cat', e.cat) : ''].filter(Boolean).join(' · ') }}</small>
       </span>
-      <b>{{ fmt.eur(e.amount) }}</b>
+      <b>{{ fmt.money(e.amount) }}</b>
     </button>
   </div>
 </template>

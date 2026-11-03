@@ -5,6 +5,8 @@ import { Hono } from 'hono';
 import { CONFIG } from '../src/config.js';
 import { clean } from '../src/db.js';
 import { checkStartup, auth } from '../src/security.js';
+import { cleanPrefs } from '../src/settings.js';
+import { MESSAGES } from '../src/messages.js';
 
 test('clean() keeps known fields with the right type', () => {
   const { rec } = clean('fuel', { id: 'f1', vehicle_id: 'v1', date: '2024-01-02', km: '1000.4', liters: '40.1234', total: 60, full_tank: 1, hacker: 'x' });
@@ -52,4 +54,16 @@ test('auth: bearer header, files cookie, lock-out after repeated failures', asyn
   assert.equal((await req('/v1/data', { ip: '6.6.6.6', authorization: 'Bearer right-token-0123456789' })).status, 429);
   assert.equal((await req('/v1/data', { ip: '7.7.7.7', authorization: 'Bearer right-token-0123456789' })).status, 200);
   Object.assign(CONFIG, saved);
+});
+
+test('cleanPrefs() accepts known units and an ISO currency', () => {
+  assert.deepEqual(cleanPrefs({ distance: 'mi', volume: 'gal_us', consumption: 'mpg_us', currency: 'usd', x: 1 }).prefs,
+    { distance: 'mi', volume: 'gal_us', consumption: 'mpg_us', currency: 'USD' });
+  assert.equal(cleanPrefs({ distance: 'leagues', volume: 'l', consumption: 'l100', currency: 'EUR' }).code, 'bad_input');
+  assert.equal(cleanPrefs({ distance: 'km', volume: 'l', consumption: 'l100', currency: 'EURO' }).code, 'bad_input');
+});
+
+test('push texts use the distance unit', () => {
+  assert.equal(MESSAGES.en.left(MESSAGES.en.dist(1609.344, 'mi')), '1,000 mi to go');
+  assert.equal(MESSAGES.es.left(MESSAGES.es.dist(15000, 'km')), 'faltan 15.000 km');
 });

@@ -1,7 +1,7 @@
 <script setup>
 // AutoLog: selector de vehículo arriba, pestañas abajo (Resumen, Repostajes, Gastos, Costes).
 import { ref, computed, onMounted } from 'vue';
-import { S, put, del, newId, setCurrent, setToken, DEMO, exitDemo } from './store.js';
+import { S, put, del, newId, setCurrent, setToken, DEMO, DEMO_ONLY, exitDemo } from './store.js';
 import { FORMS, optEmoji } from './forms.js';
 import { fuelStats, currentKm, nextDue } from './calc.js';
 import { I, install, hideIosTip } from './install.js';
@@ -12,6 +12,7 @@ import ExpenseList from './ExpenseList.vue';
 import Costs from './Costs.vue';
 import FormSheet from './FormSheet.vue';
 import Settings from './Settings.vue';
+import Wizard from './Wizard.vue';
 
 const TABS = [['resumen', '🏠'], ['fuel', '⛽'], ['expenses', '🧾'], ['costs', '📊']];
 const tab = ref('resumen');
@@ -128,7 +129,7 @@ function login() {
 
     <div v-if="DEMO" class="demo-bar">
       <span>🧪 <span v-html="t('app.demoBar')"></span></span>
-      <button class="link" @click="exitDemo">{{ t('common.exit') }}</button>
+      <button class="link" @click="exitDemo">{{ DEMO_ONLY ? t('app.demoReset') : t('common.exit') }}</button>
     </div>
 
     <div v-if="I.iosTip && !DEMO" class="install-tip">
@@ -144,12 +145,7 @@ function login() {
         <Costs v-else :veh="veh" :fills="fills" :exps="exps" :km="km" />
       </Transition>
     </main>
-    <div v-else class="empty welcome">
-      <div class="empty-icon">🚗</div>
-      <h2>{{ t('app.welcomeTitle') }}</h2>
-      <p>{{ t('app.welcomeText') }}</p>
-      <button class="primary" @click="open('vehicles')">{{ t('app.welcomeBtn') }}</button>
-    </div>
+    <Wizard v-else @vehicle="open('vehicles')" />
 
     <button v-if="veh && FORMS[tab]" class="fab" :aria-label="t('app.fab', { what: t('kinds.' + tab + '.one') })" @click="open(tab)">＋</button>
 
@@ -163,7 +159,7 @@ function login() {
       <FormSheet v-if="sheet" :key="sheet.value.id" v-bind="sheet" @save="onSave" @delete="onDelete" @close="sheet = null" @switch="onSwitch" />
     </Transition>
     <Transition name="sheet">
-      <Settings v-if="settings" @close="settings = false" />
+      <Settings v-if="settings" :vehicle-id="veh && veh.id" @close="settings = false" />
     </Transition>
 
     <Transition name="toast">
@@ -175,6 +171,10 @@ function login() {
         <div class="gate-icon">🔑</div>
         <h2>{{ t('gate.title') }}</h2>
         <p>{{ t('gate.text') }}</p>
+        <details class="gate-help">
+          <summary>{{ t('gate.whereQ') }}</summary>
+          <p>{{ t('gate.whereA') }}</p>
+        </details>
         <input v-model="token" type="password" autocomplete="off" :placeholder="t('gate.placeholder')" :aria-invalid="!!tokenErr" @input="tokenTried = false" />
         <small v-if="tokenErr" class="field-err" role="alert">{{ tokenErr }}</small>
         <button class="primary" :disabled="!token.trim() || !!tokenErr">{{ t('gate.enter') }}</button>

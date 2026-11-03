@@ -2,10 +2,13 @@
 // Keep them in line with web/src/i18n (rem.*). Add a language here and in the web app at the same time.
 const nf = (lang) => new Intl.NumberFormat(lang === 'es' ? 'es-ES' : 'en-US');
 const plural = (n, one, many) => n + ' ' + (n === 1 ? one : many);
+const KM_PER_MI = 1.609344;
+// Distance (stored in km) in the installation's unit (settings.js)
+const dist = (lang) => (km, unit) => nf(lang).format(Math.round(unit === 'mi' ? km / KM_PER_MI : km)) + (unit === 'mi' ? ' mi' : ' km');
 
 export const MESSAGES = {
   es: {
-    km: (n) => nf('es').format(n) + ' km',
+    dist: dist('es'),
     overBy: (km) => 'pasado por ' + km,
     left: (km) => 'faltan ' + km,
     ago: (d) => 'venció hace ' + plural(d, 'día', 'días'),
@@ -14,7 +17,7 @@ export const MESSAGES = {
     testBody: 'Las notificaciones funcionan en este móvil.',
   },
   en: {
-    km: (n) => nf('en').format(n) + ' km',
+    dist: dist('en'),
     overBy: (km) => km + ' over',
     left: (km) => km + ' to go',
     ago: (d) => 'due ' + plural(d, 'day', 'days') + ' ago',

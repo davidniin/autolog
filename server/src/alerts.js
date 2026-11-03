@@ -6,6 +6,7 @@ import webpush from 'web-push';
 import { CONFIG } from './config.js';
 import { sql } from './db.js';
 import { msg, cleanLang } from './messages.js';
+import { getSetting, setSetting, getPrefs } from './settings.js';
 
 // Los mismos umbrales que la web (web/src/calc.js)
 const SOON_DAYS = 30;
@@ -20,6 +21,7 @@ const days = (a, b) => Math.round((Date.parse(b) - Date.parse(a)) / 864e5);
 // lang = idioma del texto (messages.js).
 export async function alerts(lang = 'es') {
   const M = msg(lang);
+  const distance = ((await getPrefs()) || {}).distance || 'km'; // km o millas, como en la app
   const rows = await sql`
     select r.id, r.title, r.due_date::text as due_date, r.due_km, v.id as vehicle_id, v.name as vehicle,
       greatest(coalesce(v.start_km, 0),
@@ -35,7 +37,7 @@ export async function alerts(lang = 'es') {
     if (!late && !soon) continue;
     const parts = [];
     const kmFirst = k != null && (d == null || k / SOON_KM < d / SOON_DAYS);
-    const kmText = k == null ? '' : k <= 0 ? M.overBy(M.km(-k)) : M.left(M.km(k));
+    const kmText = k == null ? '' : k <= 0 ? M.overBy(M.dist(-k, distance)) : M.left(M.dist(k, distance));
     if (kmFirst) parts.push(kmText);
     if (d != null) parts.push(d < 0 ? M.ago(-d) : d === 0 ? M.today : M.in(d));
     if (k != null && !kmFirst) parts.push(kmText);
@@ -53,10 +55,6 @@ export async function alerts(lang = 'es') {
 let publicKey = '';
 export const vapidKey = () => publicKey;
 
-async function getSetting(key) { const [r] = await sql`select value from autolog_setting where key = ${key}`; return r ? r.value : null; }
-function setSetting(key, value) {
-  return sql`insert into autolog_setting (key, value) values (${key}, ${value}) on conflict (key) do update set value = excluded.value`;
-}
 
 // Claves VAPID: se generan la primera vez y se guardan en la base de datos (si cambiaran, habría que
 // volver a activar las notificaciones en cada móvil).

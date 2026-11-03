@@ -19,7 +19,7 @@ const rows = computed(() => [...props.fills].sort((a, b) => b.date.localeCompare
 <template>
   <div>
     <p class="totals" v-if="rows.length">
-      {{ t('fuelList.totals', { n: rows.length }) }} · {{ fmt.l(stats.liters) }} · <b>{{ fmt.eur(stats.spent) }}</b>
+      {{ t('fuelList.totals', { n: rows.length }) }} · {{ fmt.l(stats.liters) }} · <b>{{ fmt.money(stats.spent) }}</b>
     </p>
     <div v-else class="empty"><div class="empty-icon">⛽</div><p>{{ t('fuelList.empty') }}</p></div>
     <button v-for="f in rows" :key="f.id" class="item" @click="emit('edit', 'fuel', f)">
@@ -29,8 +29,8 @@ const rows = computed(() => [...props.fills].sort((a, b) => b.date.localeCompare
         <small>{{ fmt.km(f.km) }} · {{ fmt.l(f.liters) }} · {{ fmt.ppl(f.total / f.liters) }}</small>
       </span>
       <span class="item-end">
-        <b>{{ fmt.eur(f.total) }}</b>
-        <span v-if="stats.per[f.id] != null" class="pill">{{ fmt.l100(stats.per[f.id]) }} L/100</span>
+        <b>{{ fmt.money(f.total) }}</b>
+        <span v-if="stats.per[f.id] != null" class="pill">{{ fmt.cons(stats.per[f.id]) }} {{ fmt.consUnit() }}</span>
         <span v-else-if="!f.full_tank" class="pill muted">{{ t('fuelList.partial') }}</span>
       </span>
     </button>

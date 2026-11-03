@@ -26,7 +26,8 @@ cd server && npm install && npm run dev     # http://localhost:8791
 cd web && npm install && npm run dev        # http://localhost:5173 (proxies /v1 to :8791)
 ```
 
-Without a server, `http://localhost:5173/?demo=1` opens the app with made-up data.
+Without a server, `http://localhost:5173/?demo=1` opens the app with made-up data. The landing page and its live
+demo: `cd web && npm run build:site`, then serve `site/dist/` with any static server.
 
 ## Making a change
 
@@ -98,7 +99,8 @@ cd server && npm install && npm run dev     # http://localhost:8791
 cd web && npm install && npm run dev        # http://localhost:5173 (reenvía /v1 a :8791)
 ```
 
-Sin servidor, `http://localhost:5173/?demo=1` abre la app con datos inventados.
+Sin servidor, `http://localhost:5173/?demo=1` abre la app con datos inventados. La landing page y su demo en vivo:
+`cd web && npm run build:site`, y sirve `site/dist/` con cualquier servidor estático.
 
 ## Hacer un cambio
 

@@ -11,9 +11,15 @@
 import { num, today, fmt } from './calc.js';
 import { t } from './i18n/index.js';
 import { OPTIONS, unitLabel } from './forms.js';
+import { toDisplay, fromDisplay } from './units.js';
 
 const day = (d) => (d === 'today' ? today() : d);
-const amount = (n, unit) => fmt.num(n) + (unit ? ' ' + (n === 1 && unit === 'months' ? t('f.month') : unitLabel(unit)) : '');
+const val = (x) => (typeof x === 'function' ? x() : x); // min/max pueden depender de los ajustes (moneda)
+// Límite (guardado en km/L) tal como lo ve la persona: "Máximo 1.242.742 mi"
+const amount = (n, unit) => {
+  const shown = toDisplay(unit, n);
+  return fmt.num(unit === 'km' ? Math.round(shown) : shown) + (unit ? ' ' + (n === 1 && unit === 'months' ? t('f.month') : unitLabel(unit)) : '');
+};
 const DATE = /^\d{4}-\d{2}-\d{2}$/;
 
 export function parseField(f, raw) {
@@ -41,9 +47,14 @@ export function parseField(f, raw) {
     if (f.int && decimals) return { v, err: t('v.noDecimals') };
     if (f.dec != null && decimals > f.dec) return { v, err: t('v.maxDecimals', { n: f.dec }) };
     if (f.pos && !(v > 0)) return { v, err: t('v.positive') };
-    if (f.min != null && v < f.min) return { v, err: t('v.min', { v: amount(f.min, f.unit) }) };
-    if (f.max != null && v > f.max) return { v, err: t('v.max', { v: amount(f.max, f.unit) }) };
-    return { v };
+    // Lo escrito está en las unidades elegidas (millas, galones); se guarda en km y litros
+    let stored = fromDisplay(f.unit, v);
+    if (f.unit === 'km') stored = Math.round(stored);
+    else if (f.unit === 'L') stored = Math.round(stored * 1000) / 1000;
+    const min = val(f.min), max = val(f.max);
+    if (min != null && stored < min) return { v: stored, err: t('v.min', { v: amount(min, f.unit) }) };
+    if (max != null && stored > max) return { v: stored, err: t('v.max', { v: amount(max, f.unit) }) };
+    return { v: stored };
   }
 
   // texto

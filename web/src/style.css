@@ -113,7 +113,7 @@ button { cursor: pointer; border: 0; background: none; padding: 0; text-align: i
 .hero-edit { position: relative; z-index: 1; padding: 5px 10px; border-radius: 999px; background: rgba(255, 255, 255, 0.18); font-size: 13px; font-weight: 600; }
 .hero-bottom { display: flex; align-items: flex-end; justify-content: space-between; gap: 12px; }
 .odo small { display: block; color: rgba(255, 255, 255, 0.75); font-size: 12px; text-transform: uppercase; letter-spacing: 0.06em; }
-.odo b { font-size: 30px; font-weight: 750; letter-spacing: -0.02em; font-variant-numeric: tabular-nums; }
+.odo b { font-size: clamp(22px, 8vw, 30px); font-weight: 750; letter-spacing: -0.02em; font-variant-numeric: tabular-nums; white-space: nowrap; }
 /* matrícula europea */
 .plate {
   display: inline-flex; align-items: stretch; overflow: hidden; padding: 6px 8px 6px 0; border-radius: 6px; border: 2px solid #1d1d1d;
@@ -219,7 +219,7 @@ h3 { margin: 24px 2px 10px; font-size: 13px; font-weight: 700; text-transform: u
   width: 100%; max-width: 560px; display: grid; gap: 14px 12px;
   padding: 20px 16px calc(env(safe-area-inset-bottom) + 16px); background: var(--card); border-radius: 24px 24px 0 0;
 }
-.sheet { grid-template-columns: 1fr 1fr; max-height: 92dvh; overflow-y: auto; overscroll-behavior: contain; padding-bottom: 0; box-shadow: 0 -10px 40px rgba(0, 0, 0, 0.2); }
+.sheet { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); max-height: 92dvh; overflow-y: auto; overscroll-behavior: contain; padding-bottom: 0; box-shadow: 0 -10px 40px rgba(0, 0, 0, 0.2); }
 .sheet::before { content: ""; grid-column: 1 / -1; justify-self: center; width: 40px; height: 5px; margin: -8px 0 0; border-radius: 3px; background: var(--line); }
 .sheet h2 { grid-column: 1 / -1; margin: 0; font-size: 21px; letter-spacing: -0.01em; }
 .sheet .full { grid-column: 1 / -1; }
@@ -377,3 +377,42 @@ p.err.full { padding: 10px 12px; border-radius: 12px; background: var(--danger-s
 .gear { display: grid; place-items: center; width: 34px; height: 34px; border-radius: 50%; background: var(--card); border: 1px solid var(--line); color: var(--muted); font-size: 17px; line-height: 1; transition: transform 0.3s var(--ease); }
 .gear:active { transform: rotate(60deg); }
 .sheet .field .form-note { display: block; margin-top: 2px; }
+.settings-units { gap: 8px; }
+.lbl.sub { margin-top: 6px; font-size: 12px; text-transform: uppercase; letter-spacing: 0.05em; }
+.inp select { flex: 1; width: 100%; min-width: 0; text-overflow: ellipsis; min-height: 47px; padding: 0 12px; border: 0; background: transparent; color: var(--text); font-size: 16px; outline: none; }
+/* ---- tus datos (exportar / importar) */
+.io-btns { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.io-btn { position: relative; display: flex; align-items: center; justify-content: center; min-height: 46px; padding: 6px 10px; border-radius: 12px; border: 1.5px solid var(--line); background: var(--field); color: var(--text); font-size: 14px; font-weight: 600; text-align: center; cursor: pointer; }
+.io-btn input { position: absolute; inset: 0; opacity: 0; cursor: pointer; }
+.io-plan { display: grid; gap: 6px; padding: 10px 12px; border-radius: 12px; background: var(--field); border: 1px solid var(--line); font-size: 14px; color: var(--text); }
+.io-plan p { margin: 0; }
+.io-plan small { color: var(--muted); }
+.check-inline { display: flex !important; align-items: center; gap: 8px; font-size: 14px; color: var(--text) !important; }
+.check-inline input { width: 18px; height: 18px; accent-color: var(--accent); }
+
+/* ---- asistente de primera vez */
+.wizard { display: grid; grid-template-columns: minmax(0, 1fr); gap: 14px; justify-items: center; max-width: 380px; margin: 40px auto 0; padding: 0 8px; text-align: center; }
+.wizard h2 { margin: 6px 0 0; font-size: 24px; letter-spacing: -0.02em; }
+.wizard p { margin: 0; color: var(--muted); line-height: 1.45; }
+.wiz-logo { display: inline-grid; place-items: center; width: 96px; height: 96px; border-radius: 30px; background: var(--hero); box-shadow: var(--shadow); font-size: 50px; }
+.wiz-dots { display: flex; gap: 6px; }
+.wiz-dots i { width: 8px; height: 8px; border-radius: 50%; background: var(--line); transition: width 0.2s, background 0.2s; }
+.wiz-dots i.on { width: 22px; border-radius: 4px; background: var(--accent); }
+.wiz-langs { justify-content: center; }
+.wiz-main { width: 100%; }
+.wiz-alt { display: flex; flex-wrap: wrap; justify-content: center; gap: 4px 18px; }
+.wiz-alt .link { position: relative; text-decoration: none; cursor: pointer; }
+.wiz-alt input { position: absolute; inset: 0; opacity: 0; cursor: pointer; }
+.wiz-presets { display: grid; gap: 8px; width: 100%; }
+.wiz-presets button { min-height: 50px; border-radius: 14px; border: 1.5px solid var(--line); background: var(--card); font-weight: 600; text-align: center; transition: border-color 0.2s, background 0.2s; }
+.wiz-presets button.on { border-color: var(--accent); background: var(--accent-soft); color: var(--accent); }
+.wizard .lbl { justify-self: start; font-size: 13px; font-weight: 600; color: var(--muted); }
+.wizard .inp { width: 100%; min-width: 0; }
+.wiz-nav { display: flex; justify-content: space-between; align-items: center; width: 100%; margin-top: 4px; }
+.gate-help { text-align: left; font-size: 14px; color: var(--muted); }
+.gate-help summary { cursor: pointer; color: var(--accent); font-weight: 600; text-align: center; }
+.gate-help p { margin-top: 8px; font-size: 14px; }
+
+/* ---- acerca de / apoyar */
+.about p { margin: 0; }
+.bmc-link { display: inline-flex; align-items: center; justify-self: start; gap: 6px; padding: 9px 14px; border-radius: 12px; background: #ffdd00; color: #1d1a05; font-weight: 700; font-size: 14px; text-decoration: none; }

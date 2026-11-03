@@ -7,6 +7,7 @@
 // ctx = { others: demás registros del vehículo, km: km actuales }.
 import { fmt, num, today, addMonths } from './calc.js';
 import { t } from './i18n/index.js';
+import { distUnit, volUnit, currencySymbol, fromDisplay, realisticCurrency, UP } from './units.js';
 
 // Opciones de los campos "chips": [valor guardado, emoji]. El texto sale de i18n (opt.<grupo>.<valor>).
 // Los valores se guardan en la base de datos: no se cambian aunque el texto se traduzca.
@@ -23,13 +24,17 @@ export const optText = (group, v) => t('opt.' + group + '.' + v);
 export const optEmoji = (group, v) => ((OPTIONS[group] || []).find((o) => o[0] === v) || [])[1] || (EMOJI[group] || {})[v] || '';
 export const optLabel = (group, v) => [optEmoji(group, v), optText(group, v)].filter(Boolean).join(' ');
 
-// Unidad que se ve dentro del campo
-export const unitLabel = (u) => (u === 'months' ? t('f.months') : u);
+// Unidad que se ve dentro del campo: 'km' = distancia, 'L' = volumen, '€' = moneda (las elegidas en Ajustes)
+export const unitLabel = (u) => (u === 'months' ? t('f.months') : u === 'km' ? distUnit() : u === 'L' ? volUnit() : u === '€' ? currencySymbol() : u);
+// Parámetros de las etiquetas que dependen de las unidades ("Km actuales" / "Millas actuales")
+export const labelParams = () => ({ d: UP.distance, v: UP.volume });
 
 // Límites razonables (evitan errores al teclear, p. ej. un cero de más)
 const MAX_KM = 2000000;
-const MAX_EUR = 1000000;
-const PPL = [0.3, 5]; // €/L creíbles
+// Importes máximos y €/L creíble: solo en monedas con precios parecidos al euro (en otras, el tope del servidor)
+const MAX_EUR = () => (realisticCurrency() ? 1000000 : 1e8);
+const MAX_FILL = () => (realisticCurrency() ? 2000 : 1e8);
+const PPL = [0.3, 5]; // precio por litro creíble en EUR, USD, GBP...
 const NOTE = { k: 'note', label: 'f.note', type: 'text', len: 500 };
 const SINCE = '1950-01-01';
 
@@ -71,9 +76,9 @@ export const FORMS = {
       },
       { k: 'liters', label: 'f.liters', type: 'num', req: true, half: true, pos: true, dec: 3, max: 200, unit: 'L' },
       {
-        k: 'total', label: 'f.total', type: 'num', req: true, half: true, pos: true, dec: 2, max: 2000, unit: '€',
+        k: 'total', label: 'f.total', type: 'num', req: true, half: true, pos: true, dec: 2, max: MAX_FILL, unit: '€',
         check: (v, r) => {
-          if (!(r.liters > 0)) return '';
+          if (!(r.liters > 0) || !realisticCurrency()) return '';
           const p = v / r.liters;
           return p < PPL[0] || p > PPL[1] ? t('f.pplOff', { ppl: fmt.ppl(p) }) : '';
         },
@@ -84,7 +89,7 @@ export const FORMS = {
     ],
     blank: (vid) => ({ vehicle_id: vid, date: today(), km: null, liters: null, total: null, full_tank: true, station: '', note: '' }),
     hint: (m) => {
-      const l = num(m.liters), tot = num(m.total);
+      const l = fromDisplay('L', num(m.liters)), tot = num(m.total);
       return l > 0 && tot > 0 ? t('f.priceHint', { ppl: fmt.ppl(tot / l) }) : '';
     },
   },

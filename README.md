@@ -2,6 +2,10 @@
 
 **English** · [Español](README.es.md)
 
+[![Live demo](https://img.shields.io/badge/live%20demo-try%20it-2f5fd0)](https://<owner>.github.io/autolog/)
+[![License: MIT](https://img.shields.io/badge/license-MIT-blue)](LICENSE)
+[![Buy me a coffee](https://img.shields.io/badge/buy%20me%20a%20coffee-☕-ffdd00)](https://buymeacoffee.com/davidniin)
+
 Log fill-ups, expenses and reminders for your car or motorbike, and see what it really consumes and costs.
 AutoLog is a mobile web app you install on your phone (PWA) and **host yourself**: your data lives on your server,
 not on someone else's.
@@ -23,13 +27,17 @@ not on someone else's.
   OCR runs **on the phone** ([runonweb](https://runonweb.ai/models/ocr), PP-OCRv6): the photo never leaves the device.
 - **Works offline**: changes are saved on the phone and synced when the connection is back.
 - **Validation** of every field (impossible mileage, unrealistic €/L, future dates…).
+- **Your units**: km or miles, litres or gallons, L/100 km, km/L or mpg, and any currency.
+- **Your data, portable**: full JSON backup and CSV export/import (Excel, Google Sheets).
 - **English and Spanish** (follows the phone's language; switch it in ⚙ Settings), light/dark mode, installable on
   Android and iPhone, several vehicles.
 
 ## Try it
 
-Run it locally (see [Development](#development)) and open `http://localhost:5173/?demo=1`: **demo mode** shows
-made-up data, needs no server and doesn't touch any real data.
+**[Live demo](https://<owner>.github.io/autolog/)** — the real app with made-up data, right in your browser. Nothing is
+saved and nothing is sent anywhere.
+
+Locally: run it (see [Development](#development)) and open `http://localhost:5173/?demo=1`.
 
 ## Install your own
 
@@ -77,6 +85,7 @@ Phone (PWA) ──HTTPS──▶ autolog (Node + Hono, port 8791) ──▶ Post
 cd server && npm install && npm run dev   # :8791 — needs PostgreSQL (DATABASE_URL in server/.env)
 cd web && npm install && npm run dev      # :5173, proxies /v1 to :8791
 npm test                                  # in web/ and in server/
+cd web && npm run build:site              # landing page + live demo → site/dist/
 ```
 
 For the server in development you can set `ALLOW_NO_AUTH=1` in `server/.env`.
@@ -88,11 +97,16 @@ and the [Code of Conduct](CODE_OF_CONDUCT.md).
 
 ## Roadmap
 
-1. Units and currency (miles, gallons, mpg, any currency).
-2. Import/export (CSV).
-3. More languages, and receipt-scanner rules for other countries (today: Spanish invoices, `1.234,56 €`) — help wanted.
-4. Backups and restore from the app.
+1. More languages, and receipt-scanner rules for other countries (today: Spanish invoices, `1.234,56 €`) — help wanted.
+2. Backups with photos, and restore from the app.
+3. Electric and hybrid vehicles (kWh).
+4. A PDF service history to show when selling the vehicle.
 5. A prebuilt Docker image for every release (`ghcr.io`).
+
+## Support
+
+AutoLog is free and always will be. If it's useful to you, you can
+**[buy me a coffee ☕](https://buymeacoffee.com/davidniin)** — thank you!
 
 ## License
 

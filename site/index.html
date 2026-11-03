@@ -1,0 +1,134 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <title>AutoLog — your vehicle's logbook, on your own server</title>
+  <meta name="description" content="Self-hosted logbook for your car or motorbike: fill-ups, real fuel consumption, expenses, reminders and costs. Installable app that works offline, with an on-device invoice scanner. Free and open source." />
+  <meta name="theme-color" content="#2148b8" />
+  <meta property="og:title" content="AutoLog — your vehicle's logbook" />
+  <meta property="og:description" content="Fill-ups, consumption, expenses and reminders for your car or motorbike. Self-hosted, private, open source." />
+  <meta property="og:image" content="screenshots/light-summary.png" />
+  <link rel="icon" href="demo/icon.svg" type="image/svg+xml" />
+  <link rel="stylesheet" href="landing.css" />
+</head>
+<body>
+  <header class="nav">
+    <a class="brand" href="#top" aria-label="AutoLog">
+      <svg viewBox="0 0 512 512" aria-hidden="true"><rect width="512" height="512" rx="120" fill="#2f5fd0" /><path d="M136 330a120 120 0 1 1 240 0" fill="none" stroke="#fff" stroke-width="40" stroke-linecap="round" /><path d="M256 330 330 238" stroke="#ffb547" stroke-width="34" stroke-linecap="round" /><circle cx="256" cy="330" r="28" fill="#fff" /></svg>
+      AutoLog
+    </a>
+    <nav class="links" aria-label="Main">
+      <a href="#features" data-i18n="nav.features">Features</a>
+      <a href="#demo" data-i18n="nav.demo">Demo</a>
+      <a href="#install" data-i18n="nav.install">Install</a>
+      <a data-repo="" href="#" data-i18n="nav.github">GitHub</a>
+    </nav>
+    <button class="lang" type="button" id="lang" aria-label="Español / English">ES</button>
+  </header>
+
+  <main id="top">
+    <!-- ================= hero + live demo -->
+    <section class="hero">
+      <div class="hero-text">
+        <p class="eyebrow" data-i18n="hero.eyebrow">Free · open source · self-hosted</p>
+        <h1 data-i18n-html="hero.title">Your vehicle's logbook.<br /><span>On your own server.</span></h1>
+        <p class="lead" data-i18n="hero.lead">Log fill-ups and expenses, see what your car or motorbike really consumes and costs, and get reminded of the inspection, the oil change or the insurance. An app you install on your phone, with your data where you decide.</p>
+        <div class="ctas">
+          <a class="btn primary" href="#demo" data-i18n="hero.try">▶ Try the live demo</a>
+          <a class="btn ghost" href="#install" data-i18n="hero.install">Install yours</a>
+        </div>
+        <ul class="pills">
+          <li data-i18n="hero.p1">📶 Works offline</li>
+          <li data-i18n="hero.p2">📷 Scans invoices</li>
+          <li data-i18n="hero.p3">🔒 No tracking</li>
+          <li data-i18n="hero.p4">🌍 English · Español</li>
+        </ul>
+      </div>
+      <div class="hero-phone" id="demo">
+        <div class="phone">
+          <div class="phone-notch"></div>
+          <iframe id="demo-frame" title="AutoLog live demo" loading="lazy" data-src="demo/"></iframe>
+          <a class="phone-cover" href="demo/" data-i18n="demo.open">▶ Open the live demo</a>
+        </div>
+        <p class="phone-note" data-i18n="demo.note">Live demo with made-up data. Play with it: add a fill-up, scan an invoice, change the units… Nothing is saved.</p>
+        <a class="phone-full" href="demo/" target="_blank" rel="noopener" data-i18n="demo.full">Open full screen ↗</a>
+      </div>
+    </section>
+
+    <!-- ================= features -->
+    <section class="section" id="features">
+      <h2 data-i18n="features.title">Everything about your vehicle, in one place</h2>
+      <div class="grid">
+        <article class="card"><span class="ico">⛽</span><h3 data-i18n="f1.t">Real consumption</h3><p data-i18n="f1.d">Full-to-full method, including partial fills. Average, last stretch and price per litre or gallon.</p></article>
+        <article class="card"><span class="ico">🧾</span><h3 data-i18n="f2.t">Expenses by category</h3><p data-i18n="f2.d">Service, repairs, inspection, insurance, tax, parking, tolls… with photos and PDFs attached.</p></article>
+        <article class="card"><span class="ico">🔔</span><h3 data-i18n="f3.t">Reminders</h3><p data-i18n="f3.d">By date, by mileage or whichever comes first. Repeating, with push notifications on your phone.</p></article>
+        <article class="card"><span class="ico">📊</span><h3 data-i18n="f4.t">What it really costs</h3><p data-i18n="f4.d">Per month, per km or mile, including the purchase price, a 12-month chart and a breakdown by category.</p></article>
+        <article class="card"><span class="ico">📷</span><h3 data-i18n="f5.t">Invoice scanner</h3><p data-i18n="f5.d">Take a photo of a workshop invoice or fuel receipt and the form fills itself. The OCR runs on the phone.</p></article>
+        <article class="card"><span class="ico">📶</span><h3 data-i18n="f6.t">Offline first</h3><p data-i18n="f6.d">Log a fill-up with no signal at the petrol station; it syncs when you're back online.</p></article>
+        <article class="card"><span class="ico">📏</span><h3 data-i18n="f7.t">Your units</h3><p data-i18n="f7.d">km or miles, litres or gallons, L/100 km, km/L or mpg, and any currency.</p></article>
+        <article class="card"><span class="ico">💾</span><h3 data-i18n="f8.t">Your data, portable</h3><p data-i18n="f8.d">Full backup and CSV export/import for Excel or Google Sheets. Several vehicles and phones.</p></article>
+      </div>
+    </section>
+
+    <!-- ================= screenshots -->
+    <section class="section shots" aria-label="Screenshots">
+      <img src="screenshots/light-summary.png" alt="Summary with vehicle card and reminders" loading="lazy" />
+      <img src="screenshots/light-scan.png" alt="Scanning an invoice fills in the form" loading="lazy" />
+      <img src="screenshots/light-costs.png" alt="Costs per month and 12-month chart" loading="lazy" />
+      <img src="screenshots/dark-summary.png" alt="Dark mode" loading="lazy" />
+    </section>
+
+    <!-- ================= privacy -->
+    <section class="section privacy">
+      <div>
+        <h2 data-i18n="privacy.title">Private by design</h2>
+        <p data-i18n="privacy.lead">AutoLog isn't a service you sign up for: everyone runs their own copy. There is no central server, no account and no analytics.</p>
+      </div>
+      <ul class="checks">
+        <li data-i18n="privacy.c1">Your data lives in your PostgreSQL and on your disk.</li>
+        <li data-i18n="privacy.c2">Invoice photos are read on the phone; they're never sent anywhere.</li>
+        <li data-i18n="privacy.c3">Password-protected, with lock-out of repeated attempts and strict security headers.</li>
+        <li data-i18n="privacy.c4">Open source (MIT): you can read every line.</li>
+      </ul>
+    </section>
+
+    <!-- ================= install -->
+    <section class="section" id="install">
+      <h2 data-i18n="install.title">Install yours in minutes</h2>
+      <p class="sub" data-i18n="install.lead">One Docker container plus PostgreSQL. At home, on a NAS, a Raspberry Pi, a VPS or any cloud.</p>
+      <ol class="steps">
+        <li><b data-i18n="install.s1">Download and configure</b><code>git clone <span data-repo-text="">https://github.com/&lt;owner&gt;/autolog</span>.git &amp;&amp; cd autolog<br />cp .env.example .env</code></li>
+        <li><b data-i18n="install.s2">Start it</b><code>docker compose up -d --build</code></li>
+        <li><b data-i18n="install.s3">Add HTTPS and open it on your phone</b><span data-i18n="install.s3d">With Tailscale, Caddy or Cloudflare Tunnel. Then "Add to Home Screen".</span></li>
+      </ol>
+      <div class="ctas center">
+        <a class="btn primary" data-repo="/blob/main/docs/en/self-hosting.md" data-repo-es="/blob/main/docs/es/self-hosting.md" href="#" data-i18n="install.self">🏠 Own server guide</a>
+        <a class="btn ghost" data-repo="/blob/main/docs/en/cloud.md" data-repo-es="/blob/main/docs/es/cloud.md" href="#" data-i18n="install.cloud">☁️ Cloud guide</a>
+      </div>
+    </section>
+
+    <!-- ================= open source + support -->
+    <section class="section duo">
+      <article class="card big">
+        <span class="ico">🤝</span>
+        <h2 data-i18n="oss.title">Open source, open to ideas</h2>
+        <p data-i18n="oss.lead">Found a bug or have an idea? Issues and pull requests are welcome, in English or Spanish: translations, receipt rules for your country, new features…</p>
+        <a class="btn ghost" data-repo="" href="#" data-i18n="oss.cta">View on GitHub</a>
+      </article>
+      <article class="card big coffee">
+        <span class="ico">☕</span>
+        <h2 data-i18n="coffee.title">Support the project</h2>
+        <p data-i18n="coffee.lead">AutoLog is free and always will be. If it's useful to you, you can buy me a coffee to keep it going.</p>
+        <a class="btn bmc" href="https://buymeacoffee.com/davidniin" target="_blank" rel="noopener" data-i18n="coffee.cta">☕ Buy me a coffee</a>
+      </article>
+    </section>
+  </main>
+
+  <footer class="footer">
+    <p><span data-i18n="footer.made">Made with ❤️ · MIT licence ·</span> <a data-repo="" href="#">GitHub</a> · <a href="https://buymeacoffee.com/davidniin" target="_blank" rel="noopener">Buy me a coffee</a></p>
+  </footer>
+
+  <script src="landing.js"></script>
+</body>
+</html>

@@ -4,12 +4,15 @@
 import { reactive } from 'vue';
 import { demoData } from './demo.js';
 import { t } from './i18n/index.js';
+import { applyPrefs } from './units.js';
 
 // Modo demo (/?demo=1): datos inventados, sin servidor, guardados solo en esta pestaña (sessionStorage).
 // No toca los datos de verdad del móvil (localStorage) ni manda nada a la red. Sirve para capturas y para probar.
-const q = new URLSearchParams(location.search);
+const q = new URLSearchParams(typeof location !== 'undefined' ? location.search : ''); // (fuera del navegador: tests)
 try { if (q.has('demo')) sessionStorage.setItem('autolog-demo', '1'); } catch (e) { /* sin almacenamiento */ }
-export const DEMO = (() => { try { return sessionStorage.getItem('autolog-demo') === '1'; } catch (e) { return q.has('demo'); } })();
+// Build "solo demo" (npm run build:site, para la landing): siempre en modo demo y sin servidor
+export const DEMO_ONLY = import.meta.env.MODE === 'demo';
+export const DEMO = DEMO_ONLY || (() => { try { return sessionStorage.getItem('autolog-demo') === '1'; } catch (e) { return q.has('demo'); } })();
 const box = () => (DEMO ? sessionStorage : localStorage);
 const PREFIX = DEMO ? 'autolog-demo.' : 'autolog.';
 
@@ -23,7 +26,8 @@ if (q.has('demo')) {
 }
 export function exitDemo() {
   try { for (const k of Object.keys(sessionStorage)) if (k.startsWith('autolog-demo')) sessionStorage.removeItem(k); } catch (e) { /* nada */ }
-  location.replace('/');
+  if (DEMO_ONLY) location.reload(); // en la landing: vuelve a empezar con datos nuevos
+  else location.replace('/');
 }
 
 // Token: ?token=... la primera vez (se guarda y se quita de la barra de direcciones)
@@ -34,6 +38,7 @@ if (!DEMO && q.has('token')) {
 }
 // Los adjuntos se abren con <img> o en otra pestaña (sin cabeceras): la clave va en una cookie solo para /v1/files
 function fileCookie(t) {
+  if (typeof document === 'undefined') return;
   document.cookie = 'autolog_token=' + encodeURIComponent(t || '') + '; Path=/v1/files; SameSite=Strict' +
     (t ? '; Max-Age=315360000' : '; Max-Age=0') + (location.protocol === 'https:' ? '; Secure' : '');
 }
@@ -47,11 +52,22 @@ export const S = reactive({
   files: load('files', []), // adjuntos: solo los datos; el fichero se pide a /v1/files/:id
   queue: load('queue', []),
   current: load('current', ''),
+  settings: load('settings', null), // unidades y moneda de la instalación (null = sin elegir todavía)
   online: true,
   auth: true, // false = falta el token o no vale
 });
 
-function persist() { for (const k of ['vehicles', 'fuel', 'expenses', 'reminders', 'files', 'queue', 'current']) save(k, S[k]); }
+function persist() { for (const k of ['vehicles', 'fuel', 'expenses', 'reminders', 'files', 'queue', 'current', 'settings']) save(k, S[k]); }
+applyPrefs(S.settings);
+
+// Unidades y moneda: para todos los móviles (se guardan en el servidor, también sin conexión vía la cola)
+export function putSettings(p) {
+  S.settings = { ...p };
+  applyPrefs(S.settings);
+  S.queue.push({ method: 'PUT', path: '/v1/settings', body: S.settings });
+  persist();
+  flush();
+}
 
 export function newId() { return Date.now().toString(36) + Math.random().toString(36).slice(2, 7); }
 
@@ -62,6 +78,18 @@ export function put(kind, rec) {
   const list = S[kind], i = list.findIndex((x) => x.id === rec.id);
   if (i >= 0) list[i] = rec; else list.unshift(rec);
   enqueue('PUT', kind, rec.id, rec);
+}
+
+// Muchos de una vez (importar): se guarda en el móvil una sola vez en lugar de tras cada registro
+export function putMany(kind, recs) {
+  if (!recs.length) return;
+  const byId = new Map(S[kind].map((x, i) => [x.id, i]));
+  for (const rec of recs) {
+    if (byId.has(rec.id)) S[kind][byId.get(rec.id)] = rec; else S[kind].unshift(rec);
+    S.queue.push({ method: 'PUT', path: '/v1/' + kind + '/' + encodeURIComponent(rec.id), body: rec });
+  }
+  persist();
+  flush();
 }
 
 export function del(kind, id) {
@@ -129,6 +157,8 @@ export async function pull() {
     S.expenses = d.expenses;
     S.reminders = d.reminders || [];
     S.files = d.files || [];
+    S.settings = d.settings || null;
+    applyPrefs(S.settings);
     if (!S.vehicles.some((v) => v.id === S.current)) S.current = S.vehicles[0] ? S.vehicles[0].id : '';
     persist();
   } catch (e) { /* sin red: seguimos con lo local */ }

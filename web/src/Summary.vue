@@ -46,12 +46,12 @@ const recent = computed(() =>
 
     <h3>{{ t('summary.heading') }}</h3>
     <div class="stats">
-      <div class="stat big"><small>{{ t('summary.avg') }}</small><b>{{ fmt.l100(stats.avg) }}</b><span>L/100 km</span></div>
-      <div class="stat big"><small>{{ t('summary.last') }}</small><b>{{ fmt.l100(stats.last) }}</b><span>L/100 km</span></div>
+      <div class="stat big"><small>{{ t('summary.avg') }}</small><b>{{ fmt.cons(stats.avg) }}</b><span>{{ fmt.consUnit() }}</span></div>
+      <div class="stat big"><small>{{ t('summary.last') }}</small><b>{{ fmt.cons(stats.last) }}</b><span>{{ fmt.consUnit() }}</span></div>
       <div class="stat"><small>{{ t('summary.avgPrice') }}</small><b>{{ fmt.ppl(stats.pricePerL) }}</b></div>
-      <div class="stat"><small>{{ t('summary.fuel') }}</small><b>{{ fmt.eur(stats.spent) }}</b></div>
-      <div class="stat"><small>{{ t('summary.other') }}</small><b>{{ fmt.eur(other) }}</b></div>
-      <div class="stat"><small>{{ t('summary.total') }}</small><b>{{ fmt.eur(stats.spent + other) }}</b></div>
+      <div class="stat"><small>{{ t('summary.fuel') }}</small><b>{{ fmt.money(stats.spent) }}</b></div>
+      <div class="stat"><small>{{ t('summary.other') }}</small><b>{{ fmt.money(other) }}</b></div>
+      <div class="stat"><small>{{ t('summary.total') }}</small><b>{{ fmt.money(stats.spent + other) }}</b></div>
     </div>
     <p v-if="stats.avg == null" class="note">{{ t('summary.noConsumption') }}</p>
 
@@ -59,7 +59,7 @@ const recent = computed(() =>
     <button v-for="r in recent" :key="r.kind + r.rec.id" class="item" @click="emit('edit', r.kind, r.rec)">
       <span class="item-icon">{{ r.icon }}</span>
       <span class="item-body">{{ r.title }}<small>{{ fmt.date(r.rec.date) }}</small></span>
-      <b>{{ fmt.eur(r.amount) }}</b>
+      <b>{{ fmt.money(r.amount) }}</b>
     </button>
   </div>
 </template>

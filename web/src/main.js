@@ -9,6 +9,6 @@ createApp(App).mount('#app');
 start();
 
 // El service worker solo en producción (en desarrollo cachearía los módulos de Vite)
-if (import.meta.env.PROD && 'serviceWorker' in navigator) {
+if (import.meta.env.PROD && import.meta.env.MODE !== 'demo' && 'serviceWorker' in navigator) {
   navigator.serviceWorker.register('/sw.js').then(refreshPush).catch((e) => console.warn('[sw] ' + e.message));
 }

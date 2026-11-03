@@ -24,6 +24,37 @@ guarda en cada móvil). Los textos están en `web/src/i18n/` (`es.js`, `en.js`, 
 usan el formato del idioma elegido. Las notificaciones push llegan en el idioma que tenía cada móvil al activarlas
 (`server/src/messages.js`). Los errores de la API van en inglés con un `code` estable que la app traduce.
 
+## Unidades y moneda
+
+Se eligen en **⚙ Ajustes → Unidades y moneda** (o en el asistente de la primera vez) y valen para todos los móviles
+de la instalación (se guardan en el servidor, `PUT /v1/settings`): km o millas; litros, galones de EE. UU. o del
+Reino Unido; L/100 km, km/L, mpg (EE. UU.) o mpg (R. Unido); y cualquier moneda ISO 4217. Mientras nadie elija, cada
+móvil propone las habituales de su país (p. ej. `en-US` → millas, galones, mpg, USD).
+
+Los datos se guardan **siempre en km, litros y L/100 km**; las unidades solo cambian cómo se ven y se escriben, así que
+se pueden cambiar en cualquier momento. La moneda no se convierte: es la de los importes que apuntas. La comprobación
+de «€/L poco creíble» solo se hace en monedas con precios parecidos al euro (EUR, USD, GBP, CHF, CAD, AUD). Código:
+`web/src/units.js`.
+
+## Tus datos: copia, exportar e importar
+
+En **⚙ Ajustes → Tus datos**:
+
+- **Copia completa (JSON):** vehículos, repostajes, gastos, avisos y ajustes, para restaurar o cambiar de servidor. Las
+  fotos y los PDF no van dentro (haz copia del volumen de adjuntos, ver las guías de instalación).
+- **CSV de repostajes / gastos** para Excel o Google Sheets, siempre en km, litros y la moneda de la instalación:
+  - repostajes: `vehicle, date, km, liters, total, full_tank, station, note`
+  - gastos: `vehicle, date, km, category, title, amount, note`
+- **Importar** una copia o uno de esos CSV (coma o punto y coma, `AAAA-MM-DD` o `DD/MM/AAAA`, coma o punto decimal).
+  Antes de cambiar nada se enseña un resumen. Lo que ya existe se salta, así que importar dos veces el mismo fichero
+  no duplica nada. Un CSV sin columna `vehicle` se importa en el vehículo actual. Código: `web/src/dataio.js`.
+
+## La primera vez
+
+Si aún no hay vehículos, un asistente corto pide el idioma, las unidades y la moneda (se salta si otro móvil ya las
+eligió) y abre la ficha del primer vehículo. También permite restaurar una copia o abrir la demo. La pantalla de la
+clave explica dónde se encuentra `AUTOLOG_TOKEN`.
+
 ## Consumo: método lleno a lleno
 
 En cada repostaje se marca si se ha llenado el depósito. Entre dos llenados, el consumo es la suma de los litros
@@ -105,17 +136,24 @@ que el €/L sea creíble (0,30–5 €/L). El servidor hace su propia comprobac
 - Cabeceras de seguridad en todas las respuestas y Content-Security-Policy en la web (ver `server/src/security.js`).
 - Solo mismo origen: sin CORS salvo que se defina `CORS_ORIGIN`. Los errores internos van al log, no al cliente.
 
-## Modo demo
+## Modo demo y landing page
 
 `/?demo=1` carga datos inventados en la pestaña actual (`sessionStorage`), sin peticiones al servidor y sin tocar los
 datos de verdad guardados en el móvil. Sirve para probar la app y para hacer capturas. *Salir* la borra.
+
+La **landing page** (`site/`) incluye una **demo en vivo**: un build «solo demo» de la app (`vite build --mode demo`)
+que siempre está en modo demo, no tiene service worker y no se puede instalar. Se construyen las dos en `site/dist/`
+con `cd web && npm run build:site`; `.github/workflows/pages.yml` las publica en GitHub Pages (`/` la landing, `/demo/`
+la app). La URL del repositorio de todos los enlaces de la landing es la constante `REPO` de `site/landing.js`. La demo
+acepta `?lang=es|en`.
 
 ## API
 
 | Método | Ruta | |
 |---|---|---|
 | GET | `/v1/health` | Estado (sin clave) |
-| GET | `/v1/data` | `{ vehicles, fuel, expenses, reminders, files }`, todo de una vez |
+| GET | `/v1/data` | `{ vehicles, fuel, expenses, reminders, files, settings }`, todo de una vez |
+| PUT | `/v1/settings` | Unidades y moneda: `{ distance: km\|mi, volume: l\|gal_us\|gal_uk, consumption: l100\|kml\|mpg_us\|mpg_uk, currency: "EUR" }` |
 | PUT | `/v1/{vehicles,fuel,expenses,reminders}/:id` | Crea o actualiza (idempotente: el id lo pone el cliente) |
 | DELETE | `/v1/{vehicles,fuel,expenses,reminders}/:id` | Borra. Borrar un vehículo borra todo lo suyo |
 | POST | `/v1/files` | Sube un adjunto (multipart: `file`, `id`, `vehicle_id`, `parent_kind` = vehicles · expenses · fuel, `parent_id`) |

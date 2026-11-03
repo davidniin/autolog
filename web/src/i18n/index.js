@@ -11,6 +11,8 @@ export const LANGS = [['es', 'Español'], ['en', 'English']];
 const KEY = 'autolog.lang';
 
 function initial() {
+  // ?lang=es|en (la usa la demo de la landing para salir en el idioma de la página)
+  try { const p = new URLSearchParams(location.search).get('lang'); if (DICTS[p]) return p; } catch (e) { /* fuera del navegador */ }
   try { const s = localStorage.getItem(KEY); if (DICTS[s]) return s; } catch (e) { /* sin almacenamiento */ }
   const nav = (typeof navigator !== 'undefined' && (navigator.languages || [navigator.language])) || [];
   for (const l of nav) { const k = String(l || '').slice(0, 2).toLowerCase(); if (DICTS[k]) return k; }

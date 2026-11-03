@@ -1,5 +1,6 @@
 // Cálculos: consumo (método lleno a lleno), km actuales y formatos.
 import { t, locale } from './i18n/index.js';
+import { UP, conv, distUnit, volUnit, consUnit } from './units.js';
 
 // Consumo lleno a lleno: entre dos repostajes con depósito lleno, los litros puestos después del primero
 // (incluidos los parciales intermedios y el último lleno) divididos por los km recorridos.
@@ -43,13 +44,16 @@ function nf(opts) {
 }
 const n = (v, d0, d1 = d0) => nf({ minimumFractionDigits: d0, maximumFractionDigits: d1 }).format(v);
 
+// Los valores llegan como se guardan (km, litros, L/100 km) y salen en las unidades y la moneda elegidas (units.js).
+const money = (v, d) => nf({ style: 'currency', currency: UP.currency, ...(d != null ? { minimumFractionDigits: d, maximumFractionDigits: d } : {}) }).format(v);
 export const fmt = {
-  eur: (v) => (v == null ? '—' : nf({ style: 'currency', currency: 'EUR' }).format(v)),
-  km: (v) => (v == null ? '—' : n(v, 0) + ' km'),
-  l: (v) => (v == null ? '—' : n(v, 2) + ' L'),
-  l100: (v) => (v == null ? '—' : n(v, 1)),
-  ppl: (v) => (v == null ? '—' : n(v, 3) + ' €/L'),
-  n3: (v) => (v == null ? '—' : n(v, 3)),
+  money: (v) => (v == null ? '—' : money(v)),
+  km: (v) => (v == null ? '—' : n(conv.dist(v), 0) + ' ' + distUnit()),
+  l: (v) => (v == null ? '—' : n(conv.vol(v), 2) + ' ' + volUnit()),
+  cons: (l100) => { const c = conv.cons(l100); return c == null ? '—' : n(c, 1); },
+  consUnit: () => consUnit(),
+  ppl: (perL) => (perL == null ? '—' : money(conv.perVol(perL), 3) + '/' + volUnit()),
+  perDist: (perKm) => (perKm == null ? '—' : money(conv.perDist(perKm), 3) + '/' + distUnit()),
   num: (v, max = 3) => (v == null ? '—' : n(v, 0, max)),
   date: (s) => (s ? new Date(s + 'T12:00').toLocaleDateString(locale(), { day: 'numeric', month: 'short', year: 'numeric' }) : ''),
 };

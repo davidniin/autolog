@@ -9,12 +9,12 @@ function dismissed() { try { return localStorage.getItem('autolog.installTip') =
 
 export const I = reactive({
   prompt: null, // evento guardado para lanzar el diálogo de instalación
-  iosTip: ios && !standalone && !dismissed(),
+  iosTip: ios && !standalone && !dismissed() && import.meta.env.MODE !== 'demo',
 });
 
 window.addEventListener('beforeinstallprompt', (e) => {
   e.preventDefault();
-  I.prompt = e;
+  if (import.meta.env.MODE !== 'demo') I.prompt = e; // la demo de la landing no se instala
 });
 window.addEventListener('appinstalled', () => { I.prompt = null; });
 

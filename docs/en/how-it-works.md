@@ -26,6 +26,36 @@ use the locale of the chosen language. Push notifications are sent in the langua
 subscribed (`server/src/messages.js`). API error responses are in English and include a stable `code` that the app
 translates.
 
+## Units and currency
+
+Chosen in **⚙ Settings → Units and currency** (or in the first-run wizard) and shared by every phone of the
+installation (stored on the server, `PUT /v1/settings`): km or miles; litres, US or UK gallons; L/100 km, km/L,
+mpg (US) or mpg (UK); and any ISO 4217 currency. Until someone chooses, each phone proposes the usual ones for its
+country (e.g. `en-US` → miles, gallons, mpg, USD).
+
+Data is **always stored in km, litres and L/100 km**; units only change how it's shown and typed, so switching is safe
+at any time. The currency isn't converted: it's the currency of the amounts you log. The "unrealistic price per litre"
+check only applies to currencies with euro-like prices (EUR, USD, GBP, CHF, CAD, AUD). Code: `web/src/units.js`.
+
+## Your data: backup, export and import
+
+In **⚙ Settings → Your data**:
+
+- **Full backup (JSON):** vehicles, fill-ups, expenses, reminders and settings — to restore or move to another server.
+  Photos and PDFs are not included (back up the attachments volume, see the install guides).
+- **CSV of fill-ups / expenses** for Excel or Google Sheets, always in km, litres and the installation's currency:
+  - fill-ups: `vehicle, date, km, liters, total, full_tank, station, note`
+  - expenses: `vehicle, date, km, category, title, amount, note`
+- **Import** a backup or one of those CSVs (comma or semicolon, `YYYY-MM-DD` or `DD/MM/YYYY`, decimal comma or point).
+  A summary is shown before anything changes. Records that already exist are skipped, so importing the same file
+  twice is safe. A CSV without a `vehicle` column goes into the current vehicle. Code: `web/src/dataio.js`.
+
+## First run
+
+With no vehicles yet, a short wizard asks for the language, the units and currency (skipped if another phone already
+chose them) and opens the form for the first vehicle. It can also restore a backup or open the demo. The password
+screen explains where to find `AUTOLOG_TOKEN`.
+
 ## Consumption: full-to-full method
 
 Each fill-up says whether the tank was filled. Between two full fills, consumption is the litres added after the first
@@ -103,17 +133,24 @@ Fill-ups also check that the mileage fits between the previous and next fill-ups
 - Security headers on every response; a Content-Security-Policy on the web app (see `server/src/security.js`).
 - Same-origin only: no CORS unless `CORS_ORIGIN` is set. Internal errors are logged, not returned to the client.
 
-## Demo mode
+## Demo mode and landing page
 
 `/?demo=1` loads made-up data into the current tab (`sessionStorage`), with no server requests and without touching
-the real data stored on the phone. Useful to try the app and for screenshots. *Salir* (exit) clears it.
+the real data stored on the phone. Useful to try the app and for screenshots. *Exit* clears it.
+
+The **landing page** (`site/`) embeds a **live demo**: a "demo only" build of the app (`vite build --mode demo`) that
+is always in demo mode, has no service worker and can't be installed. Build both into `site/dist/` with
+`cd web && npm run build:site`; `.github/workflows/pages.yml` publishes them on GitHub Pages (`/` landing, `/demo/`
+app). The repository URL used by every link of the landing is the `REPO` constant in `site/landing.js`. The demo
+accepts `?lang=es|en`.
 
 ## API
 
 | Method | Path | |
 |---|---|---|
 | GET | `/v1/health` | Status (no password) |
-| GET | `/v1/data` | `{ vehicles, fuel, expenses, reminders, files }`, all at once |
+| GET | `/v1/data` | `{ vehicles, fuel, expenses, reminders, files, settings }`, all at once |
+| PUT | `/v1/settings` | Units and currency: `{ distance: km\|mi, volume: l\|gal_us\|gal_uk, consumption: l100\|kml\|mpg_us\|mpg_uk, currency: "EUR" }` |
 | PUT | `/v1/{vehicles,fuel,expenses,reminders}/:id` | Create or update (idempotent: the id comes from the client) |
 | DELETE | `/v1/{vehicles,fuel,expenses,reminders}/:id` | Delete. Deleting a vehicle deletes everything it has |
 | POST | `/v1/files` | Upload an attachment (multipart: `file`, `id`, `vehicle_id`, `parent_kind` = vehicles · expenses · fuel, `parent_id`) |

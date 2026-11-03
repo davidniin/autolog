@@ -1,5 +1,6 @@
 // API de AutoLog (/v1) + la web del móvil compilada. Ver README.md.
-//   GET    /v1/data                → { vehicles, fuel, expenses, reminders }
+//   GET    /v1/data                → { vehicles, fuel, expenses, reminders, files, settings }
+//   PUT    /v1/settings            → unidades y moneda de la instalación (settings.js)
 //   PUT    /v1/:coleccion/:id      → crea o actualiza (coleccion = vehicles | fuel | expenses | reminders)
 //   DELETE /v1/:coleccion/:id      → borra (borrar un vehículo borra todo lo suyo)
 //   POST   /v1/files               → sube un adjunto (multipart)   GET/DELETE /v1/files/:id
@@ -16,9 +17,10 @@ import { sql, migrate, TABLES, clean, upsert, remove, readAll } from './db.js';
 import { MAX_BYTES, initFiles, saveFile, readFile, removeFiles } from './files.js';
 import { auth, checkStartup, CSP } from './security.js';
 import { cleanLang } from './messages.js';
+import { getPrefs, setPrefs, cleanPrefs } from './settings.js';
 import { alerts, initPush, vapidKey, subscribe, unsubscribe, sendTest, check } from './alerts.js';
 
-const VERSION = '0.1.0';
+const VERSION = '0.2.0';
 const startupError = checkStartup();
 if (startupError) {
   console.error('[autolog] ' + startupError);
@@ -43,7 +45,17 @@ api.get('/health', async (c) => {
   catch (e) { return c.json({ ok: false, version: VERSION, db: false, error: e.message }, 503); }
 });
 
-api.get('/data', async (c) => c.json(await readAll()));
+api.get('/data', async (c) => c.json({ ...(await readAll()), settings: await getPrefs() }));
+
+// Units and currency of the installation (shared by every phone)
+api.put('/settings', async (c) => {
+  let b;
+  try { b = await c.req.json(); } catch (e) { return c.json({ error: 'invalid JSON', code: 'bad_input' }, 400); }
+  const { prefs, error, code } = cleanPrefs(b);
+  if (error) return c.json({ error, code }, 400);
+  await setPrefs(prefs);
+  return c.json({ ok: true });
+});
 
 // ------------------------------------------------------------ avisos y push
 api.get('/alerts', async (c) => c.json((await alerts(cleanLang(c.req.query('lang') || 'es'))).map(({ stamp, score, ...a }) => a)));
