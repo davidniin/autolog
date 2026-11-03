@@ -3,7 +3,7 @@
   --bg: #f3f5f9;
   --card: #ffffff;
   --text: #151a24;
-  --muted: #677085;
+  --muted: #596274; /* 4,5:1 también sobre los fondos tintados */
   --line: #e3e7ee;
   --field: #f5f7fb;
   --accent: #2f5fd0;
@@ -13,8 +13,8 @@
   --alt-soft: rgba(230, 154, 29, 0.14);
   --danger: #c0392b;
   --danger-soft: rgba(192, 57, 43, 0.1);
-  --warn: #b7791f;
-  --ok: #2e8b57;
+  --warn: #93600f; /* 4,5:1 o más sobre blanco (WCAG AA) */
+  --ok: #217a4a;
   --hero: linear-gradient(135deg, #2148b8 0%, #2f5fd0 45%, #5b86f0 100%);
   /* gráfico (validado con dataviz: claro y oscuro por separado) */
   --c-fuel: #2f5fd0;
@@ -33,7 +33,7 @@
     --muted: #9aa1b0;
     --line: #2b3039;
     --field: #14171d;
-    --accent: #6b93f0;
+    --accent: #82a5f5;
     --accent-soft: rgba(107, 147, 240, 0.16);
     --accent-text: #0f1730;
     --alt: #f0b04d;
@@ -110,7 +110,7 @@ button { cursor: pointer; border: 0; background: none; padding: 0; text-align: i
 .hero-name { flex: 1; min-width: 0; }
 .hero-name b { display: block; font-size: 20px; letter-spacing: -0.01em; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .hero-name small { color: rgba(255, 255, 255, 0.8); font-size: 13px; }
-.hero-edit { position: relative; z-index: 1; padding: 5px 10px; border-radius: 999px; background: rgba(255, 255, 255, 0.18); font-size: 13px; font-weight: 600; }
+.hero-edit { position: relative; z-index: 1; color: #fff; font: inherit; padding: 5px 10px; border-radius: 999px; background: rgba(255, 255, 255, 0.18); font-size: 13px; font-weight: 600; }
 .hero-bottom { display: flex; align-items: flex-end; justify-content: space-between; gap: 12px; }
 .odo small { display: block; color: rgba(255, 255, 255, 0.75); font-size: 12px; text-transform: uppercase; letter-spacing: 0.06em; }
 .odo b { font-size: clamp(22px, 8vw, 30px); font-weight: 750; letter-spacing: -0.02em; font-variant-numeric: tabular-nums; white-space: nowrap; }
@@ -145,7 +145,7 @@ button { cursor: pointer; border: 0; background: none; padding: 0; text-align: i
 .stat span { margin-left: 4px; color: var(--muted); font-size: 13px; }
 .note { margin: 10px 2px 0; color: var(--muted); font-size: 13px; }
 
-h3 { margin: 24px 2px 10px; font-size: 13px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.06em; color: var(--muted); }
+h3, h2.sec { margin: 24px 2px 10px; font-size: 13px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.06em; color: var(--muted); }
 .totals { margin: 10px 2px; color: var(--muted); font-size: 14px; }
 .totals b { color: var(--text); }
 
@@ -161,7 +161,7 @@ h3 { margin: 24px 2px 10px; font-size: 13px; font-weight: 700; text-transform: u
 .item b { font-variant-numeric: tabular-nums; white-space: nowrap; }
 .item-end { display: grid; justify-items: end; gap: 3px; }
 .pill { padding: 1px 8px; border-radius: 999px; background: var(--accent-soft); color: var(--accent); font-size: 12px; font-weight: 650; white-space: nowrap; }
-.pill.muted { background: var(--line); color: var(--muted); }
+.pill.muted { background: var(--field); color: var(--muted); box-shadow: inset 0 0 0 1px var(--line); } /* contraste AA */
 
 /* ---- vacío y bienvenida */
 .empty { text-align: center; margin: 48px 0 8px; color: var(--muted); }
@@ -416,3 +416,17 @@ p.err.full { padding: 10px 12px; border-radius: 12px; background: var(--danger-s
 /* ---- acerca de / apoyar */
 .about p { margin: 0; }
 .bmc-link { display: inline-flex; align-items: center; justify-self: start; gap: 6px; padding: 9px 14px; border-radius: 12px; background: #ffdd00; color: #1d1a05; font-weight: 700; font-size: 14px; text-decoration: none; }
+.io-btn.wide { grid-column: 1 / -1; text-decoration: none; background: var(--accent-soft); border-color: var(--accent); color: var(--accent); }
+.io-btn.busy { opacity: 0.7; cursor: progress; }
+
+/* ---- conflictos entre móviles */
+.conflict-bar { display: flex; align-items: center; gap: 8px; margin: 4px 0 8px; padding: 8px 6px 8px 14px; border-radius: var(--radius); background: var(--danger-soft); color: var(--text); font-size: 14px; font-weight: 600; }
+.conflict-bar > span { flex: 1; }
+.conflict-bar .link { padding: 6px 10px; }
+.diff { width: 100%; border-collapse: collapse; font-size: 14px; }
+.diff th, .diff td { padding: 8px 6px; border-bottom: 1px solid var(--line); text-align: left; vertical-align: top; overflow-wrap: anywhere; }
+.diff thead th { color: var(--muted); font-size: 12px; text-transform: uppercase; letter-spacing: 0.05em; }
+.diff tbody th { color: var(--muted); font-weight: 600; width: 34%; }
+.diff td { font-weight: 600; }
+.conflict-actions { flex-wrap: wrap; }
+.sheet:focus, .sheet-bg:focus { outline: none; }

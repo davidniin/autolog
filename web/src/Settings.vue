@@ -1,15 +1,18 @@
 <script setup>
 // Ajustes: idioma (en este móvil) y unidades/moneda (para toda la instalación). Se abre con ⚙ en la cabecera.
 import { computed, ref } from 'vue';
+import { useDialog } from './dialog.js';
 import { t, L, LANGS, setLang } from './i18n/index.js';
 import { refreshPush } from './push.js';
-import { putSettings } from './store.js';
+import { putSettings, restoreBackup, DEMO } from './store.js';
 import { backupJSON, fuelCSV, expensesCSV, download, fileName, planImport, planCounts, applyImport } from './dataio.js';
 import { UP, UNIT_OPTIONS, PRESETS, currencyList } from './units.js';
 
 const props = defineProps({ vehicleId: String }); // vehículo actual: destino de un CSV sin columna "vehicle"
 const emit = defineEmits(['close', 'imported']);
 const VERSION = __APP_VERSION__; // de web/package.json (vite.config.js)
+const panel = ref(null);
+useDialog(panel, () => emit('close'), { focusFirstField: false });
 
 function pickLang(l) {
   setLang(l);
@@ -29,12 +32,27 @@ const exportAll = () => download(fileName('backup', 'json'), backupJSON(), 'appl
 const exportFuel = () => download(fileName('fuel', 'csv'), fuelCSV(), 'text/csv;charset=utf-8');
 const exportExpenses = () => download(fileName('expenses', 'csv'), expensesCSV(), 'text/csv;charset=utf-8');
 
+const zipBusy = ref(false);
 async function pickImport(ev) {
   const f = ev.target.files[0];
   ev.target.value = '';
   plan.value = null;
   ioMsg.value = '';
   if (!f) return;
+  // Copia con fotos: la restaura el servidor
+  if (/\.zip$/i.test(f.name) || f.type === 'application/zip') {
+    if (!confirm(t('io.zipConfirm'))) return;
+    zipBusy.value = true;
+    try {
+      const r = await restoreBackup(f, true);
+      const n = Object.values(r.added).reduce((a, b) => a + b, 0) - r.added.files; // registros (sin los adjuntos)
+      ioMsg.value = t('io.zipDone', { n, files: r.added.files }) + (r.skipped ? ' ' + t('io.skipped', { n: r.skipped }) : '');
+      emit('imported');
+    } catch (e) {
+      ioMsg.value = e.message;
+    } finally { zipBusy.value = false; }
+    return;
+  }
   try {
     plan.value = planImport(f.name, await f.text(), props.vehicleId);
   } catch (e) {
@@ -55,8 +73,8 @@ const currencies = computed(() => currencyList(L.lang));
 
 <template>
   <div class="sheet-bg" @click.self="emit('close')">
-    <div class="sheet" role="dialog" aria-modal="true" :aria-label="t('settings.title')">
-      <h2>{{ t('settings.title') }}</h2>
+    <div ref="panel" class="sheet" role="dialog" aria-modal="true" aria-labelledby="settings-title" tabindex="-1">
+      <h2 id="settings-title">{{ t('settings.title') }}</h2>
 
       <div class="field full" role="group" :aria-label="t('settings.language')">
         <span class="lbl">{{ t('settings.language') }}</span>
@@ -89,10 +107,11 @@ const currencies = computed(() => currencyList(L.lang));
       <div class="field full settings-data">
         <span class="lbl">{{ t('io.title') }}</span>
         <div class="io-btns">
+          <a v-if="!DEMO" class="io-btn wide" href="/v1/backup" download>📦 {{ t('io.zip') }}</a>
           <button type="button" class="io-btn" @click="exportAll">💾 {{ t('io.backup') }}</button>
           <button type="button" class="io-btn" @click="exportFuel">⛽ {{ t('io.fuelCsv') }}</button>
           <button type="button" class="io-btn" @click="exportExpenses">🧾 {{ t('io.expensesCsv') }}</button>
-          <label class="io-btn">📥 {{ t('io.import') }}<input type="file" accept=".json,.csv,application/json,text/csv" @change="pickImport" /></label>
+          <label class="io-btn" :class="{ busy: zipBusy }">{{ zipBusy ? '⏳ ' + t('io.zipUploading') : '📥 ' + t('io.import') }}<input type="file" accept=".zip,.json,.csv,application/zip,application/json,text/csv" :disabled="zipBusy" @change="pickImport" /></label>
         </div>
         <small class="form-note">{{ t('io.note') }}</small>
         <div v-if="plan" class="io-plan" role="status">

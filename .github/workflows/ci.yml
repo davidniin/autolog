@@ -56,6 +56,8 @@ jobs:
           test "$(curl -s -o /dev/null -w '%{http_code}' http://localhost:8791/v1/data)" = 401
           curl -sf -H "Authorization: Bearer $CI_TOKEN" http://localhost:8791/v1/data
           curl -sf http://localhost:8791/ | grep -q '<div id="app">'
+          curl -sf -H "Authorization: Bearer $CI_TOKEN" -o backup.zip http://localhost:8791/v1/backup
+          unzip -l backup.zip | grep -q autolog.json
       - name: Logs on failure
         if: failure()
         run: docker logs app

@@ -155,11 +155,27 @@ export function clean(kind, x) {
   return { rec: o };
 }
 
-export function upsert(kind, rec) {
+// Guardar. Cada registro tiene una revisión (rev = su updated_at, con microsegundos) que el móvil recibe al leer.
+// - Sin baseRev (registro nuevo, o creado y editado sin conexión): se crea o se sustituye.
+// - Con baseRev (edición de algo leído del servidor): solo se guarda si nadie lo ha cambiado desde entonces.
+//   Si otro móvil lo cambió o lo borró → { conflict: true, current } (current = lo que hay ahora, o null).
+// → { rev } con la revisión nueva.
+export async function upsert(kind, rec, baseRev) {
   const { table, fields } = TABLES[kind], keys = Object.keys(fields);
-  return sql`
-    insert into ${sql(table)} ${sql(rec, 'id', ...keys)}
-    on conflict (id) do update set ${sql(rec, ...keys)}, updated_at = now()`;
+  if (baseRev == null) {
+    const [r] = await sql`
+      insert into ${sql(table)} ${sql(rec, 'id', ...keys)}
+      on conflict (id) do update set ${sql(rec, ...keys)}, updated_at = clock_timestamp()
+      returning to_char(updated_at at time zone 'UTC', 'YYYY-MM-DD"T"HH24:MI:SS.US') as rev`;
+    return { rev: r.rev };
+  }
+  const [r] = await sql`
+    update ${sql(table)} set ${sql(rec, ...keys)}, updated_at = clock_timestamp()
+    where id = ${rec.id} and to_char(updated_at at time zone 'UTC', 'YYYY-MM-DD"T"HH24:MI:SS.US') = ${String(baseRev)}
+    returning to_char(updated_at at time zone 'UTC', 'YYYY-MM-DD"T"HH24:MI:SS.US') as rev`;
+  if (r) return { rev: r.rev };
+  const [current] = await SELECT[kind](sql`where id = ${rec.id}`);
+  return { conflict: true, current: current || null };
 }
 
 export function remove(kind, id) {
@@ -167,18 +183,23 @@ export function remove(kind, id) {
 }
 
 // Todo de una vez: son pocos datos (unos cientos de filas por vehículo y año) y así el móvil lo tiene sin red.
+// Lo que se envía al móvil de cada colección (w = filtro opcional, p. ej. sql`where id = ...`)
+const SELECT = {
+  vehicles: (w = sql``) => sql`select id, name, kind, plate, fuel_type, start_km, purchase_price::float8 as purchase_price,
+      purchase_date::text as purchase_date, note, to_char(updated_at at time zone 'UTC', 'YYYY-MM-DD"T"HH24:MI:SS.US') as rev
+    from autolog_vehicle ${w} order by created_at, id`,
+  fuel: (w = sql``) => sql`select id, vehicle_id, date::text as date, km, liters::float8 as liters, total::float8 as total,
+      full_tank, station, note, to_char(updated_at at time zone 'UTC', 'YYYY-MM-DD"T"HH24:MI:SS.US') as rev
+    from autolog_fuel ${w} order by date desc, km desc`,
+  expenses: (w = sql``) => sql`select id, vehicle_id, date::text as date, km, cat, title, amount::float8 as amount, note, to_char(updated_at at time zone 'UTC', 'YYYY-MM-DD"T"HH24:MI:SS.US') as rev
+    from autolog_expense ${w} order by date desc, created_at desc`,
+  reminders: (w = sql``) => sql`select id, vehicle_id, title, cat, every_km, every_months, due_date::text as due_date, due_km, note, to_char(updated_at at time zone 'UTC', 'YYYY-MM-DD"T"HH24:MI:SS.US') as rev
+    from autolog_reminder ${w} order by created_at, id`,
+};
+
 export async function readAll() {
   const [vehicles, fuel, expenses, reminders, files] = await Promise.all([
-    sql`select id, name, kind, plate, fuel_type, start_km, purchase_price::float8 as purchase_price,
-          purchase_date::text as purchase_date, note
-        from autolog_vehicle order by created_at, id`,
-    sql`select id, vehicle_id, date::text as date, km, liters::float8 as liters, total::float8 as total,
-          full_tank, station, note
-        from autolog_fuel order by date desc, km desc`,
-    sql`select id, vehicle_id, date::text as date, km, cat, title, amount::float8 as amount, note
-        from autolog_expense order by date desc, created_at desc`,
-    sql`select id, vehicle_id, title, cat, every_km, every_months, due_date::text as due_date, due_km, note
-        from autolog_reminder order by created_at, id`,
+    SELECT.vehicles(), SELECT.fuel(), SELECT.expenses(), SELECT.reminders(),
     sql`select id, vehicle_id, parent_kind, parent_id, name, mime, size from autolog_file order by created_at, id`,
   ]);
   return { vehicles, fuel, expenses, reminders, files };

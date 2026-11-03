@@ -6,6 +6,7 @@ import { ref, onMounted } from 'vue';
 import { OCRS, readImage, modelReady } from './ocr.js';
 import { parseReceipt } from './receipt.js';
 import { upload } from './store.js';
+import { UP } from './units.js';
 import { t } from './i18n/index.js';
 
 const props = defineProps({
@@ -21,6 +22,8 @@ const ready = ref(true);
 const err = ref('');
 const res = ref(null); // resultado de parseReceipt
 const attached = ref('');
+const pdfBusy = ref(false); // leyendo un PDF (el texto, o dibujando la página para el OCR)
+const fromText = ref(false); // los datos salieron del texto del PDF (exacto, sin OCR)
 let lastFile = null;
 
 
@@ -48,10 +51,20 @@ async function pick(ev) {
   res.value = null;
   attached.value = '';
   lastFile = file;
+  fromText.value = false;
   try {
-    const ocr = await readImage(file);
+    let ocr;
+    if (file.type === 'application/pdf' || /\.pdf$/i.test(file.name)) {
+      pdfBusy.value = true;
+      let page;
+      try {
+        const { readPdf } = await import('./pdf.js');
+        page = await readPdf(file);
+      } catch (e) { console.warn('[pdf]', e); throw new Error(t('scan.pdfBad')); } finally { pdfBusy.value = false; }
+      if (page.kind === 'text') { ocr = page.ocr; fromText.value = true; } else ocr = await readImage(page.canvas);
+    } else ocr = await readImage(file);
     ready.value = true;
-    const r = parseReceipt(ocr, { plate: props.plate });
+    const r = parseReceipt(ocr, { plate: props.plate, distance: UP.distance, volume: UP.volume });
     res.value = r;
     // Ticket de gasolinera en un gasto: mejor como repostaje (se adjunta allí)
     if (r.fuel && props.kind === 'expenses' && (r.values.liters || r.values.total)) return;
@@ -78,11 +91,11 @@ const foundText = (r) => [...new Set(r.found.map((k) => t('scan.names.' + k)).fi
 
 <template>
   <div class="scan full">
-    <label class="scan-btn" :class="{ busy: OCRS.busy }">
-      <input type="file" accept="image/*" :disabled="OCRS.busy" @change="pick" />
-      <span class="scan-ico">{{ OCRS.busy ? '⏳' : '📷' }}</span>
+    <label class="scan-btn" :class="{ busy: OCRS.busy || pdfBusy }">
+      <input type="file" accept="image/*,application/pdf" :disabled="OCRS.busy || pdfBusy" @change="pick" />
+      <span class="scan-ico">{{ OCRS.busy || pdfBusy ? '⏳' : '📷' }}</span>
       <span class="scan-txt">
-        <b>{{ OCRS.busy ? (OCRS.phase === 'download' ? t('scan.downloading', { p: OCRS.progress }) : t('scan.reading')) : kind === 'fuel' ? t('scan.ticket') : t('scan.invoice') }}</b>
+        <b>{{ pdfBusy ? t('scan.readingPdf') : OCRS.busy ? (OCRS.phase === 'download' ? t('scan.downloading', { p: OCRS.progress }) : t('scan.reading')) : kind === 'fuel' ? t('scan.ticket') : t('scan.invoice') }}</b>
         <small v-if="OCRS.busy && OCRS.phase === 'download'">{{ t('scan.firstTimeOnly') }}</small>
         <small v-else-if="OCRS.busy">{{ t('scan.mayTake') }}</small>
         <small v-else-if="!ready">{{ t('scan.firstDownload') }}</small>
@@ -104,6 +117,7 @@ const foundText = (r) => [...new Set(r.found.map((k) => t('scan.names.' + k)).fi
       </template>
       <template v-else>
         <p v-if="res.found.length" v-html="t('scan.filled', { fields: foundText(res) })"></p>
+        <small v-if="fromText">{{ t('scan.pdfText') }}</small>
         <p v-for="w in res.warnings" :key="w" class="scan-warn">⚠ {{ w }}</p>
         <small v-if="attached">{{ attached }}</small>
       </template>

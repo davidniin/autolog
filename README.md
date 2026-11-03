@@ -23,12 +23,15 @@ not on someone else's.
 - **Expenses** by category (service, repairs, MOT/ITV, insurance, tax, parking, tolls…) with photo/PDF attachments.
 - **Reminders** by date and/or mileage (oil change, ITV, insurance…), with optional **push notifications**.
 - **Costs**: per month, per km, including the purchase price, 12-month chart and breakdown by category.
-- **Scan invoices and fuel receipts**: take a photo and the amount, date, mileage, litres and concept are filled in.
+- **Scan invoices and fuel receipts** (photo or PDF, Spanish or English): the amount, date, mileage, litres and concept
+  are filled in.
   OCR runs **on the phone** ([runonweb](https://runonweb.ai/models/ocr), PP-OCRv6): the photo never leaves the device.
 - **Works offline**: changes are saved on the phone and synced when the connection is back.
 - **Validation** of every field (impossible mileage, unrealistic €/L, future dates…).
 - **Your units**: km or miles, litres or gallons, L/100 km, km/L or mpg, and any currency.
-- **Your data, portable**: full JSON backup and CSV export/import (Excel, Google Sheets).
+- **Your data, portable**: backup with photos (ZIP) and restore, CSV export/import (Excel, Google Sheets).
+- **Several phones**: if two phones edit the same thing, you choose which version to keep — nothing is lost silently.
+- **Accessible**: checked with axe-core (WCAG 2.1 AA), keyboard and screen-reader friendly.
 - **English and Spanish** (follows the phone's language; switch it in ⚙ Settings), light/dark mode, installable on
   Android and iPhone, several vehicles.
 
@@ -97,9 +100,9 @@ and the [Code of Conduct](CODE_OF_CONDUCT.md).
 
 ## Roadmap
 
-1. More languages, and receipt-scanner rules for other countries (today: Spanish invoices, `1.234,56 €`) — help wanted.
-2. Backups with photos, and restore from the app.
-3. Electric and hybrid vehicles (kWh).
+1. More languages, and receipt-scanner rules for more countries — help wanted.
+2. Electric and hybrid vehicles (kWh).
+3. Tyres and parts tracking.
 4. A PDF service history to show when selling the vehicle.
 5. A prebuilt Docker image for every release (`ghcr.io`).
 

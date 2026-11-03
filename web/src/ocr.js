@@ -54,6 +54,7 @@ async function prepare(file) {
   return c;
 }
 
+// file = foto (File/Blob) o un canvas ya dibujado (página de un PDF escaneado, ver pdf.js)
 // → { text, lines: [{ text, score, box }], confidence }
 export async function readImage(file) {
   if (OCRS.busy) throw new Error(t('ocr.busy'));
@@ -62,7 +63,8 @@ export async function readImage(file) {
   OCRS.progress = 0;
   try {
     let canvas;
-    try { canvas = await prepare(file); } catch (e) { throw new Error(t('ocr.badImage')); }
+    if (typeof HTMLCanvasElement !== 'undefined' && file instanceof HTMLCanvasElement) canvas = file;
+    else try { canvas = await prepare(file); } catch (e) { throw new Error(t('ocr.badImage')); }
     const o = await engine();
     OCRS.phase = 'read';
     return await o.read(canvas);

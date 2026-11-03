@@ -17,7 +17,7 @@ const rows = computed(() =>
 
 <template>
   <div>
-    <h3 class="h-row">{{ t('rem.heading') }} <button class="link" @click="emit('add', 'reminders')">{{ t('rem.add') }}</button></h3>
+    <h2 class="sec h-row">{{ t('rem.heading') }} <button class="link" @click="emit('add', 'reminders')">{{ t('rem.add') }}</button></h2>
     <button v-if="!rows.length" class="item hint-card" @click="emit('add', 'reminders')">
       <span class="item-icon">🔔</span>
       <span class="item-body">{{ t('rem.emptyTitle') }}<small>{{ t('rem.emptySub') }}</small></span>

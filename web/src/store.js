@@ -36,11 +36,14 @@ if (!DEMO && q.has('token')) {
   q.delete('token');
   history.replaceState(null, '', location.pathname + (q.size ? '?' + q : '') + location.hash);
 }
-// Los adjuntos se abren con <img> o en otra pestaña (sin cabeceras): la clave va en una cookie solo para /v1/files
+// Los adjuntos (<img>, otra pestaña) y la copia con fotos (un enlace) se abren sin cabeceras: la clave va en una
+// cookie limitada a esas dos rutas (/v1/files y /v1/backup), nunca en la URL
 function fileCookie(t) {
   if (typeof document === 'undefined') return;
-  document.cookie = 'autolog_token=' + encodeURIComponent(t || '') + '; Path=/v1/files; SameSite=Strict' +
-    (t ? '; Max-Age=315360000' : '; Max-Age=0') + (location.protocol === 'https:' ? '; Secure' : '');
+  for (const path of ['/v1/files', '/v1/backup']) {
+    document.cookie = 'autolog_token=' + encodeURIComponent(t || '') + '; Path=' + path + '; SameSite=Strict' +
+      (t ? '; Max-Age=315360000' : '; Max-Age=0') + (location.protocol === 'https:' ? '; Secure' : '');
+  }
 }
 if (!DEMO) fileCookie(load('token', ''));
 
@@ -52,12 +55,13 @@ export const S = reactive({
   files: load('files', []), // adjuntos: solo los datos; el fichero se pide a /v1/files/:id
   queue: load('queue', []),
   current: load('current', ''),
+  conflicts: load('conflicts', []), // cambios que chocan con otro móvil: { kind, id, mine, theirs } (ver run)
   settings: load('settings', null), // unidades y moneda de la instalación (null = sin elegir todavía)
   online: true,
   auth: true, // false = falta el token o no vale
 });
 
-function persist() { for (const k of ['vehicles', 'fuel', 'expenses', 'reminders', 'files', 'queue', 'current', 'settings']) save(k, S[k]); }
+function persist() { for (const k of ['vehicles', 'fuel', 'expenses', 'reminders', 'files', 'queue', 'current', 'settings', 'conflicts']) save(k, S[k]); }
 applyPrefs(S.settings);
 
 // Unidades y moneda: para todos los móviles (se guardan en el servidor, también sin conexión vía la cola)
@@ -74,10 +78,13 @@ export function newId() { return Date.now().toString(36) + Math.random().toStrin
 export function setCurrent(id) { S.current = id; save('current', id); }
 
 // ------------------------------------------------------------ cambios
+// Guardar. Si el registro vino del servidor (tiene rev), se envía esa revisión como base_rev: si otro móvil lo cambió
+// mientras tanto, el servidor no lo pisa y responde 409 → queda en S.conflicts para que la persona elija.
 export function put(kind, rec) {
   const list = S[kind], i = list.findIndex((x) => x.id === rec.id);
   if (i >= 0) list[i] = rec; else list.unshift(rec);
-  enqueue('PUT', kind, rec.id, rec);
+  const { rev, ...body } = rec;
+  enqueue('PUT', kind, rec.id, rev ? { ...body, base_rev: rev } : body);
 }
 
 // Muchos de una vez (importar): se guarda en el móvil una sola vez en lugar de tras cada registro
@@ -85,8 +92,9 @@ export function putMany(kind, recs) {
   if (!recs.length) return;
   const byId = new Map(S[kind].map((x, i) => [x.id, i]));
   for (const rec of recs) {
-    if (byId.has(rec.id)) S[kind][byId.get(rec.id)] = rec; else S[kind].unshift(rec);
-    S.queue.push({ method: 'PUT', path: '/v1/' + kind + '/' + encodeURIComponent(rec.id), body: rec });
+    const { rev, ...body } = rec; // importado: se guarda tal cual (sin comprobar revisiones de otra instalación)
+    if (byId.has(rec.id)) S[kind][byId.get(rec.id)] = body; else S[kind].unshift(body);
+    S.queue.push({ method: 'PUT', path: '/v1/' + kind + '/' + encodeURIComponent(rec.id), body });
   }
   persist();
   flush();
@@ -138,8 +146,31 @@ async function run() {
     let r;
     try { r = await call(op.method, op.path, op.body); } catch (e) { return; }
     if (r.status === 401 || r.status >= 500) return; // se reintenta más tarde
-    if (!r.ok) console.warn('[sync] descartado ' + op.method + ' ' + op.path + ': ' + (await r.text()));
-    S.queue.shift(); // 2xx, o 4xx (dato no válido): fuera de la cola
+    const [, kind, id] = op.path.match(/^\/v1\/(\w+)\/(.+)$/) || [];
+    const d = await r.json().catch(() => ({}));
+    if (r.ok && d.rev && kind && S[kind]) {
+      // Revisión nueva: para el registro local y para los cambios suyos que sigan en la cola (editado dos veces sin
+      // conexión: el segundo cambio parte del primero, no es un conflicto)
+      const rec = S[kind].find((x) => x.id === decodeURIComponent(id));
+      if (rec) rec.rev = d.rev;
+      for (const o of S.queue.slice(1)) if (o.path === op.path && o.body && 'base_rev' in o.body) o.body.base_rev = d.rev;
+    } else if (r.status === 409 && d.code === 'conflict') {
+      const { base_rev, ...mine } = op.body;
+      S.conflicts = [...S.conflicts.filter((c) => !(c.kind === kind && c.id === mine.id)), { kind, id: mine.id, mine, theirs: d.current }];
+    } else if (!r.ok) console.warn('[sync] descartado ' + op.method + ' ' + op.path + ': ' + JSON.stringify(d));
+    S.queue.shift(); // hecho, en conflicto, o 4xx (dato no válido): fuera de la cola
+    persist();
+  }
+  if (S.conflicts.length) pull(); // lo de los demás móviles, para ver los dos lados
+}
+
+// Resolver un conflicto: quedarse con lo de este móvil (se guarda encima de lo del otro) o con lo del otro
+export function resolveConflict(c, keepMine) {
+  S.conflicts = S.conflicts.filter((x) => x !== c);
+  if (keepMine) put(c.kind, c.theirs ? { ...c.mine, rev: c.theirs.rev } : c.mine); // borrado en el otro: se vuelve a crear
+  else {
+    const list = S[c.kind], i = list.findIndex((x) => x.id === c.id);
+    if (c.theirs) { if (i >= 0) list[i] = c.theirs; else list.unshift(c.theirs); } else if (i >= 0) list.splice(i, 1);
     persist();
   }
 }
@@ -195,6 +226,20 @@ async function shrink(file, max = 2000) {
     const out = await new Promise((res) => c.toBlob(res, 'image/jpeg', 0.85));
     return out && out.size < file.size ? out : file;
   } catch (e) { return file; } // formato que el navegador no sabe leer: se sube tal cual
+}
+
+// Restaurar una copia con fotos (ZIP de /v1/backup): la fusiona el servidor (añade lo que falta, no pisa nada).
+// Necesita red. → { added: { vehicles, fuel, expenses, reminders, files }, skipped, invalid }
+export async function restoreBackup(file, withSettings, { reload = true } = {}) {
+  if (DEMO) throw new Error(t('files.demo'));
+  const h = { 'Content-Type': 'application/zip' }, token = load('token', '');
+  if (token) h.Authorization = 'Bearer ' + token;
+  let r;
+  try { r = await fetch('/v1/restore' + (withSettings ? '?settings=1' : ''), { method: 'POST', headers: h, body: file }); } catch (e) { S.online = false; throw new Error(t('files.offline')); }
+  const d = await r.json().catch(() => ({}));
+  if (!r.ok) throw new Error((d.code && t('err.' + d.code) !== 'err.' + d.code ? t('err.' + d.code) : d.error) || t('files.failed', { status: r.status }));
+  if (reload) await pull();
+  return d;
 }
 
 export function delFile(id) {

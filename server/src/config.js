@@ -14,6 +14,8 @@ export const CONFIG = {
   databaseUrl: env.DATABASE_URL || 'postgres://autolog:autolog@localhost:5432/autolog',
   // Carpeta con la web compilada (web/dist). Vacío = solo API.
   staticDir: env.STATIC_DIR || '',
+  // Tamaño máximo de una copia con fotos al restaurarla (POST /v1/restore), en MB
+  restoreMaxMb: +(env.RESTORE_MAX_MB || 2048),
   // Carpeta de los adjuntos (fotos y PDF). En Docker es un volumen: ver docker-compose.yml.
   filesDir: env.FILES_DIR || './data/files',
   // Notificaciones push: contacto que se envía a los servicios de push (Google, Apple...) y hora de la revisión diaria

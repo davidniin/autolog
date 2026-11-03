@@ -1,7 +1,7 @@
 {
   "name": "autolog-web",
   "private": true,
-  "version": "0.2.0",
+  "version": "0.3.0",
   "type": "module",
   "scripts": {
     "dev": "vite --host",
@@ -11,6 +11,7 @@
     "build:site": "vite build --mode demo --base ./ --outDir ../site/dist/demo --emptyOutDir && node ../site/build.mjs"
   },
   "dependencies": {
+    "pdfjs-dist": "6.4.299",
     "runonweb": "0.1.0",
     "vue": "^3.5.13"
   },

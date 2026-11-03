@@ -4,7 +4,7 @@ import { plural } from './plural.js';
 export default {
   common: {
     and: 'and', save: 'Save', cancel: 'Cancel', delete: 'Delete', close: 'Close', exit: 'Exit', edit: 'Edit',
-    add: 'Add', required: '*',
+    add: 'Add', required: '*', yes: 'Yes', no: 'No',
     days: (p) => plural(p.n, 'day', 'days'),
   },
   app: {
@@ -24,6 +24,17 @@ export default {
     tabs: { resumen: 'Summary', fuel: 'Fill-ups', expenses: 'Expenses', costs: 'Costs' },
     fab: 'Add {what}',
     toastDone: '✓ Done: {title}',
+  },
+  conflict: {
+    bar: (p) => (p.n === 1 ? '1 change clashes with another phone' : p.n + ' changes clash with another phone'),
+    review: 'Review',
+    changed: 'This {what} was changed on another phone',
+    deleted: 'This {what} was deleted on another phone',
+    explain: 'Choose which version to keep. Only the data that differs is shown.',
+    count: (p) => p.n + ' left',
+    mine: 'This phone', theirs: 'The other',
+    keepMine: 'Keep mine', keepTheirs: 'Keep the other',
+    restore: 'Create it again', keepDeleted: 'Leave it deleted',
   },
   wizard: {
     start: 'Get started', restore: 'I have a backup', demo: 'See the demo',
@@ -57,9 +68,12 @@ export default {
     coffee: 'Support the project: buy me a coffee',
   },
   io: {
-    title: 'Your data', backup: 'Full backup (JSON)', fuelCsv: 'Fill-ups (CSV)', expensesCsv: 'Expenses (CSV)',
+    title: 'Your data', zip: 'Backup with photos (ZIP)', backup: 'Backup without photos (JSON)',
+    zipUploading: 'Restoring the backup…',
+    zipConfirm: "Whatever is missing from the backup will be added (data, photos and PDFs). Nothing you already have is changed or deleted. Continue?",
+    zipDone: (p) => '✓ Backup restored: ' + p.n + (p.n === 1 ? ' record' : ' records') + ' added, ' + p.files + (p.files === 1 ? ' attachment.' : ' attachments.'), fuelCsv: 'Fill-ups (CSV)', expensesCsv: 'Expenses (CSV)',
     import: 'Import…',
-    note: "The backup restores everything or moves it to another server (photos and PDFs aren't included). CSV files open in Excel or Google Sheets and can be imported again; a CSV without a \"vehicle\" column goes into the current vehicle.",
+    note: 'The backup with photos (ZIP) keeps everything, to restore or move to another server. The backup without photos (JSON) works offline. CSV files open in Excel or Google Sheets and can be imported again; a CSV without a "vehicle" column goes into the current vehicle.',
     willAdd: 'To add:', nothingNew: 'Nothing new: you already have everything in this file.',
     count: {
       vehicles: (p) => p.n + (p.n === 1 ? ' vehicle' : ' vehicles'), fuel: (p) => p.n + (p.n === 1 ? ' fill-up' : ' fill-ups'),
@@ -175,14 +189,16 @@ export default {
     file_missing: 'No file', file_type: 'Only photos or PDFs', file_too_big: 'Maximum 15 MB',
     bad_parent: "Can't attach here", missing_ids: 'Missing attachment data', no_vehicle: "The vehicle doesn't exist",
     too_many_attempts: 'Too many attempts: wait a few minutes', bad_token: 'Wrong password',
+    not_backup: 'This is not an AutoLog backup (ZIP).', backup_too_big: 'The backup is bigger than the server allows (RESTORE_MAX_MB).',
   },
   scan: {
     invoice: 'Scan the invoice', ticket: 'Scan the receipt',
-    downloading: 'Downloading the reader… {p} %', reading: 'Reading the photo…',
+    downloading: 'Downloading the reader… {p} %', reading: 'Reading the photo…', readingPdf: 'Reading the PDF…',
+    pdfText: "📄 Read from the PDF's text: exact, no OCR.", pdfBad: "Can't open this PDF.",
     firstTimeOnly: 'Only the first time. Then it works offline.', mayTake: 'It may take a few seconds',
     firstDownload: 'Fills in the form for you. The first time it downloads the reader (31 MB).',
-    fillsFuel: "Fills in litres, amount and date. The photo doesn't leave your phone.",
-    fillsExpense: "Fills in amount, date, mileage and description. The photo doesn't leave your phone.",
+    fillsFuel: "Photo or PDF: fills in quantity, amount and date. It doesn't leave your phone.",
+    fillsExpense: "Photo or PDF: fills in amount, date, mileage and description. It doesn't leave your phone.",
     looksFuel: '⛽ This looks like a fuel receipt. Record it as a fill-up?',
     keepExpense: "No, it's an expense", toFuel: 'Yes, fill-up',
     filled: '✨ I filled in <b>{fields}</b>. Check it before saving.',

@@ -6,10 +6,10 @@ import { CONFIG } from './config.js';
 import { sql } from './db.js';
 
 export const MAX_BYTES = 15 * 1024 * 1024;
-const KINDS = ['vehicles', 'expenses', 'fuel']; // a qué se puede adjuntar (fuel: tickets de gasolinera)
-const OK_MIME = /^(image\/(jpeg|png|webp|gif|heic|heif)|application\/pdf)$/;
+export const KINDS = ['vehicles', 'expenses', 'fuel']; // a qué se puede adjuntar (fuel: tickets de gasolinera)
+export const OK_MIME = /^(image\/(jpeg|png|webp|gif|heic|heif)|application\/pdf)$/;
 
-const fileOf = (id) => path.join(CONFIG.filesDir, id);
+export const fileOf = (id) => path.join(CONFIG.filesDir, id);
 
 export async function initFiles() { await fs.mkdir(CONFIG.filesDir, { recursive: true }); }
 
