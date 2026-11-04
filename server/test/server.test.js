@@ -107,3 +107,34 @@ test('people: own password works, owner-only routes are protected', async () => 
   assert.equal((await req('/v1/me', 'ana-token-0123456789abcdef')).status, 401);
   Object.assign(CONFIG, saved);
 });
+
+test('secrets from files (Docker secrets pattern)', async () => {
+  const { readSecret, withPassword } = await import('../src/config.js');
+  const fs = await import('node:fs');
+  const os = await import('node:os');
+  const path = await import('node:path');
+  const f = path.join(os.tmpdir(), 'autolog-secret-test');
+  fs.writeFileSync(f, '  s3cr3t-with/special@chars\n');
+  assert.equal(readSecret(f), 's3cr3t-with/special@chars');
+  assert.equal(readSecret(''), '');
+  assert.equal(withPassword('postgres://autolog@db:5432/autolog', 'p@ss/w:rd'), 'postgres://autolog:p%40ss%2Fw%3Ard@db:5432/autolog');
+  fs.unlinkSync(f);
+});
+
+test('client IP behind a proxy: a forged X-Forwarded-For does not dodge the lock-out', async () => {
+  const saved = { ...CONFIG };
+  Object.assign(CONFIG, { token: 'right-token-0123456789', trustProxy: 1 });
+  const app = new Hono();
+  app.use('*', auth({ findUser: async () => null }));
+  app.get('/v1/data', (c) => c.text('ok'));
+  // The attacker sends a different fake IP each time; the proxy appends the real one (8.8.4.4) at the end
+  const req = (fake, token) => app.request('/v1/data', { headers: { authorization: 'Bearer ' + token, 'x-forwarded-for': fake + ', 8.8.4.4' } });
+  for (let i = 0; i < 10; i++) await req('10.0.0.' + i, 'wrong');
+  assert.equal((await req('10.0.0.99', 'right-token-0123456789')).status, 429);
+  // Two proxies (e.g. Cloudflare → Caddy): the client is the second from the right
+  const { clientIp } = await import('../src/security.js');
+  Object.assign(CONFIG, { trustProxy: 2 });
+  const fake = { req: { header: () => 'forged, 203.0.113.7, 172.70.1.1' } };
+  assert.equal(clientIp(fake), '203.0.113.7');
+  Object.assign(CONFIG, saved);
+});

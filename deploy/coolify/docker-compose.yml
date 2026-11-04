@@ -1,0 +1,52 @@
+# AutoLog for Coolify (self-hosted PaaS): New resource → Docker Compose Empty → paste this file → Deploy.
+# Coolify fills in the "magic" variables on deploy:
+#   SERVICE_FQDN_AUTOLOG_8791    → a domain for AutoLog with HTTPS (Let's Encrypt), routed to port 8791
+#   SERVICE_PASSWORD_64_AUTOLOG  → a random 64-character owner password (see it in the resource's Environment Variables)
+#   SERVICE_USER_POSTGRES / SERVICE_PASSWORD_POSTGRES → random database user and password
+# Security: no default passwords; the database has no published port; AutoLog runs unprivileged with a read-only
+# filesystem, no Linux capabilities and no-new-privileges; TRUST_PROXY=1 because Coolify's proxy is in front.
+services:
+  autolog:
+    image: ghcr.io/davidniin/autolog:0.5
+    restart: unless-stopped
+    environment:
+      - SERVICE_FQDN_AUTOLOG_8791
+      - AUTOLOG_TOKEN=${SERVICE_PASSWORD_64_AUTOLOG}
+      - DATABASE_URL=postgres://${SERVICE_USER_POSTGRES}:${SERVICE_PASSWORD_POSTGRES}@db:5432/autolog
+      - TRUST_PROXY=1
+      - TZ=${TZ:-Europe/Madrid}
+      - PUSH_CONTACT=${PUSH_CONTACT:-}
+    volumes:
+      - autolog-data:/data
+    depends_on:
+      db:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://127.0.0.1:8791/v1/health || exit 1"]
+      interval: 30s
+      timeout: 5s
+      retries: 5
+    read_only: true
+    tmpfs: [/tmp]
+    cap_drop: [ALL]
+    security_opt: [no-new-privileges:true]
+
+  db:
+    image: postgres:17-alpine
+    restart: unless-stopped
+    environment:
+      - POSTGRES_USER=${SERVICE_USER_POSTGRES}
+      - POSTGRES_PASSWORD=${SERVICE_PASSWORD_POSTGRES}
+      - POSTGRES_DB=autolog
+    volumes:
+      - autolog-db:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d autolog"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+    security_opt: [no-new-privileges:true]
+
+volumes:
+  autolog-data:
+  autolog-db:

@@ -1,0 +1,4 @@
+# Umbrel community app store manifest. Umbrel needs the store in its OWN repository (with this file at the root and
+# the app folder next to it): see docs/en/self-hosting.md → "Umbrel".
+id: davidniin
+name: AutoLog

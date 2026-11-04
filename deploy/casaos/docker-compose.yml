@@ -1,0 +1,108 @@
+# AutoLog for CasaOS (App Store → ⋯ → Install a customized app → Import → paste this file).
+# Security:
+# - No default passwords: on first start the "secrets" container generates a random app password and a random
+#   database password into /DATA/AppData/autolog/secrets (folder readable only by root; each file mounted only where
+#   needed). The app password is printed ONCE in the "secrets" container logs and stays in secrets/app/token.
+# - The database has no published port: only AutoLog can reach it.
+# - AutoLog runs as an unprivileged user, read-only filesystem, no Linux capabilities, no-new-privileges.
+# - Pinned image version. To update: change the tag (see the release notes) and re-apply.
+# Open it on your network at http://<casaos-ip>:8791 — for the phone app you need HTTPS: see docs/en/self-hosting.md.
+name: autolog
+services:
+  secrets:
+    image: alpine:3.20
+    restart: "no"
+    network_mode: none
+    read_only: true
+    cap_drop: [ALL]
+    cap_add: [CHOWN, DAC_OVERRIDE, FOWNER]
+    security_opt: [no-new-privileges:true]
+    volumes:
+      - /DATA/AppData/autolog/secrets:/secrets
+    command:
+      - /bin/sh
+      - -euc
+      - |
+        umask 077
+        gen() { tr -dc 'A-Za-z0-9' </dev/urandom | head -c 40; }
+        mkdir -p /secrets/db /secrets/app
+        [ -s /secrets/db/password ] || gen > /secrets/db/password
+        if [ ! -s /secrets/app/token ]; then
+          gen > /secrets/app/token
+          echo "================================================================"
+          echo " AutoLog password (shown only now, also in secrets/app/token):"
+          echo "   $$(cat /secrets/app/token)"
+          echo "================================================================"
+        else
+          echo "AutoLog password already created (secrets/app/token)."
+        fi
+        # Folders: traverse only (no listing). Files: readable by the users of postgres (70) and AutoLog (1000).
+        chmod 0711 /secrets /secrets/db /secrets/app
+        chmod 0444 /secrets/db/password /secrets/app/token
+
+  db:
+    image: postgres:17-alpine
+    restart: unless-stopped
+    depends_on:
+      secrets:
+        condition: service_completed_successfully
+    environment:
+      POSTGRES_USER: autolog
+      POSTGRES_DB: autolog
+      POSTGRES_PASSWORD_FILE: /run/secrets/db/password
+    volumes:
+      - /DATA/AppData/autolog/db:/var/lib/postgresql/data
+      - /DATA/AppData/autolog/secrets/db:/run/secrets/db:ro
+    security_opt: [no-new-privileges:true]
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U autolog -d autolog"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+
+  autolog:
+    image: ghcr.io/davidniin/autolog:0.5
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      AUTOLOG_TOKEN_FILE: /run/secrets/app/token
+      DATABASE_URL: postgres://autolog@db:5432/autolog
+      DATABASE_PASSWORD_FILE: /run/secrets/db/password
+      TZ: Europe/Madrid
+      PUSH_CONTACT: ""
+    ports:
+      - "8791:8791"
+    volumes:
+      - /DATA/AppData/autolog/data:/data
+      - /DATA/AppData/autolog/secrets/app:/run/secrets/app:ro
+      - /DATA/AppData/autolog/secrets/db:/run/secrets/db:ro
+    read_only: true
+    tmpfs: [/tmp]
+    cap_drop: [ALL]
+    security_opt: [no-new-privileges:true]
+
+x-casaos:
+  architectures: [amd64, arm64]
+  main: autolog
+  author: davidniin
+  developer: davidniin
+  category: Utilities
+  index: /
+  port_map: "8791"
+  icon: https://raw.githubusercontent.com/davidniin/autolog/main/web/public/icon-512.png
+  title:
+    en_us: AutoLog
+  tagline:
+    en_us: Your vehicle's logbook, on your own server
+    es_es: El historial de tu vehículo, en tu propio servidor
+  description:
+    en_us: Fill-ups and charges, real consumption, expenses, reminders, tyres and parts, costs and a history report. Installable phone app that works offline. Your data stays on your CasaOS.
+    es_es: Repostajes y recargas, consumo real, gastos, avisos, neumáticos y piezas, costes e informe del historial. App instalable en el móvil que funciona sin conexión. Tus datos se quedan en tu CasaOS.
+  tips:
+    before_install:
+      en_us: |
+        A random password is generated on first start. Find it in the logs of the "secrets" container, or in /DATA/AppData/autolog/secrets/app/token. Keep it private: it's the owner password.
+      es_es: |
+        La primera vez se genera una clave aleatoria. Está en los logs del contenedor "secrets" o en /DATA/AppData/autolog/secrets/app/token. No la compartas: es la clave del propietario.

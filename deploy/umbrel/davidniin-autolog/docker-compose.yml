@@ -1,0 +1,41 @@
+# AutoLog for umbrelOS (community app store). Umbrel provides per-install secrets:
+#   APP_PASSWORD → AutoLog's owner password (shown in the Umbrel dashboard: deterministicPassword in umbrel-app.yml)
+#   APP_SEED     → the database password (never shown, never leaves the app)
+# Security: no default passwords; the database has no published port; AutoLog runs unprivileged with a read-only
+# filesystem, no Linux capabilities and no-new-privileges. Umbrel's app_proxy sits in front: PROXY_AUTH_ADD is off
+# because the phone app (PWA) can't go through the Umbrel login page — AutoLog's own password protects it.
+version: "3.7"
+
+services:
+  app_proxy:
+    environment:
+      APP_HOST: davidniin-autolog_web_1
+      APP_PORT: 8791
+      PROXY_AUTH_ADD: "false"
+
+  web:
+    image: ghcr.io/davidniin/autolog:0.5
+    restart: on-failure
+    depends_on: [db]
+    environment:
+      AUTOLOG_TOKEN: ${APP_PASSWORD}
+      DATABASE_URL: postgres://autolog:${APP_SEED}@db:5432/autolog
+      TRUST_PROXY: "1"
+      TZ: Europe/Madrid
+    volumes:
+      - ${APP_DATA_DIR}/data:/data
+    read_only: true
+    tmpfs: [/tmp]
+    cap_drop: [ALL]
+    security_opt: [no-new-privileges:true]
+
+  db:
+    image: postgres:17-alpine
+    restart: on-failure
+    environment:
+      POSTGRES_USER: autolog
+      POSTGRES_PASSWORD: ${APP_SEED}
+      POSTGRES_DB: autolog
+    volumes:
+      - ${APP_DATA_DIR}/db:/var/lib/postgresql/data
+    security_opt: [no-new-privileges:true]

@@ -21,6 +21,11 @@ services:
       - "${BIND_ADDR:-127.0.0.1}:${HOST_PORT:-8791}:8791"
     volumes:
       - autolog-data:/data # photos and PDFs (attachments)
+    # Hardening: unprivileged user (in the image), read-only filesystem except /data, no Linux capabilities
+    read_only: true
+    tmpfs: [/tmp]
+    cap_drop: [ALL]
+    security_opt: [no-new-privileges:true]
     depends_on:
       db:
         condition: service_healthy
@@ -35,6 +40,7 @@ services:
       TZ: ${TZ:-Europe/Madrid}
     volumes:
       - autolog-db:/var/lib/postgresql/data
+    security_opt: [no-new-privileges:true]
     # No ports published: only the app container can reach the database.
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U autolog -d autolog"]

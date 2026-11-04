@@ -6,7 +6,7 @@ AutoLog es un solo contenedor Docker más una base de datos PostgreSQL, así que
 guía dice qué tiene que ofrecer la plataforma y qué configurar; para los clics, sigue la documentación de tu proveedor.
 
 Si tu proveedor te da una máquina virtual normal (VPS), es más sencillo seguir [self-hosting.md](self-hosting.md) en
-ella.
+ella. En **Render** hay un botón de un clic, y en **Coolify** una plantilla lista: [one-click.md](one-click.md).
 
 ## Lista de requisitos de la plataforma
 

@@ -31,12 +31,14 @@ function same(a, b) {
   return crypto.timingSafeEqual(x, y);
 }
 
-// IP del cliente. Detrás de un proxy (Caddy, Cloudflare, la plataforma de la nube...) hay que poner TRUST_PROXY=1
-// para usar X-Forwarded-For; si no, cualquiera podría inventarse esa cabecera.
+// IP del cliente. Detrás de un proxy hay que poner TRUST_PROXY (= cuántos proxies hay delante) para usar
+// X-Forwarded-For. Cada proxy AÑADE al final la IP de quien le habla, así que la buena es la que puso el más externo
+// de los nuestros: la n-ésima contando desde el final. Las de la izquierda las puede inventar el cliente (para saltarse
+// el límite de intentos), así que nunca se usa la primera.
 export function clientIp(c) {
-  if (CONFIG.trustProxy) {
-    const fwd = c.req.header('x-forwarded-for');
-    if (fwd) return fwd.split(',')[0].trim();
+  if (CONFIG.trustProxy > 0) {
+    const ips = (c.req.header('x-forwarded-for') || '').split(',').map((s) => s.trim()).filter(Boolean);
+    if (ips.length) return ips[Math.max(0, ips.length - CONFIG.trustProxy)];
   }
   try { return getConnInfo(c).remote.address || '?'; } catch (e) { return '?'; }
 }
