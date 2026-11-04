@@ -3,7 +3,8 @@
 **English** · [Español](../es/self-hosting.md)
 
 Any machine that runs Docker works: a home server, a NAS, a Raspberry Pi 4/5 or a VPS from any provider.
-For a cloud platform without a shell (PaaS), see [cloud.md](cloud.md).
+For a cloud platform without a shell (PaaS), see [cloud.md](cloud.md). Using CasaOS, Umbrel or Coolify? There are
+ready-made templates: [one-click.md](one-click.md).
 
 ## What you need
 
@@ -68,7 +69,7 @@ autolog.example.com {
 ```
 
 Set `TRUST_PROXY=1` in `.env` and run `docker compose up -d`. Nginx, Traefik or similar work the same way: proxy to
-`127.0.0.1:8791` and pass `X-Forwarded-For`.
+`127.0.0.1:8791` and pass `X-Forwarded-For`. With two proxies (e.g. Cloudflare in front of Caddy) use `TRUST_PROXY=2`.
 
 ### C. Cloudflare Tunnel (public, no open ports)
 

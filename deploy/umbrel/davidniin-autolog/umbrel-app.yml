@@ -1,0 +1,29 @@
+manifestVersion: 1
+id: davidniin-autolog
+category: files
+name: AutoLog
+version: "0.5.0"
+tagline: Your vehicle's logbook, on your own server
+description: >-
+  Log fill-ups and charges (petrol, diesel, LPG, electric and plug-in hybrid), expenses, reminders and tyres & parts,
+  and see what your car or motorbike really consumes and costs. Installable phone app that works offline, with an
+  on-device invoice scanner (the photo never leaves the phone), a reminder calendar, a PDF history report for when you
+  sell, and several people with their own password.
+
+
+  The password is shown below ("Default password"): it's the owner's password. Open AutoLog on your phone with
+  HTTPS (for example with the Tailscale app on your Umbrel) to install it and get notifications.
+releaseNotes: >-
+  First Umbrel release.
+developer: davidniin
+website: https://davidniin.github.io/autolog/
+dependencies: []
+repo: https://github.com/davidniin/autolog
+support: https://github.com/davidniin/autolog/issues
+port: 8791
+gallery: []
+path: ""
+defaultUsername: ""
+deterministicPassword: true
+submitter: davidniin
+submission: https://github.com/davidniin/autolog

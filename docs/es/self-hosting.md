@@ -3,7 +3,8 @@
 [English](../en/self-hosting.md) · **Español**
 
 Vale cualquier máquina con Docker: un servidor en casa, un NAS, una Raspberry Pi 4/5 o un VPS de cualquier proveedor.
-Para una plataforma en la nube sin acceso por terminal (PaaS), mira [cloud.md](cloud.md).
+Para una plataforma en la nube sin acceso por terminal (PaaS), mira [cloud.md](cloud.md). ¿Usas CasaOS, Umbrel o
+Coolify? Hay plantillas listas: [one-click.md](one-click.md).
 
 ## Qué necesitas
 
@@ -68,7 +69,7 @@ autolog.ejemplo.com {
 ```
 
 Pon `TRUST_PROXY=1` en `.env` y haz `docker compose up -d`. Con Nginx, Traefik o similares es igual: proxy a
-`127.0.0.1:8791` pasando `X-Forwarded-For`.
+`127.0.0.1:8791` pasando `X-Forwarded-For`. Con dos proxies (p. ej. Cloudflare delante de Caddy) usa `TRUST_PROXY=2`.
 
 ### C. Cloudflare Tunnel (público, sin abrir puertos)
 

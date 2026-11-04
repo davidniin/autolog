@@ -198,8 +198,13 @@ que el €/L sea creíble (0,30–5 €/L). El servidor hace su propia comprobac
   `<img>` o en otra pestaña) y la descarga de la copia usan la cookie `autolog_token`, limitada a `/v1/files` y
   `/v1/backup`. La clave nunca se acepta en la URL,
   salvo el enlace `/?token=` de la primera vez, que la web guarda y quita de la barra de direcciones.
-- 10 intentos fallidos desde una IP en 15 minutos → `429` durante 15 minutos. Detrás de un proxy pon `TRUST_PROXY=1`
-  (y solo entonces) para usar la IP real del cliente.
+- 10 intentos fallidos desde una IP en 15 minutos → `429` durante 15 minutos. Detrás de un proxy pon en `TRUST_PROXY`
+  cuántos proxies hay delante (normalmente `1`), y solo entonces: la IP del cliente es la que añade tu proxy más
+  externo, así que una cabecera `X-Forwarded-For` falsa no sirve para saltarse el bloqueo.
+- La imagen Docker corre con un usuario sin privilegios y funciona con el disco de solo lectura (`/data` es lo único
+  escribible); los compose y las plantillas quitan todas las capacidades de Linux y ponen `no-new-privileges`. Las
+  claves se pueden dar como ficheros (`AUTOLOG_TOKEN_FILE`, `DATABASE_PASSWORD_FILE`) para que no salgan en
+  `docker inspect`.
 - Cabeceras de seguridad en todas las respuestas y Content-Security-Policy en la web (ver `server/src/security.js`).
 - Solo mismo origen: sin CORS salvo que se defina `CORS_ORIGIN`. Los errores internos van al log, no al cliente.
 - Al restaurar una copia solo se aceptan adjuntos de los mismos tipos que al subirlos (imágenes y PDF) y se ignora
@@ -253,7 +258,9 @@ acepta `?lang=es|en`.
 | `AUTOLOG_TOKEN` | — | Clave de la app, obligatoria (16 caracteres o más) |
 | `DATABASE_URL` | `postgres://autolog:autolog@localhost:5432/autolog` | Conexión a PostgreSQL |
 | `PORT` | `8791` | Puerto dentro del contenedor |
-| `TRUST_PROXY` | `0` | `1` detrás de un proxy inverso (IP real del cliente desde `X-Forwarded-For`) |
+| `TRUST_PROXY` | `0` | Cuántos proxies inversos hay delante: `1` lo normal, `2` p. ej. Cloudflare delante de Caddy. La IP del cliente se toma de `X-Forwarded-For` contando desde la derecha, así una cabecera falsa no sirve para saltarse el bloqueo de intentos |
+| `AUTOLOG_TOKEN_FILE` | — | Leer la clave del propietario de un fichero (Docker secrets); si están las dos, gana la variable |
+| `DATABASE_PASSWORD_FILE` | — | Contraseña de la base de datos desde un fichero; se añade a `DATABASE_URL` |
 | `CORS_ORIGIN` | vacío | Solo si la web se sirve desde otro origen |
 | `PUSH_CONTACT` | `mailto:autolog@example.com` | Contacto para los servicios de push: usa una dirección real |
 | `PUSH_HOUR` | `9` | Hora de la revisión diaria de avisos |

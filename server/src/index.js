@@ -27,7 +27,7 @@ import { backupStream, restoreStream } from './backup.js';
 import { calendarKey, checkCalendarKey, calendarICS } from './calendar.js';
 import { alerts, initPush, vapidKey, subscribe, unsubscribe, sendTest, check } from './alerts.js';
 
-const VERSION = '0.4.0';
+const VERSION = '0.5.0';
 const startupError = checkStartup();
 if (startupError) {
   console.error('[autolog] ' + startupError);
@@ -204,6 +204,6 @@ await migrate();
 await initFiles();
 await initPush();
 serve({ fetch: app.fetch, port: CONFIG.port }, () => {
-  console.log('autolog ' + VERSION + ' on :' + CONFIG.port + ' · password ' + (CONFIG.token ? 'yes' : 'NO (ALLOW_NO_AUTH)') + ' · proxy ' + (CONFIG.trustProxy ? 'yes' : 'no') +
+  console.log('autolog ' + VERSION + ' on :' + CONFIG.port + ' · password ' + (CONFIG.token ? 'yes' : 'NO (ALLOW_NO_AUTH)') + ' · proxies ' + CONFIG.trustProxy +
     ' · web ' + (CONFIG.staticDir || 'no') + ' · files ' + CONFIG.filesDir);
 });

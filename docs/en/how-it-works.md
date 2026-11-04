@@ -189,8 +189,12 @@ Fill-ups also check that the mileage fits between the previous and next fill-ups
 - Every API route except `/v1/health` needs `Authorization: Bearer <token>`. Attachments (opened by `<img>` or in a new
   tab) and the backup download use the `autolog_token` cookie, limited to `/v1/files` and `/v1/backup`. Tokens are never accepted in URLs, except the one-time
   `/?token=` link that the web app stores and removes from the address bar.
-- 10 failed attempts from one IP within 15 minutes → `429` for 15 minutes. Behind a proxy set `TRUST_PROXY=1`, and
-  only then, so the real client IP is used.
+- 10 failed attempts from one IP within 15 minutes → `429` for 15 minutes. Behind a proxy set `TRUST_PROXY` to the
+  number of proxies in front (usually `1`), and only then: the client IP is the one added by your outermost proxy, so a
+  forged `X-Forwarded-For` can't be used to dodge the lock-out.
+- The Docker image runs as an unprivileged user and works with a read-only filesystem (`/data` is the only writable
+  path); the compose files and templates drop every Linux capability and set `no-new-privileges`. Passwords can be
+  given as files (`AUTOLOG_TOKEN_FILE`, `DATABASE_PASSWORD_FILE`) so they don't show in `docker inspect`.
 - Security headers on every response; a Content-Security-Policy on the web app (see `server/src/security.js`).
 - Same-origin only: no CORS unless `CORS_ORIGIN` is set. Internal errors are logged, not returned to the client.
 - Restoring a backup only accepts attachments of the same types as uploads (images and PDF) and ignores any other
@@ -244,7 +248,9 @@ accepts `?lang=es|en`.
 | `AUTOLOG_TOKEN` | — | App password, required (16+ characters) |
 | `DATABASE_URL` | `postgres://autolog:autolog@localhost:5432/autolog` | PostgreSQL connection |
 | `PORT` | `8791` | Port inside the container |
-| `TRUST_PROXY` | `0` | `1` behind a reverse proxy (real client IP from `X-Forwarded-For`) |
+| `TRUST_PROXY` | `0` | How many reverse proxies are in front: `1` usually, `2` e.g. Cloudflare in front of Caddy. The client IP is taken from `X-Forwarded-For` counting from the right, so a forged header can't dodge the login lock-out |
+| `AUTOLOG_TOKEN_FILE` | — | Read the owner password from a file instead (Docker secrets); the variable wins if both are set |
+| `DATABASE_PASSWORD_FILE` | — | Database password from a file, added to `DATABASE_URL` |
 | `CORS_ORIGIN` | empty | Only if the web app is served from another origin |
 | `PUSH_CONTACT` | `mailto:autolog@example.com` | Contact for push services: use a real address |
 | `PUSH_HOUR` | `9` | Hour of the daily reminder check |

@@ -54,6 +54,9 @@ AutoLog is **self-hosted**: everyone runs their own copy. There is no central se
 |---|---|
 | Your own server / NAS / Raspberry Pi / VPS (Docker) | [docs/en/self-hosting.md](docs/en/self-hosting.md) |
 | Any cloud provider (container + PostgreSQL) | [docs/en/cloud.md](docs/en/cloud.md) |
+| **One click:** CasaOS, Umbrel, Coolify, Render | [docs/en/one-click.md](docs/en/one-click.md) |
+
+[![Deploy to Render](https://render.com/images/deploy-to-render-button.svg)](https://render.com/deploy?repo=https://github.com/davidniin/autolog)
 
 Quick start with Docker:
 

@@ -11,3 +11,6 @@ backups/
 *.sql.gz
 *.dump
 docs/
+deploy/
+site/
+render.yaml
