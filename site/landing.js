@@ -5,11 +5,11 @@ const REPO = 'https://github.com/davidniin/autolog';
 const ES = {
   'nav.features': 'Funciones', 'nav.demo': 'Demo', 'nav.install': 'Instalar', 'nav.github': 'GitHub',
   'hero.eyebrow': 'Gratis · código abierto · autoalojada',
-  'hero.title': 'El historial de tu vehículo.<br /><span>En tu propio servidor.</span>',
+  'hero.title': 'El historial de tu vehículo.<br />En tu propio servidor.',
   'hero.lead': 'Apunta repostajes y gastos, mira cuánto consume y cuánto te cuesta de verdad tu coche o tu moto, y que te avise de la ITV, del aceite o del seguro. Una app que instalas en el móvil, con tus datos donde tú decides.',
-  'hero.try': '▶ Probar la demo en vivo', 'hero.install': 'Instala la tuya',
-  'hero.p1': '📶 Funciona sin cobertura', 'hero.p2': '📷 Escanea facturas', 'hero.p3': '🔒 Sin rastreo', 'hero.p4': '🌍 Español · English',
-  'demo.open': '▶ Abrir la demo en vivo',
+  'hero.try': 'Probar la demo en vivo', 'hero.install': 'Instala la tuya',
+  'hero.p1': 'Funciona sin cobertura', 'hero.p2': 'Escanea facturas', 'hero.p3': 'Sin rastreo', 'hero.p4': 'Español · English',
+  'demo.open': 'Abrir la demo en vivo',
   'demo.note': 'Demo en vivo con datos inventados. Juega con ella: apunta un repostaje, escanea una factura, cambia las unidades… No se guarda nada.',
   'demo.full': 'Abrir a pantalla completa ↗',
   'features.title': 'Todo sobre tu vehículo, en un solo sitio',
@@ -31,14 +31,14 @@ const ES = {
   'install.lead': 'Un contenedor Docker más PostgreSQL. En casa, en un NAS, una Raspberry Pi, un VPS o cualquier nube.',
   'install.s1': 'Descarga y configura', 'install.s2': 'Arráncala', 'install.s3': 'Ponle HTTPS y ábrela en el móvil',
   'install.s3d': 'Con Tailscale, Caddy o Cloudflare Tunnel. Después, «Añadir a pantalla de inicio».',
-  'install.self': '🏠 Guía para tu servidor', 'install.cloud': '☁️ Guía para la nube',
+  'install.self': 'Guía para tu servidor', 'install.cloud': 'Guía para la nube',
   'oss.title': 'Código abierto, abierto a ideas',
   'oss.lead': '¿Has encontrado un fallo o tienes una idea? Issues y pull requests bienvenidos, en español o en inglés: traducciones, reglas de facturas de tu país, funciones nuevas…',
   'oss.cta': 'Ver en GitHub',
   'coffee.title': 'Apoya el proyecto',
   'coffee.lead': 'AutoLog es gratis y lo seguirá siendo. Si te resulta útil, puedes invitarme a un café para que siga adelante.',
-  'coffee.cta': '☕ Invítame a un café',
-  'footer.made': 'Hecho con ❤️ · Licencia MIT ·',
+  'coffee.cta': 'Invítame a un café',
+  'footer.made': 'Licencia MIT ·',
 };
 
 // The page is written in English; Spanish replaces the texts. The English originals are kept to switch back.

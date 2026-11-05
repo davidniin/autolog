@@ -10,6 +10,7 @@
   <meta property="og:description" content="Fill-ups, consumption, expenses and reminders for your car or motorbike. Self-hosted, private, open source." />
   <meta property="og:image" content="screenshots/light-summary.png" />
   <link rel="icon" href="demo/icon.svg" type="image/svg+xml" />
+  <link rel="preload" href="fonts/bricolage-grotesque-latin.woff2" as="font" type="font/woff2" crossorigin />
   <link rel="stylesheet" href="landing.css" />
 </head>
 <body>
@@ -32,24 +33,24 @@
     <section class="hero">
       <div class="hero-text">
         <p class="eyebrow" data-i18n="hero.eyebrow">Free · open source · self-hosted</p>
-        <h1 data-i18n-html="hero.title">Your vehicle's logbook.<br /><span>On your own server.</span></h1>
+        <h1 data-i18n-html="hero.title">Your vehicle's logbook.<br />On your own server.</h1>
         <p class="lead" data-i18n="hero.lead">Log fill-ups and expenses, see what your car or motorbike really consumes and costs, and get reminded of the inspection, the oil change or the insurance. An app you install on your phone, with your data where you decide.</p>
         <div class="ctas">
-          <a class="btn primary" href="#demo" data-i18n="hero.try">▶ Try the live demo</a>
+          <a class="btn primary" href="#demo" data-i18n="hero.try">Try the live demo</a>
           <a class="btn ghost" href="#install" data-i18n="hero.install">Install yours</a>
         </div>
         <ul class="pills">
-          <li data-i18n="hero.p1">📶 Works offline</li>
-          <li data-i18n="hero.p2">📷 Scans invoices</li>
-          <li data-i18n="hero.p3">🔒 No tracking</li>
-          <li data-i18n="hero.p4">🌍 English · Español</li>
+          <li data-i18n="hero.p1">Works offline</li>
+          <li data-i18n="hero.p2">Scans invoices</li>
+          <li data-i18n="hero.p3">No tracking</li>
+          <li data-i18n="hero.p4">English · Español</li>
         </ul>
       </div>
       <div class="hero-phone" id="demo">
         <div class="phone">
           <div class="phone-notch"></div>
           <iframe id="demo-frame" title="AutoLog live demo" loading="lazy" data-src="demo/"></iframe>
-          <a class="phone-cover" href="demo/" data-i18n="demo.open">▶ Open the live demo</a>
+          <a class="phone-cover" href="demo/" data-i18n="demo.open">Open the live demo</a>
         </div>
         <p class="phone-note" data-i18n="demo.note">Live demo with made-up data. Play with it: add a fill-up, scan an invoice, change the units… Nothing is saved.</p>
         <a class="phone-full" href="demo/" target="_blank" rel="noopener" data-i18n="demo.full">Open full screen ↗</a>
@@ -60,14 +61,14 @@
     <section class="section" id="features">
       <h2 data-i18n="features.title">Everything about your vehicle, in one place</h2>
       <div class="grid">
-        <article class="card"><span class="ico">⛽</span><h3 data-i18n="f1.t">Real consumption</h3><p data-i18n="f1.d">Full-to-full, including partial fills. Petrol, diesel, LPG, electric and plug-in hybrid (kWh).</p></article>
-        <article class="card"><span class="ico">🧾</span><h3 data-i18n="f2.t">Expenses by category</h3><p data-i18n="f2.d">Service, repairs, inspection, insurance, tax, parking, tolls… with photos and PDFs attached.</p></article>
-        <article class="card"><span class="ico">🔔</span><h3 data-i18n="f3.t">Reminders</h3><p data-i18n="f3.d">By date, by mileage or whichever comes first. Push notifications and a calendar for Google, Apple or Outlook.</p></article>
-        <article class="card"><span class="ico">📊</span><h3 data-i18n="f4.t">What it really costs</h3><p data-i18n="f4.d">Per month, per km or mile, including the purchase price, a 12-month chart and a breakdown by category.</p></article>
-        <article class="card"><span class="ico">📷</span><h3 data-i18n="f5.t">Invoice scanner</h3><p data-i18n="f5.d">Take a photo of a workshop invoice or fuel receipt and the form fills itself. The OCR runs on the phone.</p></article>
-        <article class="card"><span class="ico">📶</span><h3 data-i18n="f6.t">Offline first</h3><p data-i18n="f6.d">Log a fill-up with no signal at the petrol station; it syncs when you're back online.</p></article>
-        <article class="card"><span class="ico">📏</span><h3 data-i18n="f7.t">Your units</h3><p data-i18n="f7.d">km or miles, litres or gallons, L/100 km, km/L or mpg, and any currency.</p></article>
-        <article class="card"><span class="ico">💾</span><h3 data-i18n="f8.t">Your data, portable</h3><p data-i18n="f8.d">Backup with photos, CSV for Excel, a PDF history to sell the car, and several people with their own password.</p></article>
+        <article class="feature"><h3 data-i18n="f1.t">Real consumption</h3><p data-i18n="f1.d">Full-to-full, including partial fills. Petrol, diesel, LPG, electric and plug-in hybrid (kWh).</p></article>
+        <article class="feature"><h3 data-i18n="f2.t">Expenses by category</h3><p data-i18n="f2.d">Service, repairs, inspection, insurance, tax, parking, tolls… with photos and PDFs attached.</p></article>
+        <article class="feature"><h3 data-i18n="f3.t">Reminders</h3><p data-i18n="f3.d">By date, by mileage or whichever comes first. Push notifications and a calendar for Google, Apple or Outlook.</p></article>
+        <article class="feature"><h3 data-i18n="f4.t">What it really costs</h3><p data-i18n="f4.d">Per month, per km or mile, including the purchase price, a 12-month chart and a breakdown by category.</p></article>
+        <article class="feature"><h3 data-i18n="f5.t">Invoice scanner</h3><p data-i18n="f5.d">Take a photo of a workshop invoice or fuel receipt and the form fills itself. The OCR runs on the phone.</p></article>
+        <article class="feature"><h3 data-i18n="f6.t">Offline first</h3><p data-i18n="f6.d">Log a fill-up with no signal at the petrol station; it syncs when you're back online.</p></article>
+        <article class="feature"><h3 data-i18n="f7.t">Your units</h3><p data-i18n="f7.d">km or miles, litres or gallons, L/100 km, km/L or mpg, and any currency.</p></article>
+        <article class="feature"><h3 data-i18n="f8.t">Your data, portable</h3><p data-i18n="f8.d">Backup with photos, CSV for Excel, a PDF history to sell the car, and several people with their own password.</p></article>
       </div>
     </section>
 
@@ -103,30 +104,28 @@
         <li><b data-i18n="install.s3">Add HTTPS and open it on your phone</b><span data-i18n="install.s3d">With Tailscale, Caddy or Cloudflare Tunnel. Then "Add to Home Screen".</span></li>
       </ol>
       <div class="ctas center">
-        <a class="btn primary" data-repo="/blob/main/docs/en/self-hosting.md" data-repo-es="/blob/main/docs/es/self-hosting.md" href="#" data-i18n="install.self">🏠 Own server guide</a>
-        <a class="btn ghost" data-repo="/blob/main/docs/en/cloud.md" data-repo-es="/blob/main/docs/es/cloud.md" href="#" data-i18n="install.cloud">☁️ Cloud guide</a>
+        <a class="btn primary" data-repo="/blob/main/docs/en/self-hosting.md" data-repo-es="/blob/main/docs/es/self-hosting.md" href="#" data-i18n="install.self">Own server guide</a>
+        <a class="btn ghost" data-repo="/blob/main/docs/en/cloud.md" data-repo-es="/blob/main/docs/es/cloud.md" href="#" data-i18n="install.cloud">Cloud guide</a>
       </div>
     </section>
 
     <!-- ================= open source + support -->
     <section class="section duo">
       <article class="card big">
-        <span class="ico">🤝</span>
         <h2 data-i18n="oss.title">Open source, open to ideas</h2>
         <p data-i18n="oss.lead">Found a bug or have an idea? Issues and pull requests are welcome, in English or Spanish: translations, receipt rules for your country, new features…</p>
         <a class="btn ghost" data-repo="" href="#" data-i18n="oss.cta">View on GitHub</a>
       </article>
       <article class="card big coffee">
-        <span class="ico">☕</span>
         <h2 data-i18n="coffee.title">Support the project</h2>
         <p data-i18n="coffee.lead">AutoLog is free and always will be. If it's useful to you, you can buy me a coffee to keep it going.</p>
-        <a class="btn bmc" href="https://buymeacoffee.com/davidniin" target="_blank" rel="noopener" data-i18n="coffee.cta">☕ Buy me a coffee</a>
+        <a class="btn bmc" href="https://buymeacoffee.com/davidniin" target="_blank" rel="noopener" data-i18n="coffee.cta">Buy me a coffee</a>
       </article>
     </section>
   </main>
 
   <footer class="footer">
-    <p><span data-i18n="footer.made">Made with ❤️ · MIT licence ·</span> <a data-repo="" href="#">GitHub</a> · <a href="https://buymeacoffee.com/davidniin" target="_blank" rel="noopener">Buy me a coffee</a></p>
+    <p><span data-i18n="footer.made">MIT licence ·</span> <a data-repo="" href="#">GitHub</a> · <a href="https://buymeacoffee.com/davidniin" target="_blank" rel="noopener">Buy me a coffee</a></p>
   </footer>
 
   <script src="landing.js"></script>
