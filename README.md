@@ -110,8 +110,8 @@ and the [Code of Conduct](CODE_OF_CONDUCT.md).
 1. More languages, and receipt-scanner rules for more countries — help wanted.
 2. Reminders by email.
 3. Home Assistant integration.
-4. A PDF service history to show when selling the vehicle.
-5. A prebuilt Docker image for every release (`ghcr.io`).
+4. Publish the one-click templates in the official CasaOS, Umbrel and Coolify app stores.
+5. API documentation (OpenAPI).
 
 ## Support
 

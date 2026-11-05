@@ -111,8 +111,8 @@ Las ideas, los avisos de fallos y los pull requests son bienvenidos, en español
 1. Más idiomas, y reglas del escáner para más países: se busca ayuda.
 2. Avisos por email.
 3. Integración con Home Assistant.
-4. Historial en PDF para enseñarlo al vender el vehículo.
-5. Imagen Docker ya construida en cada versión (`ghcr.io`).
+4. Publicar las plantillas de un clic en las tiendas oficiales de CasaOS, Umbrel y Coolify.
+5. Documentación de la API (OpenAPI).
 
 ## Apoya el proyecto
 
