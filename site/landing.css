@@ -5,7 +5,7 @@
   src: url('fonts/bricolage-grotesque-latin.woff2') format('woff2'); }
 :root {
   --bg: #f3f5f9; --card: #fff; --text: #151a24; --muted: #5f6879; --line: #e3e7ee;
-  --accent: #2f5fd0; --accent-soft: rgba(47, 95, 208, 0.1);
+  --accent: #2f5fd0; --accent-soft: rgba(47, 95, 208, 0.1); --alt: #c47a0a; --band: #2148b8;
   --hero: linear-gradient(135deg, #2148b8 0%, #2f5fd0 45%, #5b86f0 100%);
   --shadow: 0 18px 50px rgba(20, 35, 80, 0.18); --r-sm: 4px; --r: 8px;
   --display: 'Bricolage Grotesque', system-ui, sans-serif;
@@ -14,7 +14,7 @@
 @media (prefers-color-scheme: dark) {
   :root {
     --bg: #0e1015; --card: #181b22; --text: #eef1f6; --muted: #9aa1b0; --line: #2a2f38;
-    --accent: #6b93f0; --accent-soft: rgba(107, 147, 240, 0.15);
+    --accent: #6b93f0; --accent-soft: rgba(107, 147, 240, 0.15); --alt: #ffb547; --band: #1b3a8f;
     --hero: linear-gradient(135deg, #1b3a8f 0%, #2a50b8 50%, #4a72d8 100%);
     --shadow: 0 18px 50px rgba(0, 0, 0, 0.55);
   }
@@ -49,14 +49,15 @@ h1, h2, h3 { font-family: var(--display); letter-spacing: -0.025em; line-height:
 .hero { display: grid; grid-template-columns: 1.1fr 0.9fr; align-items: center; gap: 48px; max-width: 1120px; margin: 0 auto; padding: 56px 16px 40px; }
 .eyebrow { margin: 0 0 12px; color: var(--accent); font-weight: 700; font-size: 14px; text-transform: uppercase; letter-spacing: 0.08em; }
 .hero h1 { margin: 0; font-size: clamp(40px, 6vw, 68px); font-weight: 800; }
+.hero h1 em { font-style: normal; text-decoration: underline; text-decoration-color: var(--alt); text-decoration-thickness: 0.12em; text-underline-offset: 0.12em; text-decoration-skip-ink: none; }
 .lead { margin: 18px 0 0; color: var(--muted); font-size: 19px; max-width: 560px; }
 .pills { display: flex; flex-wrap: wrap; gap: 4px 0; margin: 26px 0 0; padding: 0; list-style: none; }
 .pills li { font-size: 15px; font-weight: 600; }
-.pills li + li::before { content: '/'; margin: 0 12px; color: var(--accent); font-weight: 400; }
+.pills li + li::before { content: '/'; margin: 0 12px; color: var(--alt); font-weight: 700; }
 
 /* phone with the live demo */
 .hero-phone { display: grid; justify-items: center; gap: 12px; scroll-margin-top: 80px; }
-.phone { position: relative; width: 340px; height: 700px; padding: 26px 10px 12px; border-radius: 48px; background: #0b0d12; box-shadow: var(--shadow), inset 0 0 0 2px #2a2e37; }
+.phone { position: relative; height: clamp(560px, calc(100svh - 150px), 700px); aspect-ratio: 340 / 700; padding: 26px 10px 12px; border-radius: 48px; background: #0b0d12; box-shadow: var(--shadow), inset 0 0 0 2px #2a2e37; }
 .phone-notch { position: absolute; z-index: 2; top: 10px; left: 50%; width: 70px; height: 6px; transform: translateX(-50%); border-radius: 999px; background: #2a2e37; }
 .phone iframe { width: 100%; height: 100%; border: 0; border-radius: 30px; background: var(--bg); }
 .phone-cover { position: absolute; inset: 26px 10px 12px; display: grid; place-items: center; border-radius: 30px; background: url('screenshots/light-summary.png') top center / cover;
@@ -74,7 +75,8 @@ h1, h2, h3 { font-family: var(--display); letter-spacing: -0.025em; line-height:
 .sub { margin: 0 auto 28px; max-width: 640px; color: var(--muted); text-align: center; }
 .grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 36px 28px; margin-top: 40px; }
 .feature { padding-top: 16px; border-top: 2px solid var(--text); }
-.feature h3 { margin: 0 0 8px; font-size: 21px; }
+.feature .figure { margin: 0 0 10px; color: var(--accent); font: 800 clamp(26px, 2.6vw, 32px)/1.05 var(--display); letter-spacing: -0.03em; font-variant-numeric: tabular-nums; }
+.feature h3 { margin: 0 0 8px; font-size: 19px; }
 .feature p { margin: 0; color: var(--muted); font-size: 15px; }
 .card { padding: 22px; border-radius: var(--r); background: var(--card); border: 1px solid var(--line); }
 .card p { margin: 0; color: var(--muted); }
@@ -82,16 +84,17 @@ h1, h2, h3 { font-family: var(--display); letter-spacing: -0.025em; line-height:
 .shots { display: flex; gap: 18px; justify-content: center; overflow-x: auto; padding-top: 8px; scrollbar-width: none; }
 .shots img { width: 220px; flex: none; border-radius: 10px; border: 1px solid var(--line); box-shadow: var(--shadow); }
 
-.privacy { display: grid; grid-template-columns: 1fr 1fr; gap: 40px; align-items: center; }
-.privacy h2 { margin: 0 0 10px; font-size: clamp(28px, 3.6vw, 40px); }
-.privacy p { margin: 0; color: var(--muted); font-size: 18px; }
-.checks { margin: 0; padding: 0; list-style: none; border-top: 1px solid var(--line); }
-.checks li { position: relative; padding: 14px 0 14px 34px; border-bottom: 1px solid var(--line); }
-.checks li::before { content: '✓'; position: absolute; left: 4px; top: 13px; color: var(--accent); font-weight: 800; }
+/* privacy: full-width solid blue band, the one loud moment of the page */
+.privacy { display: grid; grid-template-columns: 1fr 1fr; gap: 40px; align-items: center; max-width: none; margin: 40px 0; padding: 80px max(16px, calc(50% - 544px)); background: var(--band); color: #fff; }
+.privacy h2 { margin: 0 0 14px; font-size: clamp(34px, 4.6vw, 54px); }
+.privacy p { margin: 0; color: rgba(255, 255, 255, 0.82); font-size: 18px; }
+.checks { margin: 0; padding: 0; list-style: none; border-top: 1px solid rgba(255, 255, 255, 0.25); }
+.checks li { position: relative; padding: 14px 0 14px 34px; border-bottom: 1px solid rgba(255, 255, 255, 0.25); }
+.checks li::before { content: '✓'; position: absolute; left: 4px; top: 13px; color: #ffb547; font-weight: 800; }
 
 .steps { display: grid; grid-template-columns: repeat(3, 1fr); gap: 28px; margin: 0; padding: 0; list-style: none; counter-reset: step; }
 .steps li { display: grid; align-content: start; gap: 10px; padding-top: 14px; border-top: 2px solid var(--text); counter-increment: step; }
-.steps li::before { content: counter(step, decimal-leading-zero); color: var(--accent); font: 800 34px/1 var(--display); letter-spacing: -0.03em; }
+.steps li::before { content: counter(step, decimal-leading-zero); color: var(--alt); font: 800 34px/1 var(--display); letter-spacing: -0.03em; }
 .steps code { display: block; padding: 10px 12px; border-radius: var(--r-sm); background: #0f1320; color: #dbe4ff; font: 13px/1.6 ui-monospace, "SF Mono", Menlo, Consolas, monospace; overflow-x: auto; white-space: nowrap; }
 .steps span { color: var(--muted); font-size: 15px; }
 

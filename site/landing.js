@@ -5,7 +5,7 @@ const REPO = 'https://github.com/davidniin/autolog';
 const ES = {
   'nav.features': 'Funciones', 'nav.demo': 'Demo', 'nav.install': 'Instalar', 'nav.github': 'GitHub',
   'hero.eyebrow': 'Gratis · código abierto · autoalojada',
-  'hero.title': 'El historial de tu vehículo.<br />En tu propio servidor.',
+  'hero.title': 'El historial de tu vehículo.<br />En <em>tu propio</em> servidor.',
   'hero.lead': 'Apunta repostajes y gastos, mira cuánto consume y cuánto te cuesta de verdad tu coche o tu moto, y que te avise de la ITV, del aceite o del seguro. Una app que instalas en el móvil, con tus datos donde tú decides.',
   'hero.try': 'Probar la demo en vivo', 'hero.install': 'Instala la tuya',
   'hero.p1': 'Funciona sin cobertura', 'hero.p2': 'Escanea facturas', 'hero.p3': 'Sin rastreo', 'hero.p4': 'Español · English',
@@ -13,6 +13,8 @@ const ES = {
   'demo.note': 'Demo en vivo con datos inventados. Juega con ella: apunta un repostaje, escanea una factura, cambia las unidades… No se guarda nada.',
   'demo.full': 'Abrir a pantalla completa ↗',
   'features.title': 'Todo sobre tu vehículo, en un solo sitio',
+  'f1.n': '6,5 L/100 km', 'f2.n': '8 categorías', 'f3.n': '15.000 km', 'f4.n': '0,18 €/km',
+  'f5.n': '0 fotos enviadas', 'f6.n': '0 rayitas', 'f7.n': 'mpg ⇄ L/100', 'f8.n': 'JSON · CSV · PDF',
   'f1.t': 'Consumo real', 'f1.d': 'Lleno a lleno, con los repostajes parciales. Gasolina, diésel, GLP, eléctricos e híbridos enchufables (kWh).',
   'f2.t': 'Gastos por categoría', 'f2.d': 'Revisión, reparación, ITV, seguro, impuestos, aparcamiento, peajes… con fotos y PDF adjuntos.',
   'f3.t': 'Avisos', 'f3.d': 'Por fecha, por km o lo primero que llegue. Notificaciones y calendario para Google, Apple u Outlook.',
