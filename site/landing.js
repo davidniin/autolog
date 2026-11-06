@@ -89,3 +89,49 @@ if ('IntersectionObserver' in window) {
   }, { rootMargin: '200px' }).observe(frame);
 } else loadDemo();
 wide.addEventListener('change', loadDemo);
+
+// ---- mobile polish -------------------------------------------------------------------------------------------
+document.documentElement.classList.add('js');
+const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+// Sections fade up as they scroll into view
+const revealEls = document.querySelectorAll('.feature, .section > h2, .shots, .privacy > *, .steps li, .card.big');
+revealEls.forEach((el) => el.classList.add('reveal'));
+if ('IntersectionObserver' in window && !reduce) {
+  const io = new IntersectionObserver((entries) => {
+    for (const e of entries) if (e.isIntersecting) { e.target.classList.add('in'); io.unobserve(e.target); }
+  }, { rootMargin: '0px 0px -8% 0px' });
+  revealEls.forEach((el, i) => { el.style.transitionDelay = (i % 4) * 60 + 'ms'; io.observe(el); });
+} else revealEls.forEach((el) => el.classList.add('in'));
+
+// Sticky call to action (phones): shown once the hero buttons have scrolled away, hidden again at the install section
+const bar = document.getElementById('sticky-cta');
+const heroCtas = document.querySelector('.hero .ctas');
+const install = document.getElementById('install');
+if (bar && 'IntersectionObserver' in window) {
+  let heroGone = false, atInstall = false;
+  const sync = () => {
+    const on = heroGone && !atInstall;
+    bar.classList.toggle('show', on);
+    bar.setAttribute('aria-hidden', String(!on));
+    bar.querySelectorAll('a').forEach((a) => a.tabIndex = on ? 0 : -1);
+  };
+  new IntersectionObserver(([e]) => { heroGone = !e.isIntersecting && e.boundingClientRect.top < 0; sync(); }).observe(heroCtas);
+  new IntersectionObserver(([e]) => { atInstall = e.isIntersecting; sync(); }, { threshold: 0.35 }).observe(install);
+}
+
+// "Copy" buttons on the install commands (tapping a code block on a phone to select it is fiddly)
+for (const code of document.querySelectorAll('.steps code')) {
+  const btn = document.createElement('button');
+  btn.type = 'button'; btn.className = 'copy';
+  const label = () => (lang === 'es' ? 'Copiar' : 'Copy');
+  btn.textContent = label();
+  btn.addEventListener('click', async () => {
+    const text = [...code.childNodes].filter((n) => n !== btn).map((n) => (n.nodeName === 'BR' ? '\n' : n.textContent)).join('').replace(/^\s+/, '');
+    try { await navigator.clipboard.writeText(text); } catch (e) { return; }
+    btn.classList.add('done'); btn.textContent = lang === 'es' ? '¡Copiado!' : 'Copied!';
+    if (navigator.vibrate) navigator.vibrate(10);
+    setTimeout(() => { btn.classList.remove('done'); btn.textContent = label(); }, 1600);
+  });
+  code.appendChild(btn);
+}

@@ -25,6 +25,7 @@
       <a href="#install" data-i18n="nav.install">Install</a>
       <a data-repo="" href="#" data-i18n="nav.github">GitHub</a>
     </nav>
+    <a class="nav-demo" href="demo/" data-i18n="nav.demo">Demo</a>
     <button class="lang" type="button" id="lang" aria-label="Español / English">ES</button>
   </header>
 
@@ -73,7 +74,7 @@
     </section>
 
     <!-- ================= screenshots -->
-    <section class="section shots" aria-label="Screenshots">
+    <section class="section shots" aria-label="Screenshots" tabindex="0">
       <img src="screenshots/light-summary.png" alt="Summary with vehicle card and reminders" loading="lazy" />
       <img src="screenshots/light-scan.png" alt="Scanning an invoice fills in the form" loading="lazy" />
       <img src="screenshots/light-costs.png" alt="Costs per month and 12-month chart" loading="lazy" />
@@ -127,6 +128,12 @@
   <footer class="footer">
     <p><span data-i18n="footer.made">MIT licence ·</span> <a data-repo="" href="#">GitHub</a> · <a href="https://buymeacoffee.com/davidniin" target="_blank" rel="noopener">Buy me a coffee</a></p>
   </footer>
+
+  <!-- Mobile only: appears after the hero so the next step is always one thumb-tap away -->
+  <div class="sticky-cta" id="sticky-cta" aria-hidden="true">
+    <a class="btn primary" href="demo/" tabindex="-1" data-i18n="hero.try">Try the live demo</a>
+    <a class="btn ghost" href="#install" tabindex="-1" data-i18n="hero.install">Install yours</a>
+  </div>
 
   <script src="landing.js"></script>
 </body>
