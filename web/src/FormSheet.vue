@@ -86,6 +86,21 @@ function onInput(f, ev) {
   m[f.k] = s;
   delete auto[f.k];
 }
+// Intro en el teclado del móvil: pasa al campo siguiente; en el último, guarda
+function inputsOf() {
+  return [...panel.value.querySelectorAll('.sheet input:not([type=checkbox]):not([type=file]):not([type=hidden])')];
+}
+const isLast = (f) => {
+  const ids = fields.value.filter((x) => x.type !== 'chips' && x.type !== 'check').map((x) => x.k);
+  return ids[ids.length - 1] === f.k;
+};
+function onEnter(f, ev) {
+  if (isLast(f)) return; // el envío del formulario guarda
+  const list = inputsOf(), i = list.indexOf(ev.target);
+  if (i < 0 || i === list.length - 1) return;
+  ev.preventDefault();
+  list[i + 1].focus();
+}
 function pickChip(f, v) {
   m[f.k] = v;
   delete auto[f.k];
@@ -157,12 +172,14 @@ function remove() {
               :min="f.type === 'date' ? dateAttr(f.min) : undefined"
               :max="f.type === 'date' ? dateAttr(f.max) : undefined"
               :autocapitalize="f.upper ? 'characters' : undefined"
+              :enterkeyhint="isLast(f) ? 'done' : 'next'"
               :required="f.req"
               :aria-invalid="!!errOf(f.k)"
               :aria-describedby="errOf(f.k) ? 'e-' + f.k : undefined"
               autocomplete="off"
               @input="onInput(f, $event)"
               @blur="touched[f.k] = true"
+              @keydown.enter="onEnter(f, $event)"
             />
             <span v-if="f.unit" class="unit" aria-hidden="true">{{ unitLabel(fieldUnit(f, m)) }}</span>
           </span>

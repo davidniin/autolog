@@ -4,7 +4,7 @@ import { plural } from './plural.js';
 export default {
   common: {
     and: 'and', save: 'Save', cancel: 'Cancel', delete: 'Delete', close: 'Close', exit: 'Exit', edit: 'Edit',
-    add: 'Add', required: '*', yes: 'Yes', no: 'No',
+    add: 'Add', yes: 'Yes', no: 'No',
     days: (p) => plural(p.n, 'day', 'days'),
   },
   app: {
@@ -20,7 +20,6 @@ export default {
     iosShare: 'share icon',
     welcomeTitle: 'Welcome to AutoLog',
     welcomeText: 'Log fill-ups and expenses, see what your vehicle consumes and costs, and get reminders for inspections or oil changes.',
-    welcomeBtn: 'Add my vehicle',
     tabs: { resumen: 'Summary', fuel: 'Fill-ups', charges: 'Charges', expenses: 'Expenses', costs: 'Costs' },
     fab: 'Add {what}',
     toastDone: '✓ Done: {title}',

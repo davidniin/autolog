@@ -6,6 +6,7 @@ import { FORMS, optEmoji } from './forms.js';
 import { energyStats, energiesOf, currentKm, nextDue } from './calc.js';
 import { I, install, hideIosTip } from './install.js';
 import { t } from './i18n/index.js';
+import { buzz } from './dialog.js';
 import Summary from './Summary.vue';
 import FuelList from './FuelList.vue';
 import ExpenseList from './ExpenseList.vue';
@@ -21,6 +22,16 @@ const tab = ref('resumen');
 const settings = ref(false);
 const conflicts = ref(false); // ficha de cambios que chocan con otro móvil
 const report = ref(false); // informe del historial (para imprimir / PDF)
+
+// Cada pestaña recuerda por dónde ibas; volver a tocar la pestaña activa sube al principio (como en iOS/Android)
+const scrollOf = {};
+function goTab(id) {
+  if (id === tab.value) { window.scrollTo({ top: 0, behavior: 'smooth' }); return; }
+  scrollOf[tab.value] = window.scrollY;
+  tab.value = id;
+  buzz(6);
+}
+function restoreScroll() { window.scrollTo(0, scrollOf[tab.value] || 0); }
 
 const veh = computed(() => S.vehicles.find((v) => v.id === S.current) || S.vehicles[0] || null);
 const fills = computed(() => (veh.value ? S.fuel.filter((f) => f.vehicle_id === veh.value.id) : []));
@@ -43,6 +54,7 @@ const iosTip = computed(() => t('app.iosTip', { icon: '<span class="ios-share" a
 const toast = ref('');
 let toastTimer = 0;
 function notify(msg) {
+  buzz();
   toast.value = msg;
   clearTimeout(toastTimer);
   toastTimer = setTimeout(() => { toast.value = ''; }, 2400);
@@ -168,7 +180,7 @@ function login() {
     </div>
 
     <template v-if="veh">
-      <Transition name="fade" mode="out-in">
+      <Transition name="fade" mode="out-in" @enter="restoreScroll">
         <Summary v-if="tab === 'resumen'" :veh="veh" :fills="fills" :exps="exps" :reminders="rems" :stats="stats" :km="km" :energies="energies" @edit="open" @add="open" @done="openDone" @report="report = true" @part-off="openPartOff" />
         <FuelList v-else-if="tab === 'fuel'" :fills="fills" :stats="stats" :energies="energies" @edit="open" />
         <ExpenseList v-else-if="tab === 'expenses'" :exps="exps" @edit="open" />
@@ -181,7 +193,7 @@ function login() {
     <button v-if="veh && FORMS[tab]" class="fab" :aria-label="t('app.fab', { what: t('kinds.' + tab + '.one') })" @click="open(tab)">＋</button>
 
     <nav v-if="veh" class="bottom" :aria-label="t('app.sectionsNav')">
-      <button v-for="[id, icon] in TABS" :key="id" :class="{ on: tab === id }" :aria-current="tab === id ? 'page' : undefined" @click="tab = id">
+      <button v-for="[id, icon] in TABS" :key="id" :class="{ on: tab === id }" :aria-current="tab === id ? 'page' : undefined" @click="goTab(id)">
         <span>{{ id === 'fuel' && energies.length === 1 && energies[0] === 'kwh' ? '⚡' : icon }}</span>{{ tabLabel(id) }}
       </button>
     </nav>

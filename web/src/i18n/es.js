@@ -4,7 +4,7 @@ import { plural } from './plural.js';
 export default {
   common: {
     and: 'y', save: 'Guardar', cancel: 'Cancelar', delete: 'Borrar', close: 'Cerrar', exit: 'Salir', edit: 'Editar',
-    add: 'Añadir', required: '*', yes: 'Sí', no: 'No',
+    add: 'Añadir', yes: 'Sí', no: 'No',
     days: (p) => plural(p.n, 'día', 'días'),
   },
   app: {
@@ -20,7 +20,6 @@ export default {
     iosShare: 'icono compartir',
     welcomeTitle: 'Bienvenido a AutoLog',
     welcomeText: 'Apunta repostajes y gastos, mira cuánto consume y cuánto te cuesta, y que te avise de la ITV o del aceite.',
-    welcomeBtn: 'Añadir mi vehículo',
     tabs: { resumen: 'Resumen', fuel: 'Repostajes', charges: 'Recargas', expenses: 'Gastos', costs: 'Costes' },
     fab: 'Añadir {what}',
     toastDone: '✓ Hecho: {title}',
