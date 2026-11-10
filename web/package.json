@@ -11,9 +11,9 @@
     "build:site": "vite build --mode demo --base ./ --outDir ../site/dist/demo --emptyOutDir && node ../site/build.mjs"
   },
   "dependencies": {
-    "pdfjs-dist": "6.4.299",
+    "pdfjs-dist": "6.5.438",
     "runonweb": "0.1.0",
-    "vue": "^3.5.13"
+    "vue": "^3.5.45"
   },
   "devDependencies": {
     "@vitejs/plugin-vue": "^5.2.1",
