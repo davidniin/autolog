@@ -18,7 +18,7 @@
   "devDependencies": {
     "@vitejs/plugin-vue": "^5.2.1",
     "vite": "^6.0.7",
-    "vitest": "4.1.12"
+    "vitest": "5.1.0"
   },
   "overrides": {
     "onnxruntime-web": "1.30.0"
