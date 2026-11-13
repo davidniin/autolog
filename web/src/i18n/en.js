@@ -3,7 +3,7 @@ import { plural } from './plural.js';
 
 export default {
   common: {
-    and: 'and', save: 'Save', cancel: 'Cancel', delete: 'Delete', close: 'Close', exit: 'Exit', edit: 'Edit',
+    and: 'and', save: 'Save', cancel: 'Cancel', delete: 'Delete', undo: 'Undo', undone: '↩ Restored', close: 'Close', exit: 'Exit', edit: 'Edit',
     add: 'Add', yes: 'Yes', no: 'No',
     days: (p) => plural(p.n, 'day', 'days'),
   },

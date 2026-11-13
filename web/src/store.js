@@ -117,10 +117,35 @@ export function del(kind, id) {
 }
 
 function enqueue(method, kind, id, body) {
-  S.queue.push({ method, path: '/v1/' + kind + '/' + encodeURIComponent(id), body });
+  const op = { method, path: '/v1/' + kind + '/' + encodeURIComponent(id), body };
+  if (holding) op.tag = holding;
+  S.queue.push(op);
   persist();
   flush();
 }
+
+// Cambios "en espera": mientras se puede deshacer, lo que se manda a la cola se queda aquí sin enviarse al servidor
+// (los adjuntos del servidor no se tocan hasta que caduca el aviso). Las marcas solo viven en memoria: si se cierra
+// la app, al volver los cambios se envían con normalidad.
+const heldTags = new Set();
+let holding = null;
+export function held(fn) {
+  const tag = newId();
+  heldTags.add(tag);
+  holding = tag;
+  try { fn(); } finally { holding = null; }
+  return tag;
+}
+// Se acabó el plazo: los cambios en espera se envían
+export function release(tag) { heldTags.delete(tag); reflush(); }
+// Deshecho: los cambios en espera que aún no han salido se quitan de la cola
+export function cancel(tag) {
+  heldTags.delete(tag);
+  S.queue = S.queue.filter((o) => o.tag !== tag);
+  persist();
+  reflush();
+}
+export function persistNow() { persist(); }
 
 // ------------------------------------------------------------ red
 export async function call(method, path, body) {
@@ -142,10 +167,13 @@ export async function call(method, path, body) {
 
 let flushing = null;
 export function flush() { return flushing || (flushing = run().finally(() => { flushing = null; })); }
+// Tras soltar o deshacer un cambio en espera: si hay una vuelta terminando (parada en ese cambio), se espera y se hace otra
+function reflush() { return flushing ? flushing.then(flush) : flush(); }
 async function run() {
   if (DEMO) { S.queue = []; persist(); return; } // en la demo los cambios se quedan en la pestaña
   while (S.queue.length) {
     const op = S.queue[0];
+    if (op.tag && heldTags.has(op.tag)) return; // en espera (se puede deshacer): sale al caducar el aviso
     let r;
     try { r = await call(op.method, op.path, op.body); } catch (e) { return; }
     if (r.status === 401 || r.status >= 500) return; // se reintenta más tarde

@@ -7,6 +7,7 @@ import { energyStats, energiesOf, currentKm, nextDue } from './calc.js';
 import { I, install, hideIosTip } from './install.js';
 import { t } from './i18n/index.js';
 import { buzz } from './dialog.js';
+import { stage } from './undo.js';
 import Summary from './Summary.vue';
 import FuelList from './FuelList.vue';
 import ExpenseList from './ExpenseList.vue';
@@ -52,12 +53,34 @@ const iosTip = computed(() => t('app.iosTip', { icon: '<span class="ios-share" a
 
 // ------------------------------------------------------------ aviso breve tras guardar o borrar
 const toast = ref('');
+const toastUndo = ref(null); // cambio que se puede deshacer mientras dure el aviso (ver undo.js)
 let toastTimer = 0;
-function notify(msg) {
+const TOAST_MS = 2400, UNDO_MS = 6000;
+function closeToast() {
+  clearTimeout(toastTimer);
+  toast.value = '';
+  if (toastUndo.value) toastUndo.value.commit(); // caducó: el cambio sale al servidor
+  toastUndo.value = null;
+}
+function armToast(ms) {
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(closeToast, ms);
+}
+function notify(msg, undo) {
+  if (toastUndo.value) toastUndo.value.commit(); // un aviso nuevo da por bueno el anterior
   buzz();
   toast.value = msg;
+  toastUndo.value = undo || null;
+  armToast(undo ? UNDO_MS : TOAST_MS);
+}
+// Con el foco en "Deshacer" (teclado, lector de pantalla) el aviso no caduca; al salir se da un margen
+function toastFocus(inside) { if (toastUndo.value) { if (inside) clearTimeout(toastTimer); else armToast(UNDO_MS / 2); } }
+function undoLast() {
+  const u = toastUndo.value;
   clearTimeout(toastTimer);
-  toastTimer = setTimeout(() => { toast.value = ''; }, 2400);
+  toastUndo.value = null;
+  toast.value = '';
+  if (u && u.undo()) notify(t('common.undone'));
 }
 
 // ------------------------------------------------------------ ficha de edición
@@ -90,7 +113,7 @@ function openDone(r) {
 function onSave(rec) {
   const { kind, isNew } = sheet.value;
   sheet.value = null;
-  if (kind === 'done') { markDone(doneOf, rec); return notify(t('app.toastDone', { title: doneOf.title })); }
+  if (kind === 'done') { const r = doneOf; return notify(t('app.toastDone', { title: r.title }), stage(() => markDone(r, rec))); }
   if (kind === 'partOff') {
     const p = partOf;
     put('parts', { ...p, removed_date: rec.removed_date, removed_km: rec.removed_km });
@@ -114,9 +137,12 @@ function markDone(r, d) {
 }
 function onDelete() {
   const kind = sheet.value.kind, charge = kind === 'fuel' && sheet.value.value.energy === 'kwh';
-  del(kind, sheet.value.value.id);
+  const id = sheet.value.value.id;
   sheet.value = null;
-  notify(t('kinds.' + (charge ? 'charge' : kind) + '.deleted'));
+  const msg = t('kinds.' + (charge ? 'charge' : kind) + '.deleted');
+  // Un vehículo arrastra todo lo suyo: ahí se sigue pidiendo confirmación (en FormSheet) y no se puede deshacer
+  if (kind === 'vehicles') { del(kind, id); return notify(msg); }
+  notify(msg, stage(() => del(kind, id)));
 }
 
 // Accesos directos del icono (manifest: /?add=fuel, /?add=expenses)
@@ -211,7 +237,10 @@ function login() {
     <Report v-if="report && veh" :veh="veh" :km="km" @close="report = false" />
 
     <Transition name="toast">
-      <div v-if="toast" class="toast" role="status">{{ toast }}</div>
+      <div v-if="toast" class="toast" role="status" @focusin="toastFocus(true)" @focusout="toastFocus(false)">
+        <span class="toast-msg">{{ toast }}</span>
+        <button v-if="toastUndo" type="button" class="toast-undo" @click="undoLast">{{ t('common.undo') }}</button>
+      </div>
     </Transition>
 
     <div v-if="!S.auth" class="gate">
