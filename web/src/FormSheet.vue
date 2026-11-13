@@ -133,7 +133,8 @@ function switchTo(kind, data) {
 }
 
 function remove() {
-  if (confirm(t('kinds.' + kindKey.value + '.confirm'))) emit('delete');
+  // Solo un vehículo pide confirmación (arrastra sus repostajes y gastos); lo demás se borra y se puede deshacer
+  if (props.kind !== 'vehicles' || confirm(t('kinds.vehicles.confirm'))) emit('delete');
 }
 </script>
 
