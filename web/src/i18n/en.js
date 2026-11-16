@@ -14,7 +14,7 @@ export default {
     vehiclesNav: 'Vehicles',
     sectionsNav: 'Sections',
     addVehicle: '＋ Vehicle',
-    demoReset: 'Reset',
+    demoReset: 'Reset', demoBack: '← Website',
     demoBar: '<b>Demo mode</b>: made-up data. Your changes are deleted when you close the tab.',
     iosTip: 'Install it on your iPhone: tap <b>Share</b> {icon} and then <b>Add to Home Screen</b>.',
     iosShare: 'share icon',
@@ -242,7 +242,7 @@ export default {
     owner_only: 'Only the owner can do this.', not_backup: 'This is not an AutoLog backup (ZIP).', backup_too_big: 'The backup is bigger than the server allows (RESTORE_MAX_MB).',
   },
   scan: {
-    invoice: 'Scan the invoice', ticket: 'Scan the receipt',
+    invoice: 'Scan the invoice', ticket: 'Scan the receipt', sample: '✨ No invoice at hand? Try a sample one',
     downloading: 'Downloading the reader… {p} %', reading: 'Reading the photo…', readingPdf: 'Reading the PDF…',
     pdfText: "📄 Read from the PDF's text: exact, no OCR.", pdfBad: "Can't open this PDF.",
     firstTimeOnly: 'Only the first time. Then it works offline.', mayTake: 'It may take a few seconds',

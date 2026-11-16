@@ -19,6 +19,7 @@ import Conflicts from './Conflicts.vue';
 import Report from './Report.vue';
 
 const TABS = [['resumen', '🏠'], ['fuel', '⛽'], ['expenses', '🧾'], ['costs', '📊']];
+const inTopWindow = window.top === window.self; // la demo abierta a pantalla completa (no dentro del teléfono de la web) ofrece volver
 const tab = ref('resumen');
 const settings = ref(false);
 const conflicts = ref(false); // ficha de cambios que chocan con otro móvil
@@ -197,6 +198,7 @@ function login() {
 
     <div v-if="DEMO" class="demo-bar">
       <span>🧪 <span v-html="t('app.demoBar')"></span></span>
+      <a v-if="DEMO_ONLY && inTopWindow" class="link" href="../">{{ t('app.demoBack') }}</a>
       <button class="link" @click="exitDemo">{{ DEMO_ONLY ? t('app.demoReset') : t('common.exit') }}</button>
     </div>
 

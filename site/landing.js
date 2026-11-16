@@ -9,9 +9,11 @@ const ES = {
   'hero.lead': 'Apunta repostajes y gastos, mira cuánto consume y cuánto te cuesta de verdad tu coche o tu moto, y que te avise de la ITV, del aceite o del seguro. Una app que instalas en el móvil, con tus datos donde tú decides.',
   'hero.try': 'Probar la demo en vivo', 'hero.install': 'Instala la tuya',
   'hero.p1': 'Funciona sin cobertura', 'hero.p2': 'Escanea facturas', 'hero.p3': 'Sin rastreo', 'hero.p4': 'Español · English',
-  'demo.open': 'Abrir la demo en vivo',
-  'demo.note': 'Demo en vivo con datos inventados. Juega con ella: apunta un repostaje, escanea una factura, cambia las unidades… No se guarda nada.',
-  'demo.full': 'Abrir a pantalla completa ↗',
+  'demo.open': 'Probar la demo en vivo',
+  'demo.note': 'Datos inventados. No se guarda nada.',
+  'demo.full': 'Pantalla completa ↗',
+  'cta.demo': 'Probar la demo',
+  'try.label': 'Prueba:', 'try.scan': '🧾 Escanea una factura', 'try.fuel': '⛽ Apunta un repostaje',
   'features.title': 'Todo sobre tu vehículo, en un solo sitio',
   'f1.n': '6,5 L/100 km', 'f2.n': '8 categorías', 'f3.n': '15.000 km', 'f4.n': '0,18 €/km',
   'f5.n': '0 fotos enviadas', 'f6.n': '0 rayitas', 'f7.n': 'mpg ⇄ L/100', 'f8.n': 'JSON · CSV · PDF',
@@ -47,6 +49,11 @@ const ES = {
 const EN = {};
 let lang = 'en';
 
+function demoUrl(query) {
+  const f = document.getElementById('demo-frame');
+  return f.dataset.src + '?lang=' + lang + (query ? '&' + query : '');
+}
+
 function apply(l) {
   lang = l;
   document.documentElement.lang = l;
@@ -66,7 +73,7 @@ function apply(l) {
   for (const el of document.querySelectorAll('[data-repo-text]')) el.textContent = REPO;
   document.getElementById('lang').textContent = l === 'es' ? 'EN' : 'ES';
   const frame = document.getElementById('demo-frame');
-  if (frame && frame.src) frame.src = frame.dataset.src + '?lang=' + l; // la demo, en el mismo idioma
+  if (frame && frame.src) frame.src = demoUrl(); // la demo, en el mismo idioma
   try { localStorage.setItem('autolog-site.lang', l); } catch (e) { /* private mode */ }
 }
 
@@ -78,11 +85,29 @@ document.getElementById('lang').addEventListener('click', () => apply(lang === '
 // Live demo: only loaded on wide screens (on phones, the button opens it full screen) and when it scrolls into view
 const frame = document.getElementById('demo-frame');
 const wide = matchMedia('(min-width: 900px)');
-function loadDemo() {
-  if (!wide.matches || frame.src) return;
-  frame.src = frame.dataset.src + '?lang=' + lang;
+function loadDemo(query) {
+  if (!wide.matches) return;
+  if (frame.src && typeof query !== 'string') return;
+  frame.src = demoUrl(typeof query === 'string' ? query : '');
   frame.closest('.phone').classList.add('live');
 }
+// The shortcut chips jump the embedded demo straight to a screen (on phones the link opens the demo full screen)
+for (const a of document.querySelectorAll('[data-demo-q]')) {
+  a.addEventListener('click', (e) => {
+    if (!wide.matches) { a.href = 'demo/?lang=' + lang + '&' + a.dataset.demoQ; return; }
+    e.preventDefault();
+    loadDemo(a.dataset.demoQ);
+  });
+}
+// The demo is laid out as a real 390 px phone and scaled to fit the mock-up, so the app never looks cramped
+const screen = frame.parentElement;
+function fit() {
+  const s = screen.clientWidth / 390;
+  frame.style.width = '390px';
+  frame.style.height = screen.clientHeight / s + 'px';
+  frame.style.transform = 'scale(' + s + ')';
+}
+if ('ResizeObserver' in window) new ResizeObserver(fit).observe(screen); else fit();
 if ('IntersectionObserver' in window) {
   new IntersectionObserver((entries, obs) => {
     if (entries.some((e) => e.isIntersecting)) { loadDemo(); if (frame.src) obs.disconnect(); }
@@ -109,15 +134,16 @@ const bar = document.getElementById('sticky-cta');
 const heroCtas = document.querySelector('.hero .ctas');
 const install = document.getElementById('install');
 if (bar && 'IntersectionObserver' in window) {
-  let heroGone = false, atInstall = false;
+  let heroGone = false, atInstall = false, phoneInView = false;
   const sync = () => {
-    const on = heroGone && !atInstall;
+    const on = heroGone && !atInstall && !phoneInView; // the phone's own cover already has a button
     bar.classList.toggle('show', on);
     bar.setAttribute('aria-hidden', String(!on));
     bar.querySelectorAll('a').forEach((a) => a.tabIndex = on ? 0 : -1);
   };
   new IntersectionObserver(([e]) => { heroGone = !e.isIntersecting && e.boundingClientRect.top < 0; sync(); }).observe(heroCtas);
   new IntersectionObserver(([e]) => { atInstall = e.isIntersecting; sync(); }, { threshold: 0.35 }).observe(install);
+  new IntersectionObserver(([e]) => { phoneInView = e.isIntersecting; sync(); }, { threshold: 0.25 }).observe(document.querySelector('.hero-phone'));
 }
 
 // "Copy" buttons on the install commands (tapping a code block on a phone to select it is fiddly)

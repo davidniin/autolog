@@ -43,10 +43,23 @@ async function attach(file) {
   }
 }
 
-async function pick(ev) {
+function pick(ev) {
   const file = ev.target.files[0];
   ev.target.value = '';
-  if (!file) return;
+  if (file) scanFile(file);
+}
+
+// Demo de la web: una factura inventada ya incluida, para ver el escáner sin tener una a mano (site/sample-invoice.png)
+const SAMPLE = import.meta.env.MODE === 'demo' && props.kind === 'expenses';
+async function useSample() {
+  err.value = '';
+  try {
+    const blob = await (await fetch(import.meta.env.BASE_URL + 'sample-invoice.png')).blob();
+    await scanFile(new File([blob], 'factura-ejemplo.png', { type: 'image/png' }));
+  } catch (e) { err.value = e.message; }
+}
+
+async function scanFile(file) {
   err.value = '';
   res.value = null;
   attached.value = '';
@@ -102,6 +115,7 @@ const foundText = (r) => [...new Set(r.found.map((k) => t('scan.names.' + k)).fi
         <small v-else>{{ kind === 'fuel' ? t('scan.fillsFuel') : t('scan.fillsExpense') }}</small>
       </span>
     </label>
+    <button v-if="SAMPLE && !res && !OCRS.busy && !pdfBusy" type="button" class="scan-sample" @click="useSample">{{ t('scan.sample') }}</button>
     <div v-if="OCRS.busy && OCRS.phase === 'download'" class="scan-bar"><i :style="{ width: OCRS.progress + '%' }"></i></div>
 
     <p v-if="err" class="err">{{ err }}</p>

@@ -50,11 +50,17 @@
       <div class="hero-phone" id="demo">
         <div class="phone">
           <div class="phone-notch"></div>
-          <iframe id="demo-frame" title="AutoLog live demo" loading="lazy" data-src="demo/"></iframe>
-          <a class="phone-cover" href="demo/" data-i18n="demo.open">Open the live demo</a>
+          <div class="phone-screen">
+            <iframe id="demo-frame" title="AutoLog live demo" loading="lazy" data-src="demo/"></iframe>
+            <a class="phone-cover" href="demo/"><span class="cover-btn" data-i18n="demo.open">Try the live demo</span></a>
+          </div>
         </div>
-        <p class="phone-note" data-i18n="demo.note">Live demo with made-up data. Play with it: add a fill-up, scan an invoice, change the units… Nothing is saved.</p>
-        <a class="phone-full" href="demo/" target="_blank" rel="noopener" data-i18n="demo.full">Open full screen ↗</a>
+        <div class="try">
+          <span data-i18n="try.label">Try:</span>
+          <a class="chip" href="demo/?add=expenses" data-demo-q="add=expenses" data-i18n="try.scan">🧾 Scan an invoice</a>
+          <a class="chip" href="demo/?add=fuel" data-demo-q="add=fuel" data-i18n="try.fuel">⛽ Log a fill-up</a>
+        </div>
+        <p class="phone-note"><span data-i18n="demo.note">Made-up data. Nothing is saved.</span> <a class="phone-full" href="demo/" target="_blank" rel="noopener" data-i18n="demo.full">Open full screen ↗</a></p>
       </div>
     </section>
 
@@ -131,7 +137,7 @@
 
   <!-- Mobile only: appears after the hero so the next step is always one thumb-tap away -->
   <div class="sticky-cta" id="sticky-cta" aria-hidden="true">
-    <a class="btn primary" href="demo/" tabindex="-1" data-i18n="hero.try">Try the live demo</a>
+    <a class="btn primary" href="demo/" tabindex="-1" data-i18n="cta.demo">Try the demo</a>
     <a class="btn ghost" href="#install" tabindex="-1" data-i18n="hero.install">Install yours</a>
   </div>
 

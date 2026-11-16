@@ -14,7 +14,7 @@ export default {
     vehiclesNav: 'Vehículos',
     sectionsNav: 'Secciones',
     addVehicle: '＋ Vehículo',
-    demoReset: 'Reiniciar',
+    demoReset: 'Reiniciar', demoBack: '← Web',
     demoBar: '<b>Modo demo</b>: datos inventados. Lo que cambies se borra al cerrar la pestaña.',
     iosTip: 'Instálala en tu iPhone: pulsa <b>Compartir</b> {icon} y luego <b>Añadir a pantalla de inicio</b>.',
     iosShare: 'icono compartir',
@@ -245,7 +245,7 @@ export default {
     owner_only: 'Solo el propietario puede hacer esto.', not_backup: 'No es una copia de AutoLog (ZIP).', backup_too_big: 'La copia es más grande de lo que admite el servidor (RESTORE_MAX_MB).',
   },
   scan: {
-    invoice: 'Escanear la factura', ticket: 'Escanear el ticket',
+    invoice: 'Escanear la factura', ticket: 'Escanear el ticket', sample: '✨ ¿Sin factura a mano? Prueba con una de ejemplo',
     downloading: 'Descargando el lector… {p} %', reading: 'Leyendo la foto…', readingPdf: 'Leyendo el PDF…',
     pdfText: '📄 Leído del texto del PDF: exacto, sin OCR.', pdfBad: 'No puedo abrir este PDF.',
     firstTimeOnly: 'Solo la primera vez. Luego funciona sin conexión.', mayTake: 'Puede tardar unos segundos',
