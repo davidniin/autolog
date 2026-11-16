@@ -362,6 +362,7 @@ p.err.full { padding: 10px 12px; border-radius: 12px; background: var(--danger-s
 .scan-txt { display: grid; gap: 2px; min-width: 0; }
 .scan-txt b { color: var(--accent); font-size: 16px; }
 .scan-txt small { color: var(--muted); font-size: 12.5px; }
+.scan-sample { justify-self: start; min-height: 44px; padding: 0 4px; color: var(--accent); font-size: 14.5px; font-weight: 650; text-align: left; }
 .scan-bar { height: 6px; border-radius: 3px; background: var(--line); overflow: hidden; }
 .scan-bar i { display: block; height: 100%; background: var(--accent); transition: width 0.2s; }
 .scan-res { display: grid; gap: 6px; padding: 10px 12px; border-radius: 12px; background: var(--field); border: 1px solid var(--line); font-size: 14px; }
