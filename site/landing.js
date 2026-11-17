@@ -3,16 +3,16 @@
 const REPO = 'https://github.com/davidniin/autolog';
 
 const ES = {
-  'nav.features': 'Funciones', 'nav.demo': 'Demo', 'nav.install': 'Instalar', 'nav.github': 'GitHub',
-  'hero.eyebrow': 'Gratis · código abierto · autoalojada',
-  'hero.title': 'El historial de tu vehículo.<br />En <em>tu propio</em> servidor.',
-  'hero.lead': 'Apunta repostajes y gastos, mira cuánto consume y cuánto te cuesta de verdad tu coche o tu moto, y que te avise de la ITV, del aceite o del seguro. Una app que instalas en el móvil, con tus datos donde tú decides.',
-  'hero.try': 'Probar la demo en vivo', 'hero.install': 'Instala la tuya',
-  'hero.p1': 'Funciona sin cobertura', 'hero.p2': 'Escanea facturas', 'hero.p3': 'Sin rastreo', 'hero.p4': 'Español · English',
+  'nav.features': 'Funciones', 'nav.demo': 'Demo', 'nav.install': 'Empezar', 'nav.github': 'GitHub',
+  'hero.eyebrow': 'Gratis · sin cuenta · código abierto',
+  'hero.title': 'El historial de tu vehículo,<br /><em>en tu bolsillo</em>.',
+  'hero.lead': 'Apunta repostajes y gastos, mira cuánto consume y cuánto te cuesta de verdad tu coche o tu moto, y que te avise de la ITV, del aceite o del seguro. Ábrela en el móvil y empieza: sin instalar nada y sin registrarte. Tus datos se quedan contigo.',
+  'hero.start': 'Empezar ahora', 'hero.demo': 'Ver la demo',
+  'hero.p1': 'Funciona sin cobertura', 'hero.p2': 'Escanea facturas', 'hero.p3': 'Sin cuenta ni rastreo', 'hero.p4': 'Español · English',
   'demo.open': 'Probar la demo en vivo',
   'demo.note': 'Datos inventados. No se guarda nada.',
   'demo.full': 'Pantalla completa ↗',
-  'cta.demo': 'Probar la demo',
+  'cta.demo': 'Probar la demo', 'cta.start': 'Empezar ahora',
   'try.label': 'Prueba:', 'try.scan': '🧾 Escanea una factura', 'try.fuel': '⛽ Apunta un repostaje',
   'features.title': 'Todo sobre tu vehículo, en un solo sitio',
   'f1.n': '6,5 L/100 km', 'f2.n': '8 categorías', 'f3.n': '15.000 km', 'f4.n': '0,18 €/km',
@@ -26,13 +26,23 @@ const ES = {
   'f7.t': 'Tus unidades', 'f7.d': 'km o millas, litros o galones, L/100 km, km/L o mpg, y cualquier moneda.',
   'f8.t': 'Tus datos, contigo', 'f8.d': 'Copia con fotos, CSV para Excel, historial en PDF para vender el coche y varias personas con su propia clave.',
   'privacy.title': 'Privada desde el diseño',
-  'privacy.lead': 'AutoLog no es un servicio en el que te registras: cada persona monta su propia copia. No hay servidor central, ni cuenta, ni analítica.',
-  'privacy.c1': 'Tus datos están en tu PostgreSQL y en tu disco.',
+  'privacy.lead': 'AutoLog no es un servicio en el que te registras. No hay cuenta, ni servidor central, ni analítica: tus datos son solo tuyos.',
+  'privacy.c1': 'Tus datos se guardan en tu móvil (o en tu propio servidor, si lo prefieres). Nosotros nunca los vemos.',
   'privacy.c2': 'Las fotos de las facturas se leen en el móvil; nunca se envían a ningún sitio.',
-  'privacy.c3': 'Protegida con clave, con bloqueo de intentos repetidos y cabeceras de seguridad estrictas.',
+  'privacy.c3': 'Si la montas en un servidor, va protegida con clave y bloquea los intentos repetidos.',
   'privacy.c4': 'Código abierto (MIT): puedes leer cada línea.',
-  'install.title': 'Instala la tuya en unos minutos',
-  'install.lead': 'Un contenedor Docker más PostgreSQL. En casa, en un NAS, una Raspberry Pi, un VPS o cualquier nube.',
+  'install.title': 'Tres formas de empezar: elige la tuya',
+  'install.lead': 'No hace falta saber de informática. Empieza en el móvil en segundos y, si algún día quieres, pasa después a tu propio espacio.',
+  'way1.tag': 'La más fácil', 'way1.t': 'En tu móvil, ahora mismo',
+  'way1.d': 'Abre AutoLog y pulsa «Añadir a pantalla de inicio». Ya está: tus datos se quedan solo en tu móvil, sin cuenta y sin registrarte.',
+  'way1.cta': 'Abrir AutoLog', 'way1.n': 'Un solo móvil · sin avisos push · haz una copia de vez en cuando.',
+  'way2.tag': 'Varios móviles', 'way2.t': 'Tu propia copia en internet, con un clic',
+  'way2.d': 'Para usarla desde varios móviles o compartirla con tu familia: crea tu propia copia en la nube con un botón. Sin escribir comandos.',
+  'way2.cta': 'Guía paso a paso', 'way2.n': 'Tus datos quedan en tu propia cuenta, no en la nuestra.',
+  'way3.tag': 'Avanzado', 'way3.t': 'En tu propio servidor',
+  'way3.d': 'Un servidor en casa, un NAS o una Raspberry Pi con Docker. Control total, fotos, avisos push y varias personas.',
+  'way3.n': 'Requiere algunos conocimientos técnicos.',
+  'adv.summary': 'Ver los comandos para tu servidor',
   'install.s1': 'Descarga y configura', 'install.s2': 'Arráncala', 'install.s3': 'Ponle HTTPS y ábrela en el móvil',
   'install.s3d': 'Con Tailscale, Caddy o Cloudflare Tunnel. Después, «Añadir a pantalla de inicio».',
   'install.self': 'Guía para tu servidor', 'install.cloud': 'Guía para la nube',
@@ -120,7 +130,7 @@ document.documentElement.classList.add('js');
 const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
 
 // Sections fade up as they scroll into view
-const revealEls = document.querySelectorAll('.feature, .section > h2, .shots, .privacy > *, .steps li, .card.big');
+const revealEls = document.querySelectorAll('.feature, .section > h2, .shots, .privacy > *, .steps li, .card.big, .way');
 revealEls.forEach((el) => el.classList.add('reveal'));
 if ('IntersectionObserver' in window && !reduce) {
   const io = new IntersectionObserver((entries) => {

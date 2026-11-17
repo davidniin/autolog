@@ -7,8 +7,9 @@
 [![Invítame a un café](https://img.shields.io/badge/inv%C3%ADtame%20a%20un%20caf%C3%A9-☕-ffdd00)](https://buymeacoffee.com/davidniin)
 
 Apunta los repostajes, gastos y avisos de tu coche o tu moto, y mira cuánto consume y cuánto te cuesta de verdad.
-AutoLog es una web que se instala en el móvil (PWA) y que **alojas tú**: tus datos están en tu servidor, no en el de
-otro.
+AutoLog es una app gratuita que abres en el navegador del móvil y añades a la pantalla de inicio. Úsala **ahora mismo,
+sin registrarte y sin servidor** (tus datos se quedan en tu móvil), o monta tu propia copia para compartirla entre
+móviles y personas. De cualquier forma, tus datos nunca están en el servidor de otro.
 
 <p align="center">
   <img src="docs/screenshots/light-summary.png" width="220" alt="Resumen: ficha del vehículo y avisos">
@@ -16,6 +17,44 @@ otro.
   <img src="docs/screenshots/light-costs.png" width="220" alt="Costes al mes y por km, gráfico de 12 meses">
   <img src="docs/screenshots/dark-summary.png" width="220" alt="Modo oscuro">
 </p>
+
+## Empieza en 3 pasos (gratis, sin servidor)
+
+1. **Abre [AutoLog](https://davidniin.github.io/autolog/app/) en el móvil.**
+2. **Añádela a la pantalla de inicio.** Android (Chrome): menú ⋮ → *Instalar aplicación*. iPhone (Safari): Compartir ⬆︎ → *Añadir a pantalla de inicio*.
+3. **Crea tu vehículo** y apunta tu primer repostaje. Ya está.
+
+Sin cuenta, sin registrarte y sin instalar nada en un ordenador. Tus datos se quedan **solo en ese móvil**: haz una copia de
+seguridad de vez en cuando (AutoLog te lo recuerda pasado un mes). Límites y detalles: [guía solo móvil](docs/es/phone-only.md).
+¿Solo quieres verla? Prueba la [demo en vivo](https://davidniin.github.io/autolog/demo/) (datos inventados, no se guarda nada).
+
+## ¿Quieres más? Elige una guía
+
+Para usarla en **varios móviles**, compartirla con tu familia, o tener **fotos adjuntas y avisos push**, necesitas tu propia
+copia en internet. Elige la que mejor te encaje (la más fácil primero):
+
+| | Eres… | Guía |
+|---|---|---|
+| 🟢 | No eres técnico y solo quieres tenerla en internet | **[Un clic con Render](docs/es/one-click.md#render)**: un botón y copiar dos cosas (plan de pago) |
+| 🟡 | Tienes un servidor en casa con CasaOS o Umbrel, o usas Coolify | **[Apps de un clic](docs/es/one-click.md)** |
+| 🟠 | Tienes una Raspberry Pi, un NAS o un PC, o quieres tu propio dominio | **[Tu propio servidor](docs/es/self-hosting.md)** (Docker) |
+| 🔴 | Usas una plataforma en la nube (Fly.io, Railway, Cloud Run…) | **[Nube](docs/es/cloud.md)** |
+
+[![Deploy to Render](https://render.com/images/deploy-to-render-button.svg)](https://render.com/deploy?repo=https://github.com/davidniin/autolog)
+
+Puedes empezar en el móvil y subir de nivel después: exporta una copia en ⚙ Ajustes e impórtala en la nueva instalación.
+
+<details>
+<summary>Inicio rápido con Docker (para quien sabe de esto)</summary>
+
+```sh
+git clone https://github.com/davidniin/autolog.git && cd autolog
+cp .env.example .env          # pon AUTOLOG_TOKEN (openssl rand -hex 24) y POSTGRES_PASSWORD
+docker compose up -d --build  # la app en 127.0.0.1:8791 + su propio PostgreSQL
+```
+
+Después ponle HTTPS delante (Tailscale, Caddy, Cloudflare Tunnel…): hace falta para instalarla en el móvil.
+</details>
 
 ## Qué hace
 
@@ -40,42 +79,18 @@ otro.
 - **Español e inglés** (según el idioma del móvil; se cambia en ⚙ Ajustes), modo claro y oscuro, instalable en
   Android y iPhone, varios vehículos.
 
-## Pruébala
-
-**[Demo en vivo](https://davidniin.github.io/autolog/)**: la app de verdad con datos inventados, en tu navegador. No se
-guarda nada ni se envía nada.
-
-En local: arráncala (ver [Desarrollo](#desarrollo)) y abre `http://localhost:5173/?demo=1`.
-
-## Instala la tuya
-
-AutoLog es **autoalojada**: cada persona monta su propia copia. No hay un servicio central y nadie más ve tus datos.
-
-| Dónde | Guía |
-|---|---|
-| Tu servidor / NAS / Raspberry Pi / VPS (Docker) | [docs/es/self-hosting.md](docs/es/self-hosting.md) |
-| Cualquier nube (contenedor + PostgreSQL) | [docs/es/cloud.md](docs/es/cloud.md) |
-| **En un clic:** CasaOS, Umbrel, Coolify, Render | [docs/es/one-click.md](docs/es/one-click.md) |
-
-[![Deploy to Render](https://render.com/images/deploy-to-render-button.svg)](https://render.com/deploy?repo=https://github.com/davidniin/autolog)
-
-Inicio rápido con Docker:
-
-```sh
-git clone https://github.com/davidniin/autolog.git && cd autolog
-cp .env.example .env          # pon AUTOLOG_TOKEN (openssl rand -hex 24) y POSTGRES_PASSWORD
-docker compose up -d --build  # la app en 127.0.0.1:8791 + su propio PostgreSQL
-```
-
-Después ponle HTTPS delante (Tailscale, Caddy, Cloudflare Tunnel…): hace falta para instalarla en el móvil.
+Los adjuntos (fotos y PDF), los avisos push, el calendario y compartir entre móviles o personas necesitan tu propio
+servidor; el [modo solo móvil](docs/es/phone-only.md) los deja fuera.
 
 ## Privacidad y seguridad
 
-- Tus datos se quedan en **tu** PostgreSQL y en **tu** disco. La app no tiene analítica ni rastreo.
-- Las únicas peticiones fuera de tu servidor son la descarga, una sola vez, del modelo del OCR (Hugging Face) y de su
-  motor (jsdelivr), y las notificaciones push (a través de los servicios de Google, Apple o Mozilla, como cualquier web).
-- Para entrar hace falta una clave (`AUTOLOG_TOKEN`, mínimo 16 caracteres); sin ella el servidor no arranca. Los
-  intentos fallidos repetidos se bloquean, y se envían cabeceras de seguridad (CSP…).
+- Solo móvil: tus datos se quedan en el almacenamiento del propio móvil y no se envían a ningún sitio. Con tu servidor:
+  en **tu** PostgreSQL y en **tu** disco. En ambos casos la app no tiene analítica ni rastreo.
+- Las únicas peticiones externas son la descarga, una sola vez, del modelo del OCR (Hugging Face) y de su motor
+  (jsdelivr) y, en tu servidor, las notificaciones push (a través de los servicios de Google, Apple o Mozilla, como
+  cualquier web).
+- En tu servidor, para entrar hace falta una clave (`AUTOLOG_TOKEN`, mínimo 16 caracteres); sin ella el servidor no
+  arranca. Los intentos fallidos repetidos se bloquean, y se envían cabeceras de seguridad (CSP…).
 - ¿Has encontrado una vulnerabilidad? Avisa en privado: ver [SECURITY.md](SECURITY.md).
 
 ## Cómo funciona
@@ -89,6 +104,8 @@ Móvil (PWA) ──HTTPS──▶ autolog (Node + Hono, puerto 8791) ──▶ P
 ```
 
 - `web/` — PWA con Vue 3 + Vite. `server/` — Node 22+ y Hono: la API `/v1` y la web compilada, en un solo contenedor.
+- La app solo móvil es el mismo código de `web/` compilado sin servidor (`npm run build:app`): todo queda en el
+  `localStorage` del móvil.
 
 ## Desarrollo
 
@@ -96,7 +113,8 @@ Móvil (PWA) ──HTTPS──▶ autolog (Node + Hono, puerto 8791) ──▶ P
 cd server && npm install && npm run dev   # :8791 — necesita PostgreSQL (DATABASE_URL en server/.env)
 cd web && npm install && npm run dev      # :5173, reenvía /v1 a :8791
 npm test                                  # en web/ y en server/
-cd web && npm run build:site              # landing page + demo en vivo → site/dist/
+cd web && npm run build:app               # la app solo móvil, sin servidor → site/dist/app/
+cd web && npm run build:site              # landing + demo en vivo + app solo móvil → site/dist/
 ```
 
 En desarrollo puedes poner `ALLOW_NO_AUTH=1` en `server/.env`.
@@ -113,6 +131,7 @@ Las ideas, los avisos de fallos y los pull requests son bienvenidos, en español
 3. Integración con Home Assistant.
 4. Publicar las plantillas de un clic en las tiendas oficiales de CasaOS, Umbrel y Coolify.
 5. Documentación de la API (OpenAPI).
+6. Fotos y adjuntos en el modo solo móvil.
 
 ## Apoya el proyecto
 

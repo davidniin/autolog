@@ -26,8 +26,9 @@ cd server && npm install && npm run dev     # http://localhost:8791
 cd web && npm install && npm run dev        # http://localhost:5173 (proxies /v1 to :8791)
 ```
 
-Without a server, `http://localhost:5173/?demo=1` opens the app with made-up data. The landing page and its live
-demo: `cd web && npm run build:site`, then serve `site/dist/` with any static server.
+Without a server, `http://localhost:5173/?demo=1` opens the app with made-up data. The landing page, its live demo and
+the no-server phone app (`/app/`): `cd web && npm run build:site`, then serve `site/dist/` with any static server.
+The phone-only app alone: `npm run build:app`.
 
 ## Making a change
 
@@ -36,7 +37,7 @@ demo: `cd web && npm run build:site`, then serve `site/dist/` with any static se
 3. Add or update tests: `web/test/` (Vitest) and `server/test/` (`node:test`).
 4. Check that everything passes:
    ```sh
-   cd web && npm test && npm run build
+   cd web && npm test && npm run build && npm run build:app
    cd server && npm test
    ```
 5. Update the docs if behaviour changes (`docs/en` **and** `docs/es`; if you only write one language, say so in the PR
@@ -60,6 +61,19 @@ demo: `cd web && npm run build:site`, then serve `site/dist/` with any static se
 4. Run `npm test` in `web/` and add your language to the key check in `web/test/i18n.test.js`.
 - **Never include real personal data** in code, tests, fixtures or screenshots: no real plates, names, invoices or
   addresses. Use the demo mode for screenshots and made-up data in tests.
+
+## Publishing a version (maintainers)
+
+The deploy templates pin an exact image version, so a release touches several files. Change the number in all of them:
+
+- `web/package.json` and `server/package.json` (`version`, and the same in their `package-lock.json`), and `VERSION` in
+  `server/src/index.js`.
+- The image tag `ghcr.io/davidniin/autolog:X.Y` in `render.yaml`, `deploy/casaos/docker-compose.yml`,
+  `deploy/coolify/docker-compose.yml` and `deploy/umbrel/davidniin-autolog/docker-compose.yml`, and `version` in
+  `deploy/umbrel/davidniin-autolog/umbrel-app.yml`.
+- Then tag it: `git tag vX.Y.Z && git push origin vX.Y.Z`. `.github/workflows/release.yml` publishes the image
+  (`:X.Y.Z`, `:X.Y` and `:latest`). After the first release, make the package **public** in GitHub → Packages, or the
+  one-click templates can't download it.
 
 ## Commits
 
@@ -99,8 +113,9 @@ cd server && npm install && npm run dev     # http://localhost:8791
 cd web && npm install && npm run dev        # http://localhost:5173 (reenvía /v1 a :8791)
 ```
 
-Sin servidor, `http://localhost:5173/?demo=1` abre la app con datos inventados. La landing page y su demo en vivo:
-`cd web && npm run build:site`, y sirve `site/dist/` con cualquier servidor estático.
+Sin servidor, `http://localhost:5173/?demo=1` abre la app con datos inventados. La landing page, su demo en vivo y la
+app solo móvil (`/app/`): `cd web && npm run build:site`, y sirve `site/dist/` con cualquier servidor estático. Solo la
+app solo móvil: `npm run build:app`.
 
 ## Hacer un cambio
 
@@ -109,7 +124,7 @@ Sin servidor, `http://localhost:5173/?demo=1` abre la app con datos inventados. 
 3. Añade o actualiza tests: `web/test/` (Vitest) y `server/test/` (`node:test`).
 4. Comprueba que todo pasa:
    ```sh
-   cd web && npm test && npm run build
+   cd web && npm test && npm run build && npm run build:app
    cd server && npm test
    ```
 5. Actualiza la documentación si cambia el comportamiento (`docs/es` **y** `docs/en`; si solo escribes en un idioma,
@@ -133,6 +148,20 @@ Sin servidor, `http://localhost:5173/?demo=1` abre la app con datos inventados. 
 4. Pasa `npm test` en `web/` y añade tu idioma a la comprobación de claves de `web/test/i18n.test.js`.
 - **Nunca pongas datos personales reales** en código, tests, datos de ejemplo o capturas: ni matrículas, ni nombres,
   ni facturas, ni direcciones reales. Usa el modo demo para las capturas y datos inventados en los tests.
+
+## Publicar una versión (mantenedores)
+
+Las plantillas de despliegue fijan una versión exacta de la imagen, así que una versión toca varios ficheros. Cambia el
+número en todos:
+
+- `web/package.json` y `server/package.json` (`version`, y lo mismo en sus `package-lock.json`), y `VERSION` en
+  `server/src/index.js`.
+- La etiqueta de la imagen `ghcr.io/davidniin/autolog:X.Y` en `render.yaml`, `deploy/casaos/docker-compose.yml`,
+  `deploy/coolify/docker-compose.yml` y `deploy/umbrel/davidniin-autolog/docker-compose.yml`, y `version` en
+  `deploy/umbrel/davidniin-autolog/umbrel-app.yml`.
+- Después crea la etiqueta: `git tag vX.Y.Z && git push origin vX.Y.Z`. `.github/workflows/release.yml` publica la imagen
+  (`:X.Y.Z`, `:X.Y` y `:latest`). Tras la primera versión, haz el paquete **público** en GitHub → Packages; si no, las
+  plantillas de un clic no pueden descargarlo.
 
 ## Commits
 

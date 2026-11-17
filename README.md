@@ -7,8 +7,9 @@
 [![Buy me a coffee](https://img.shields.io/badge/buy%20me%20a%20coffee-☕-ffdd00)](https://buymeacoffee.com/davidniin)
 
 Log fill-ups, expenses and reminders for your car or motorbike, and see what it really consumes and costs.
-AutoLog is a mobile web app you install on your phone (PWA) and **host yourself**: your data lives on your server,
-not on someone else's.
+AutoLog is a free app you open in your phone's browser and add to the home screen. Use it **right now, with no
+sign-up and no server** (your data stays on your phone), or run your own copy to share it between phones and people.
+Either way, your data is never on someone else's server.
 
 <p align="center">
   <img src="docs/screenshots/light-summary.png" width="220" alt="Summary: vehicle card, reminders">
@@ -16,6 +17,44 @@ not on someone else's.
   <img src="docs/screenshots/light-costs.png" width="220" alt="Costs per month and per km, 12-month chart">
   <img src="docs/screenshots/dark-summary.png" width="220" alt="Dark mode">
 </p>
+
+## Start in 3 steps (free, no server)
+
+1. **Open [AutoLog](https://davidniin.github.io/autolog/app/) on your phone.**
+2. **Add it to your home screen.** Android (Chrome): menu ⋮ → *Install app*. iPhone (Safari): Share ⬆︎ → *Add to Home Screen*.
+3. **Create your vehicle** and log your first fill-up. Done.
+
+No account, no sign-up and nothing to install on a computer. Your data stays **only on that phone**: make a backup now and
+then (AutoLog reminds you after a month). Limits and details: [phone-only guide](docs/en/phone-only.md).
+Just looking? Try the [live demo](https://davidniin.github.io/autolog/demo/) (made-up data, nothing is saved).
+
+## Want more? Pick a guide
+
+To use it on **several phones**, share it with your family, or have **photo attachments and push reminders**, you need
+your own copy online. Pick the one that fits you (easiest first):
+
+| | You are… | Guide |
+|---|---|---|
+| 🟢 | Not technical, you just want it online | **[One click with Render](docs/en/one-click.md#render)**: a button, then copy two things (paid plan) |
+| 🟡 | You have a home server with CasaOS or Umbrel, or use Coolify | **[One-click apps](docs/en/one-click.md)** |
+| 🟠 | You have a Raspberry Pi, a NAS or a PC, or want your own domain | **[Your own server](docs/en/self-hosting.md)** (Docker) |
+| 🔴 | You use a cloud platform (Fly.io, Railway, Cloud Run…) | **[Cloud](docs/en/cloud.md)** |
+
+[![Deploy to Render](https://render.com/images/deploy-to-render-button.svg)](https://render.com/deploy?repo=https://github.com/davidniin/autolog)
+
+You can start on the phone and move up later: export a backup in ⚙ Settings and import it on the new setup.
+
+<details>
+<summary>Quick start with Docker (for the technically inclined)</summary>
+
+```sh
+git clone https://github.com/davidniin/autolog.git && cd autolog
+cp .env.example .env          # set AUTOLOG_TOKEN (openssl rand -hex 24) and POSTGRES_PASSWORD
+docker compose up -d --build  # app on 127.0.0.1:8791 + its own PostgreSQL
+```
+
+Then put HTTPS in front of it (Tailscale, Caddy, Cloudflare Tunnel…): it is required to install it on the phone.
+</details>
 
 ## Features
 
@@ -39,42 +78,17 @@ not on someone else's.
 - **English and Spanish** (follows the phone's language; switch it in ⚙ Settings), light/dark mode, installable on
   Android and iPhone, several vehicles.
 
-## Try it
-
-**[Live demo](https://davidniin.github.io/autolog/)** — the real app with made-up data, right in your browser. Nothing is
-saved and nothing is sent anywhere.
-
-Locally: run it (see [Development](#development)) and open `http://localhost:5173/?demo=1`.
-
-## Install your own
-
-AutoLog is **self-hosted**: everyone runs their own copy. There is no central service and nobody else sees your data.
-
-| Where | Guide |
-|---|---|
-| Your own server / NAS / Raspberry Pi / VPS (Docker) | [docs/en/self-hosting.md](docs/en/self-hosting.md) |
-| Any cloud provider (container + PostgreSQL) | [docs/en/cloud.md](docs/en/cloud.md) |
-| **One click:** CasaOS, Umbrel, Coolify, Render | [docs/en/one-click.md](docs/en/one-click.md) |
-
-[![Deploy to Render](https://render.com/images/deploy-to-render-button.svg)](https://render.com/deploy?repo=https://github.com/davidniin/autolog)
-
-Quick start with Docker:
-
-```sh
-git clone https://github.com/davidniin/autolog.git && cd autolog
-cp .env.example .env          # set AUTOLOG_TOKEN (openssl rand -hex 24) and POSTGRES_PASSWORD
-docker compose up -d --build  # app on 127.0.0.1:8791 + its own PostgreSQL
-```
-
-Then put HTTPS in front of it (Tailscale, Caddy, Cloudflare Tunnel…) — required to install it on the phone.
+Attachments (photos and PDFs), push reminders, the calendar feed and sharing between phones or people need your own
+server; the [phone-only mode](docs/en/phone-only.md) leaves them out.
 
 ## Privacy and security
 
-- Your data stays in **your** PostgreSQL and **your** disk. The app has no analytics and no tracking.
-- The only external requests are the one-time download of the OCR model (Hugging Face) and engine (jsdelivr), and
-  push notifications (sent through Google/Apple/Mozilla push services, as for any web app).
-- Access needs a password (`AUTOLOG_TOKEN`, min. 16 characters); the server won't start without one. Repeated wrong
-  attempts are blocked, and security headers (CSP…) are set.
+- Phone only: your data stays in the phone's own storage and is never sent anywhere. With your own server: it stays in
+  **your** PostgreSQL and **your** disk. Either way the app has no analytics and no tracking.
+- The only external requests are the one-time download of the OCR model (Hugging Face) and engine (jsdelivr), and, on
+  your own server, push notifications (sent through Google/Apple/Mozilla push services, as for any web app).
+- On your own server, access needs a password (`AUTOLOG_TOKEN`, min. 16 characters); the server won't start without
+  one. Repeated wrong attempts are blocked, and security headers (CSP…) are set.
 - Found a vulnerability? Please report it privately: see [SECURITY.md](SECURITY.md).
 
 ## How it works
@@ -88,6 +102,8 @@ Phone (PWA) ──HTTPS──▶ autolog (Node + Hono, port 8791) ──▶ Post
 ```
 
 - `web/` — Vue 3 + Vite PWA. `server/` — Node 22+ and Hono: `/v1` API plus the built web app, in one container.
+- The phone-only app is the same `web/` code built without a server (`npm run build:app`): everything stays in the
+  phone's `localStorage`.
 
 ## Development
 
@@ -95,7 +111,8 @@ Phone (PWA) ──HTTPS──▶ autolog (Node + Hono, port 8791) ──▶ Post
 cd server && npm install && npm run dev   # :8791 — needs PostgreSQL (DATABASE_URL in server/.env)
 cd web && npm install && npm run dev      # :5173, proxies /v1 to :8791
 npm test                                  # in web/ and in server/
-cd web && npm run build:site              # landing page + live demo → site/dist/
+cd web && npm run build:app               # the no-server phone app → site/dist/app/
+cd web && npm run build:site              # landing page + live demo + phone app → site/dist/
 ```
 
 For the server in development you can set `ALLOW_NO_AUTH=1` in `server/.env`.
@@ -112,6 +129,7 @@ and the [Code of Conduct](CODE_OF_CONDUCT.md).
 3. Home Assistant integration.
 4. Publish the one-click templates in the official CasaOS, Umbrel and Coolify app stores.
 5. API documentation (OpenAPI).
+6. Photos and attachments in the phone-only mode.
 
 ## Support
 

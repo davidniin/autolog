@@ -2,13 +2,19 @@
 
 [English](../en/self-hosting.md) · **Español**
 
-Vale cualquier máquina con Docker: un servidor en casa, un NAS, una Raspberry Pi 4/5 o un VPS de cualquier proveedor.
-Para una plataforma en la nube sin acceso por terminal (PaaS), mira [cloud.md](cloud.md). ¿Usas CasaOS, Umbrel o
-Coolify? Hay plantillas listas: [one-click.md](one-click.md).
+> **Para quién:** quien tiene una Raspberry Pi, un NAS, un PC o un VPS, o quiere AutoLog en su propio dominio, y no le
+> importa usar la terminal.
+> **Nivel:** 🟠 con algo de conocimiento técnico. **Tiempo:** 20–30 minutos.
+> **Otras opciones:** sin servidor, solo en el móvil → [solo móvil](phone-only.md) · sin terminal →
+> [un clic](one-click.md) · plataforma en la nube → [nube](cloud.md).
+
+Vale cualquier máquina con Docker: un servidor en casa, un NAS, una Raspberry Pi o un VPS de cualquier proveedor.
 
 ## Qué necesitas
 
 - Docker con el plugin de Compose (`docker compose version`).
+- **Raspberry Pi:** una Pi 4 o 5 con un sistema de **64 bits** (Raspberry Pi OS 64-bit; la imagen existe para `amd64` y
+  `arm64`, no para 32 bits). Instala Docker con `curl -fsSL https://get.docker.com | sh`.
 - Unos 300 MB de RAM y algo de disco para los adjuntos.
 - **HTTPS** para el móvil: instalar la app, las notificaciones push y el escáner necesitan una conexión segura. Las
   opciones están en el paso 3.

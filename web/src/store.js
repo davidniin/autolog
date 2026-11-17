@@ -12,6 +12,9 @@ const q = new URLSearchParams(typeof location !== 'undefined' ? location.search 
 try { if (q.has('demo')) sessionStorage.setItem('autolog-demo', '1'); } catch (e) { /* sin almacenamiento */ }
 // Build "solo demo" (npm run build:site, para la landing): siempre en modo demo y sin servidor
 export const DEMO_ONLY = import.meta.env.MODE === 'demo';
+// Build "sin servidor" (npm run build:app, la web de la landing en /app/): los datos viven solo en este móvil (localStorage),
+// sin clave, sin red y sin fotos adjuntas. Se puede pasar a un servidor propio con la copia (JSON) de Ajustes.
+export const LOCAL = import.meta.env.MODE === 'phone';
 export const DEMO = DEMO_ONLY || (() => { try { return sessionStorage.getItem('autolog-demo') === '1'; } catch (e) { return q.has('demo'); } })();
 const box = () => (DEMO ? sessionStorage : localStorage);
 const PREFIX = DEMO ? 'autolog-demo.' : 'autolog.';
@@ -31,7 +34,7 @@ export function exitDemo() {
 }
 
 // Token: ?token=... la primera vez (se guarda y se quita de la barra de direcciones)
-if (!DEMO && q.has('token')) {
+if (!DEMO && !LOCAL && q.has('token')) {
   save('token', q.get('token'));
   q.delete('token');
   history.replaceState(null, '', location.pathname + (q.size ? '?' + q : '') + location.hash);
@@ -45,7 +48,7 @@ function fileCookie(t) {
       (t ? '; Max-Age=315360000' : '; Max-Age=0') + (location.protocol === 'https:' ? '; Secure' : '');
   }
 }
-if (!DEMO) fileCookie(load('token', ''));
+if (!DEMO && !LOCAL) fileCookie(load('token', ''));
 
 export const S = reactive({
   vehicles: load('vehicles', []),
@@ -59,6 +62,8 @@ export const S = reactive({
   conflicts: load('conflicts', []), // cambios que chocan con otro móvil: { kind, id, mine, theirs } (ver run)
   settings: load('settings', null), // unidades y moneda de la instalación (null = sin elegir todavía)
   me: load('me', null), // quién soy: { name ('' = propietario), admin }
+  lastBackup: load('lastBackup', ''), // (sin servidor) fecha de la última copia descargada
+  since: load('since', ''), // (sin servidor) desde cuándo se usa este móvil: la primera copia se pide pasado un tiempo
   online: true,
   auth: true, // false = falta el token o no vale
 });
@@ -74,6 +79,9 @@ export function putSettings(p) {
   persist();
   flush();
 }
+
+if (LOCAL && !S.since) { S.since = new Date().toISOString().slice(0, 10); save('since', S.since); }
+export function markBackup() { S.lastBackup = new Date().toISOString().slice(0, 10); save('lastBackup', S.lastBackup); }
 
 export function newId() { return Date.now().toString(36) + Math.random().toString(36).slice(2, 7); }
 
@@ -149,7 +157,7 @@ export function persistNow() { persist(); }
 
 // ------------------------------------------------------------ red
 export async function call(method, path, body) {
-  if (DEMO) throw new Error('En el modo demo no hay servidor');
+  if (DEMO || LOCAL) throw new Error('Sin servidor');
   const h = {}, token = load('token', '');
   if (token) h.Authorization = 'Bearer ' + token;
   if (body !== undefined) h['Content-Type'] = 'application/json';
@@ -170,7 +178,7 @@ export function flush() { return flushing || (flushing = run().finally(() => { f
 // Tras soltar o deshacer un cambio en espera: si hay una vuelta terminando (parada en ese cambio), se espera y se hace otra
 function reflush() { return flushing ? flushing.then(flush) : flush(); }
 async function run() {
-  if (DEMO) { S.queue = []; persist(); return; } // en la demo los cambios se quedan en la pestaña
+  if (DEMO || LOCAL) { S.queue = []; persist(); return; } // sin servidor: los cambios se quedan en este móvil
   while (S.queue.length) {
     const op = S.queue[0];
     if (op.tag && heldTags.has(op.tag)) return; // en espera (se puede deshacer): sale al caducar el aviso
@@ -214,7 +222,7 @@ async function whoAmI() {
 }
 
 export async function pull() {
-  if (DEMO) { S.me = { id: 'owner', name: '', admin: true }; return; }
+  if (DEMO || LOCAL) { S.me = { id: 'owner', name: '', admin: true }; return; }
   await flush();
   if (S.queue.length) return;
   whoAmI();
@@ -239,6 +247,7 @@ export async function pull() {
 // Subir necesita red (un fichero no cabe en la cola). Las fotos se reducen antes: ~2000 px en JPEG.
 export async function upload(file, meta) {
   if (DEMO) throw new Error(t('files.demo'));
+  if (LOCAL) throw new Error(t('files.local'));
   const blob = file.type.startsWith('image/') ? await shrink(file) : file;
   const name = blob === file ? file.name : file.name.replace(/\.\w+$/, '') + '.jpg';
   const fd = new FormData();
@@ -272,6 +281,7 @@ async function shrink(file, max = 2000) {
 // Necesita red. → { added: { vehicles, fuel, expenses, reminders, parts, files }, skipped, invalid }
 export async function restoreBackup(file, withSettings, { reload = true } = {}) {
   if (DEMO) throw new Error(t('files.demo'));
+  if (LOCAL) throw new Error(t('files.local'));
   const h = { 'Content-Type': 'application/zip' }, token = load('token', '');
   if (token) h.Authorization = 'Bearer ' + token;
   let r;
@@ -303,6 +313,7 @@ export function logout() {
 
 export function start() {
   pull();
+  if (LOCAL) return; // sin servidor no hay nada que sincronizar
   setInterval(pull, 30000);
   document.addEventListener('visibilitychange', () => { if (!document.hidden) pull(); });
   window.addEventListener('online', pull);

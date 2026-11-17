@@ -20,6 +20,9 @@ AutoLog is self-hosted: each person runs and secures their own instance. Problem
 configured (a weak `AUTOLOG_TOKEN`, `ALLOW_NO_AUTH=1` on the internet, no HTTPS) are not vulnerabilities in AutoLog,
 but suggestions to make the defaults safer are welcome.
 
+The no-server phone app (`/app/`) has no accounts or backend: its data lives in the browser's own storage on that
+phone. Anything that lets another site or person read or alter that data is in scope.
+
 ---
 
 ## Avisar de una vulnerabilidad
@@ -34,3 +37,6 @@ apareces en los créditos.
 Solo la última versión (y la rama `main`) recibe arreglos de seguridad. Cada persona aloja y protege su propia
 instancia: una configuración insegura (clave débil, `ALLOW_NO_AUTH=1` en internet, sin HTTPS) no es una vulnerabilidad
 de AutoLog, aunque las propuestas para que la configuración por defecto sea más segura son bienvenidas.
+
+La app solo móvil (`/app/`) no tiene cuentas ni servidor: sus datos viven en el almacenamiento del navegador de ese móvil.
+Cualquier fallo que permita a otra web o persona leer o alterar esos datos sí entra en el alcance.

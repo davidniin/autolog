@@ -4,7 +4,7 @@ import { computed, ref } from 'vue';
 import { useDialog } from './dialog.js';
 import { t, L, LANGS, setLang } from './i18n/index.js';
 import { refreshPush } from './push.js';
-import { S, putSettings, restoreBackup, DEMO, call, logout } from './store.js';
+import { S, putSettings, restoreBackup, DEMO, LOCAL, call, logout, markBackup } from './store.js';
 import { backupJSON, fuelCSV, expensesCSV, download, fileName, planImport, planCounts, applyImport } from './dataio.js';
 import { UP, UNIT_OPTIONS, PRESETS, currencyList } from './units.js';
 import { fmt } from './calc.js';
@@ -24,6 +24,7 @@ const prefs = () => ({ distance: UP.distance, volume: UP.volume, consumption: UP
 const setPref = (k, v) => putSettings({ ...prefs(), [k]: v });
 const applyPreset = (p) => putSettings({ ...prefs(), ...p });
 const isPreset = (p) => Object.entries(p).every(([k, v]) => UP[k] === v);
+const presetId = computed(() => (PRESETS.find(([, p]) => isPreset(p)) || [''])[0]); // '' = combinación propia
 
 // ------------------------------------------------------------ calendario de avisos (enlace con clave propia, solo lectura)
 const cal = ref(''); // URL del calendario
@@ -80,7 +81,8 @@ const seen = (u) => (u.last_seen ? fmt.date(u.last_seen.slice(0, 10)) : t('peopl
 const plan = ref(null); // importación pendiente de confirmar
 const ioMsg = ref('');
 const withSettings = ref(true);
-const exportAll = () => download(fileName('backup', 'json'), backupJSON(), 'application/json');
+const exportAll = () => { download(fileName('backup', 'json'), backupJSON(), 'application/json'); markBackup(); };
+const lastBackup = computed(() => (S.lastBackup ? fmt.date(S.lastBackup) : t('local.never')));
 const exportFuel = () => download(fileName('fuel', 'csv'), fuelCSV(), 'text/csv;charset=utf-8');
 const exportExpenses = () => download(fileName('expenses', 'csv'), expensesCSV(), 'text/csv;charset=utf-8');
 
@@ -128,35 +130,48 @@ const currencies = computed(() => currencyList(L.lang));
     <div ref="panel" class="sheet" role="dialog" aria-modal="true" aria-labelledby="settings-title" tabindex="-1">
       <h2 id="settings-title">{{ t('settings.title') }}</h2>
 
-      <div class="field full" role="group" :aria-label="t('settings.language')">
-        <span class="lbl">{{ t('settings.language') }}</span>
-        <div class="chips">
-          <button v-for="[code, name] in LANGS" :key="code" type="button" :lang="code" :class="{ on: L.lang === code }" :aria-pressed="L.lang === code" @click="pickLang(code)">{{ name }}</button>
-        </div>
+      <div class="field full">
+        <label class="lbl" for="set-lang">{{ t('settings.language') }}</label>
+        <span class="inp">
+          <select id="set-lang" :value="L.lang" @change="pickLang($event.target.value)">
+            <option v-for="[code, name] in LANGS" :key="code" :value="code" :lang="code">{{ name }}</option>
+          </select>
+        </span>
         <small class="form-note">{{ t('settings.languageNote') }}</small>
       </div>
 
-      <div class="field full settings-units">
-        <span class="lbl">{{ t('settings.units') }}</span>
-        <div class="chips presets">
-          <button v-for="[id, p] in PRESETS" :key="id" type="button" :class="{ on: isPreset(p) }" :aria-pressed="isPreset(p)" @click="applyPreset(p)">{{ t('settings.presets.' + id) }}</button>
-        </div>
-        <template v-for="(opts, k) in UNIT_OPTIONS" :key="k">
-          <span class="lbl sub">{{ t('settings.' + k) }}</span>
-          <div class="chips" role="group" :aria-label="t('settings.' + k)">
-            <button v-for="o in opts" :key="o" type="button" :class="{ on: UP[k] === o }" :aria-pressed="UP[k] === o" @click="setPref(k, o)">{{ t('units.' + k + '.' + o) }}</button>
-          </div>
-        </template>
-        <label class="lbl sub" for="set-currency">{{ t('settings.currency') }}</label>
+      <h3 class="full settings-sub">{{ t('settings.units') }}</h3>
+
+      <div class="field full">
+        <label class="lbl" for="set-preset">{{ t('settings.preset') }}</label>
+        <span class="inp">
+          <select id="set-preset" :value="presetId" @change="applyPreset(PRESETS.find((p) => p[0] === $event.target.value)[1])">
+            <option v-if="!presetId" value="" disabled>{{ t('settings.presetCustom') }}</option>
+            <option v-for="[id] in PRESETS" :key="id" :value="id">{{ t('settings.presets.' + id) }}</option>
+          </select>
+        </span>
+      </div>
+
+      <div v-for="(opts, k) in UNIT_OPTIONS" :key="k" class="field">
+        <label class="lbl" :for="'set-' + k">{{ t('settings.' + k) }}</label>
+        <span class="inp">
+          <select :id="'set-' + k" :value="UP[k]" @change="setPref(k, $event.target.value)">
+            <option v-for="o in opts" :key="o" :value="o">{{ t('units.' + k + '.' + o) }}</option>
+          </select>
+        </span>
+      </div>
+
+      <div class="field">
+        <label class="lbl" for="set-currency">{{ t('settings.currency') }}</label>
         <span class="inp">
           <select id="set-currency" :value="UP.currency" @change="setPref('currency', $event.target.value)">
             <option v-for="[code, name] in currencies" :key="code" :value="code">{{ name }}</option>
           </select>
         </span>
-        <small class="form-note">{{ t('settings.unitsNote') }} {{ t('settings.currencyNote') }}</small>
       </div>
+      <small class="form-note full">{{ t('settings.unitsNote') }} {{ t('settings.currencyNote') }}</small>
 
-      <div v-if="!DEMO" class="field full settings-cal">
+      <div v-if="!DEMO && !LOCAL" class="field full settings-cal">
         <span class="lbl">📅 {{ t('cal.title') }}</span>
         <small class="form-note">{{ t('cal.text') }}</small>
         <button v-if="!cal" type="button" class="io-btn" @click="calendar()">{{ t('cal.get') }}</button>
@@ -175,13 +190,14 @@ const currencies = computed(() => currencyList(L.lang));
       <div class="field full settings-data">
         <span class="lbl">{{ t('io.title') }}</span>
         <div class="io-btns">
-          <a v-if="!DEMO" class="io-btn wide" href="/v1/backup" download>📦 {{ t('io.zip') }}</a>
+          <a v-if="!DEMO && !LOCAL" class="io-btn wide" href="/v1/backup" download>📦 {{ t('io.zip') }}</a>
           <button type="button" class="io-btn" @click="exportAll">💾 {{ t('io.backup') }}</button>
           <button type="button" class="io-btn" @click="exportFuel">⛽ {{ t('io.fuelCsv') }}</button>
           <button type="button" class="io-btn" @click="exportExpenses">🧾 {{ t('io.expensesCsv') }}</button>
           <label class="io-btn" :class="{ busy: zipBusy }">{{ zipBusy ? '⏳ ' + t('io.zipUploading') : '📥 ' + t('io.import') }}<input type="file" accept=".zip,.json,.csv,application/zip,application/json,text/csv" :disabled="zipBusy" @change="pickImport" /></label>
         </div>
-        <small class="form-note">{{ t('io.note') }}</small>
+        <small v-if="LOCAL" class="form-note">💾 {{ t('local.lastBackup', { when: lastBackup }) }} · {{ t('local.keepSafe') }}</small>
+        <small v-else class="form-note">{{ t('io.note') }}</small>
         <div v-if="plan" class="io-plan" role="status">
           <p v-if="total"><b>{{ t('io.willAdd') }}</b> {{ Object.entries(counts).filter(([, n]) => n).map(([k, n]) => t('io.count.' + k, { n })).join(' · ') }}</p>
           <p v-else>{{ t('io.nothingNew') }}</p>
@@ -196,7 +212,7 @@ const currencies = computed(() => currencyList(L.lang));
         <p v-if="ioMsg" class="hint">{{ ioMsg }}</p>
       </div>
 
-      <div v-if="!DEMO" class="field full settings-people">
+      <div v-if="!DEMO && !LOCAL" class="field full settings-people">
         <span class="lbl">👥 {{ t('people.title') }}</span>
         <small class="form-note">{{ S.me && !S.me.admin ? t('people.youAre', { name: S.me.name }) : t('people.youAreOwner') }}</small>
         <template v-if="S.me && S.me.admin">
@@ -222,6 +238,27 @@ const currencies = computed(() => currencyList(L.lang));
         </template>
         <p v-if="peopleMsg" class="hint">{{ peopleMsg }}</p>
         <button type="button" class="link danger-soft" @click="leave">↩ {{ t('people.logout') }}</button>
+      </div>
+
+      <div v-if="!DEMO" class="field full help">
+        <span class="lbl">❓ {{ t('help.title') }}</span>
+        <details>
+          <summary>{{ t('help.installQ') }}</summary>
+          <p>{{ t('help.installA') }}</p>
+        </details>
+        <details>
+          <summary>{{ t('help.whereQ') }}</summary>
+          <p>{{ LOCAL ? t('help.whereLocalA') : t('help.whereServerA') }}</p>
+        </details>
+        <details>
+          <summary>{{ t('help.phoneQ') }}</summary>
+          <p>{{ LOCAL ? t('help.phoneLocalA') : t('help.phoneServerA') }}</p>
+        </details>
+        <details v-if="LOCAL">
+          <summary>{{ t('help.moreQ') }}</summary>
+          <p>{{ t('help.moreA') }}</p>
+          <a class="link" :href="'https://github.com/davidniin/autolog/blob/main/docs/' + (L.lang === 'es' ? 'es' : 'en') + '/one-click.md'" target="_blank" rel="noopener">{{ t('help.moreLink') }} →</a>
+        </details>
       </div>
 
       <div class="field full about">

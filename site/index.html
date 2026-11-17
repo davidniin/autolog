@@ -4,10 +4,10 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
   <title>AutoLog — your vehicle's logbook, on your own server</title>
-  <meta name="description" content="Self-hosted logbook for your car or motorbike: fill-ups, real fuel consumption, expenses, reminders and costs. Installable app that works offline, with an on-device invoice scanner. Free and open source." />
+  <meta name="description" content="Free logbook for your car or motorbike: fill-ups, real fuel consumption, expenses, reminders and costs. Open it on your phone, no sign-up, and your data stays with you. Works offline, with an on-device invoice scanner. Open source." />
   <meta name="theme-color" content="#2148b8" />
   <meta property="og:title" content="AutoLog — your vehicle's logbook" />
-  <meta property="og:description" content="Fill-ups, consumption, expenses and reminders for your car or motorbike. Self-hosted, private, open source." />
+  <meta property="og:description" content="Fill-ups, consumption, expenses and reminders for your car or motorbike. Free, no sign-up, private, open source." />
   <meta property="og:image" content="screenshots/light-summary.png" />
   <link rel="icon" href="demo/icon.svg" type="image/svg+xml" />
   <link rel="preload" href="fonts/bricolage-grotesque-latin.woff2" as="font" type="font/woff2" crossorigin />
@@ -22,7 +22,7 @@
     <nav class="links" aria-label="Main">
       <a href="#features" data-i18n="nav.features">Features</a>
       <a href="#demo" data-i18n="nav.demo">Demo</a>
-      <a href="#install" data-i18n="nav.install">Install</a>
+      <a href="#install" data-i18n="nav.install">Start</a>
       <a data-repo="" href="#" data-i18n="nav.github">GitHub</a>
     </nav>
     <a class="nav-demo" href="demo/" data-i18n="nav.demo">Demo</a>
@@ -33,17 +33,17 @@
     <!-- ================= hero + live demo -->
     <section class="hero">
       <div class="hero-text">
-        <p class="eyebrow" data-i18n="hero.eyebrow">Free · open source · self-hosted</p>
-        <h1 data-i18n-html="hero.title">Your vehicle's logbook.<br />On <em>your own</em> server.</h1>
-        <p class="lead" data-i18n="hero.lead">Log fill-ups and expenses, see what your car or motorbike really consumes and costs, and get reminded of the inspection, the oil change or the insurance. An app you install on your phone, with your data where you decide.</p>
+        <p class="eyebrow" data-i18n="hero.eyebrow">Free · no account · open source</p>
+        <h1 data-i18n-html="hero.title">Your vehicle's logbook,<br /><em>in your pocket</em>.</h1>
+        <p class="lead" data-i18n="hero.lead">Log fill-ups and expenses, see what your car or motorbike really consumes and costs, and get reminded of the inspection, the oil change or the insurance. Open it on your phone and start: nothing to install, no sign-up. Your data stays with you.</p>
         <div class="ctas">
-          <a class="btn primary" href="#demo" data-i18n="hero.try">Try the live demo</a>
-          <a class="btn ghost" href="#install" data-i18n="hero.install">Install yours</a>
+          <a class="btn primary" href="app/" data-i18n="hero.start">Start now</a>
+          <a class="btn ghost" href="#demo" data-i18n="hero.demo">See the demo</a>
         </div>
         <ul class="pills">
           <li data-i18n="hero.p1">Works offline</li>
           <li data-i18n="hero.p2">Scans invoices</li>
-          <li data-i18n="hero.p3">No tracking</li>
+          <li data-i18n="hero.p3">No account, no tracking</li>
           <li data-i18n="hero.p4">English · Español</li>
         </ul>
       </div>
@@ -91,29 +91,54 @@
     <section class="section privacy">
       <div>
         <h2 data-i18n="privacy.title">Private by design</h2>
-        <p data-i18n="privacy.lead">AutoLog isn't a service you sign up for: everyone runs their own copy. There is no central server, no account and no analytics.</p>
+        <p data-i18n="privacy.lead">AutoLog isn't a service you sign up for. There is no account, no central server and no analytics: your data is only yours.</p>
       </div>
       <ul class="checks">
-        <li data-i18n="privacy.c1">Your data lives in your PostgreSQL and on your disk.</li>
+        <li data-i18n="privacy.c1">Your data is saved on your phone (or on your own server if you prefer). We never see it.</li>
         <li data-i18n="privacy.c2">Invoice photos are read on the phone; they're never sent anywhere.</li>
-        <li data-i18n="privacy.c3">Password-protected, with lock-out of repeated attempts and strict security headers.</li>
+        <li data-i18n="privacy.c3">If you set it up on a server, it is protected with a password and blocks repeated attempts.</li>
         <li data-i18n="privacy.c4">Open source (MIT): you can read every line.</li>
       </ul>
     </section>
 
     <!-- ================= install -->
     <section class="section" id="install">
-      <h2 data-i18n="install.title">Install yours in minutes</h2>
-      <p class="sub" data-i18n="install.lead">One Docker container plus PostgreSQL. At home, on a NAS, a Raspberry Pi, a VPS or any cloud.</p>
-      <ol class="steps">
-        <li><b data-i18n="install.s1">Download and configure</b><code>git clone <span data-repo-text="">https://github.com/&lt;owner&gt;/autolog</span>.git &amp;&amp; cd autolog<br />cp .env.example .env</code></li>
-        <li><b data-i18n="install.s2">Start it</b><code>docker compose up -d --build</code></li>
-        <li><b data-i18n="install.s3">Add HTTPS and open it on your phone</b><span data-i18n="install.s3d">With Tailscale, Caddy or Cloudflare Tunnel. Then "Add to Home Screen".</span></li>
-      </ol>
-      <div class="ctas center">
-        <a class="btn primary" data-repo="/blob/main/docs/en/self-hosting.md" data-repo-es="/blob/main/docs/es/self-hosting.md" href="#" data-i18n="install.self">Own server guide</a>
-        <a class="btn ghost" data-repo="/blob/main/docs/en/cloud.md" data-repo-es="/blob/main/docs/es/cloud.md" href="#" data-i18n="install.cloud">Cloud guide</a>
+      <h2 data-i18n="install.title">Three ways to start: pick yours</h2>
+      <p class="sub" data-i18n="install.lead">You don't need to be technical. Start on your phone in seconds and, if you ever want to, move to your own space later.</p>
+      <div class="ways">
+        <article class="way main">
+          <p class="way-tag" data-i18n="way1.tag">Easiest</p>
+          <h3 data-i18n="way1.t">On your phone, right now</h3>
+          <p data-i18n="way1.d">Open AutoLog and tap "Add to Home Screen". That's all: your data stays only on your phone, with no account and no sign-up.</p>
+          <a class="btn primary" href="app/" data-i18n="way1.cta">Open AutoLog</a>
+          <small data-i18n="way1.n">One phone · no push reminders · make a backup now and then.</small>
+        </article>
+        <article class="way">
+          <p class="way-tag" data-i18n="way2.tag">Several phones</p>
+          <h3 data-i18n="way2.t">Your own copy online, in one click</h3>
+          <p data-i18n="way2.d">To use it from several phones or share it with your family: create your own copy in the cloud with a button. No commands to type.</p>
+          <a class="btn ghost" data-repo="/blob/main/docs/en/one-click.md" data-repo-es="/blob/main/docs/es/one-click.md" href="#" data-i18n="way2.cta">Step-by-step guide</a>
+          <small data-i18n="way2.n">Your data stays in your own account, not ours.</small>
+        </article>
+        <article class="way">
+          <p class="way-tag" data-i18n="way3.tag">Advanced</p>
+          <h3 data-i18n="way3.t">On your own server</h3>
+          <p data-i18n="way3.d">A home server, NAS or Raspberry Pi with Docker. Full control, photos, push reminders and several people.</p>
+          <a class="btn ghost" data-repo="/blob/main/docs/en/self-hosting.md" data-repo-es="/blob/main/docs/es/self-hosting.md" href="#" data-i18n="install.self">Own server guide</a>
+          <small data-i18n="way3.n">Needs some technical knowledge.</small>
+        </article>
       </div>
+      <details class="adv">
+        <summary data-i18n="adv.summary">Show the commands for your own server</summary>
+        <ol class="steps">
+          <li><b data-i18n="install.s1">Download and configure</b><code>git clone <span data-repo-text="">https://github.com/&lt;owner&gt;/autolog</span>.git &amp;&amp; cd autolog<br />cp .env.example .env</code></li>
+          <li><b data-i18n="install.s2">Start it</b><code>docker compose up -d --build</code></li>
+          <li><b data-i18n="install.s3">Add HTTPS and open it on your phone</b><span data-i18n="install.s3d">With Tailscale, Caddy or Cloudflare Tunnel. Then "Add to Home Screen".</span></li>
+        </ol>
+        <div class="ctas center">
+          <a class="btn ghost" data-repo="/blob/main/docs/en/cloud.md" data-repo-es="/blob/main/docs/es/cloud.md" href="#" data-i18n="install.cloud">Cloud guide</a>
+        </div>
+      </details>
     </section>
 
     <!-- ================= open source + support -->
@@ -137,8 +162,8 @@
 
   <!-- Mobile only: appears after the hero so the next step is always one thumb-tap away -->
   <div class="sticky-cta" id="sticky-cta" aria-hidden="true">
-    <a class="btn primary" href="demo/" tabindex="-1" data-i18n="cta.demo">Try the demo</a>
-    <a class="btn ghost" href="#install" tabindex="-1" data-i18n="hero.install">Install yours</a>
+    <a class="btn primary" href="app/" tabindex="-1" data-i18n="cta.start">Start now</a>
+    <a class="btn ghost" href="demo/" tabindex="-1" data-i18n="cta.demo">Try the demo</a>
   </div>
 
   <script src="landing.js"></script>

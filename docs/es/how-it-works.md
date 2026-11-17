@@ -16,6 +16,10 @@ Móvil (PWA) ──HTTPS──▶ autolog (Node + Hono, puerto 8791) ──▶ P
   los genera el móvil, así que reenviar un cambio no lo duplica.
 - **Servidor** (`server/`): Node 22+ y Hono. Sirve la API `/v1` y la web compilada en un solo contenedor. Las tablas
   (`autolog_*`) se crean solas al arrancar.
+- **Modo solo móvil** (sin servidor): la misma web compilada con `vite build --mode phone` (`npm run build:app`,
+  publicada en `/app/`). `LOCAL` en `web/src/store.js` desactiva todo lo que necesita servidor (clave, sincronización,
+  adjuntos, push, personas, calendario); los datos se quedan en el `localStorage` del móvil. Avisa de hacer una copia
+  pasado un mes (`lastBackup` / `since`). Ver [phone-only.md](phone-only.md).
 
 ## Idiomas
 
@@ -45,7 +49,8 @@ En **⚙ Ajustes → Tus datos**:
   copia»): el servidor la **fusiona** (`POST /v1/restore`): añade lo que falta y nunca cambia ni borra lo que ya tienes,
   así que restaurar dos veces no pasa nada. Tamaño máximo `RESTORE_MAX_MB` (2048 por defecto). Código:
   `server/src/backup.js`.
-- **Copia sin fotos (JSON):** los mismos datos sin adjuntos; funciona sin conexión.
+- **Copia sin fotos (JSON):** los mismos datos sin adjuntos; funciona sin conexión. Es la única copia del
+  [modo solo móvil](phone-only.md), e importarla en un servidor te lleva allí.
 - **CSV de repostajes / gastos** para Excel o Google Sheets, siempre en km, litros y la moneda de la instalación:
   - repostajes: `vehicle, date, km, liters, total, full_tank, station, note`
   - gastos: `vehicle, date, km, category, title, amount, note`
@@ -224,9 +229,10 @@ lo pide. Avisa si algo es difícil de usar con lector de pantalla o teclado.
 datos de verdad guardados en el móvil. Sirve para probar la app y para hacer capturas. *Salir* la borra.
 
 La **landing page** (`site/`) incluye una **demo en vivo**: un build «solo demo» de la app (`vite build --mode demo`)
-que siempre está en modo demo, no tiene service worker y no se puede instalar. Se construyen las dos en `site/dist/`
-con `cd web && npm run build:site`; `.github/workflows/pages.yml` las publica en GitHub Pages (`/` la landing, `/demo/`
-la app). La URL del repositorio de todos los enlaces de la landing es la constante `REPO` de `site/landing.js`. La demo
+que siempre está en modo demo, no tiene service worker y no se puede instalar. El mismo proceso genera además la **app
+solo móvil sin servidor** (`--mode phone`, instalable, con rutas relativas y su propio manifiesto `site/app.webmanifest`).
+Se construyen todas en `site/dist/` con `cd web && npm run build:site`; `.github/workflows/pages.yml` las publica en
+GitHub Pages (`/` la landing, `/demo/` la demo, `/app/` la app solo móvil). La URL del repositorio de todos los enlaces de la landing es la constante `REPO` de `site/landing.js`. La demo
 acepta `?lang=es|en`.
 
 ## API

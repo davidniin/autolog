@@ -2,11 +2,14 @@
 
 [English](../en/cloud.md) · **Español**
 
+> **Para quién:** quien quiere montar AutoLog en una plataforma en la nube (Fly.io, Railway, Cloud Run, Kubernetes…) y se
+> maneja con contenedores y variables de entorno.
+> **Nivel:** 🔴 técnico. **Tiempo:** 30+ minutos.
+> **Otras opciones:** sin servidor, solo en el móvil → [solo móvil](phone-only.md) · un botón, sin comandos (Render) →
+> [un clic](one-click.md) · un VPS o una Raspberry Pi → [tu propio servidor](self-hosting.md).
+
 AutoLog es un solo contenedor Docker más una base de datos PostgreSQL, así que funciona en casi cualquier nube. Esta
 guía dice qué tiene que ofrecer la plataforma y qué configurar; para los clics, sigue la documentación de tu proveedor.
-
-Si tu proveedor te da una máquina virtual normal (VPS), es más sencillo seguir [self-hosting.md](self-hosting.md) en
-ella. En **Render** hay un botón de un clic, y en **Coolify** una plantilla lista: [one-click.md](one-click.md).
 
 ## Lista de requisitos de la plataforma
 
@@ -43,10 +46,12 @@ El Dockerfile ya define `STATIC_DIR` y `FILES_DIR=/data/files`. **Nunca** pongas
 
 ## Pasos (en general)
 
-1. Haz un **fork** de este repositorio (o usa la imagen de `ghcr.io/davidniin/autolog` si los mantenedores la publican).
+1. **Elige de dónde sale la app.** Lo más sencillo es la imagen ya construida `ghcr.io/davidniin/autolog:0.5` (para
+   actualizar, cambia ese número por el de la última versión de [Releases](https://github.com/davidniin/autolog/releases)).
+   O haz un **fork** de este repositorio y despliega con el `Dockerfile`.
 2. **Crea la base de datos**: un PostgreSQL gestionado, o un contenedor de PostgreSQL con su propio volumen. Copia la
    URL de conexión. Las gestionadas suelen necesitar `?sslmode=require` al final.
-3. **Crea la app** desde tu fork con el `Dockerfile`. Añade las variables de arriba, un volumen en `/data` y el health
+3. **Crea la app** con la imagen (o desde tu fork con el `Dockerfile`). Añade las variables de arriba, un volumen en `/data` y el health
    check.
 4. **Despliega** y abre `https://<tu-app>/v1/health`: tiene que decir `"db":true,"auth":true`.
 5. **Instálala en el móvil**: abre una vez `https://<tu-app>/?token=<AUTOLOG_TOKEN>` y luego *Instalar aplicación*

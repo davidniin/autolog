@@ -7,7 +7,7 @@ import { toDisplay } from './units.js';
 import { today, numInput, fmt } from './calc.js';
 import { t } from './i18n/index.js';
 import { validate, sanitizeNum } from './validate.js';
-import { delFile } from './store.js';
+import { delFile, LOCAL } from './store.js';
 import Attachments from './Attachments.vue';
 import { useDialog } from './dialog.js';
 import ReceiptScan from './ReceiptScan.vue';
@@ -187,7 +187,10 @@ function remove() {
           <small v-if="errOf(f.k)" :id="'e-' + f.k" class="field-err" role="alert">{{ errOf(f.k) }}</small>
         </div>
       </template>
-      <template v-if="form.files">
+      <template v-if="form.files && LOCAL">
+        <p class="form-note full">{{ t('f.attachLocal') }}</p>
+      </template>
+      <template v-else-if="form.files">
         <Attachments
           v-if="!(isNew && kind === 'vehicles')"
           :vehicle-id="kind === 'vehicles' ? m.id : m.vehicle_id" :kind="kind" :parent-id="m.id"

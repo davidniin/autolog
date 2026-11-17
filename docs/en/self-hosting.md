@@ -2,13 +2,19 @@
 
 **English** · [Español](../es/self-hosting.md)
 
-Any machine that runs Docker works: a home server, a NAS, a Raspberry Pi 4/5 or a VPS from any provider.
-For a cloud platform without a shell (PaaS), see [cloud.md](cloud.md). Using CasaOS, Umbrel or Coolify? There are
-ready-made templates: [one-click.md](one-click.md).
+> **Who it's for:** anyone with a Raspberry Pi, a NAS, a PC or a VPS, or who wants AutoLog on their own domain, and
+> doesn't mind using a terminal.
+> **Level:** 🟠 some technical knowledge. **Time:** 20–30 minutes.
+> **Other options:** no server, phone only → [phone only](phone-only.md) · no terminal → [one-click](one-click.md) ·
+> a cloud platform → [cloud](cloud.md).
+
+Any machine that runs Docker works: a home server, a NAS, a Raspberry Pi or a VPS from any provider.
 
 ## What you need
 
 - Docker with the Compose plugin (`docker compose version`).
+- **Raspberry Pi:** a Pi 4 or 5 running a **64-bit** system (Raspberry Pi OS 64-bit; the image exists for `amd64` and
+  `arm64`, not 32-bit). Install Docker with `curl -fsSL https://get.docker.com | sh`.
 - About 300 MB of RAM and some disk for attachments.
 - **HTTPS** for the phone: installing the app, push notifications and the scanner need a secure connection. Options
   are in step 3.

@@ -8,6 +8,8 @@ const here = dirname(fileURLToPath(import.meta.url));
 const out = join(here, 'dist');
 await mkdir(out, { recursive: true });
 for (const f of ['index.html', 'landing.css', 'landing.js']) await cp(join(here, f), join(out, f));
+// The no-server app lives in /app/: its own manifest (relative paths, so it installs from a sub-folder)
+await cp(join(here, 'app.webmanifest'), join(out, 'app', 'manifest.webmanifest'));
 await cp(join(here, 'sample-invoice.png'), join(out, 'demo', 'sample-invoice.png')); // made-up invoice for the demo's scanner
 await cp(join(here, 'fonts'), join(out, 'fonts'), { recursive: true });
 await cp(join(here, '..', 'docs', 'screenshots'), join(out, 'screenshots'), { recursive: true });

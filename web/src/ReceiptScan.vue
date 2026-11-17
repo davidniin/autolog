@@ -5,7 +5,7 @@
 import { ref, onMounted } from 'vue';
 import { OCRS, readImage, modelReady } from './ocr.js';
 import { parseReceipt } from './receipt.js';
-import { upload } from './store.js';
+import { upload, LOCAL } from './store.js';
 import { UP } from './units.js';
 import { t } from './i18n/index.js';
 
@@ -33,6 +33,7 @@ onMounted(async () => {
 });
 
 async function attach(file) {
+  if (LOCAL) return; // sin servidor no se guardan las fotos: solo se leen
   attached.value = t('scan.saving');
   try {
     const rec = await upload(file, { vehicle_id: props.vehicleId, parent_kind: props.kind, parent_id: props.parentId });
