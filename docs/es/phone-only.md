@@ -2,15 +2,20 @@
 
 [English](../en/phone-only.md) · **Español**
 
-La forma más fácil de usar AutoLog: abre **https://davidniin.github.io/autolog/app/** en el móvil. Sin cuenta, sin
-registrarte y sin montar ningún servidor. Tus datos se guardan en el propio almacenamiento del móvil y no se envían a ningún sitio.
+> **Para quién:** cualquiera. Es la forma más fácil: sin cuenta, sin registrarte y sin montar ningún servidor.
+> **Nivel:** 🟢 ninguno. **Tiempo:** 1 minuto. **Qué necesitas:** un móvil con Chrome (Android) o Safari (iPhone).
+> **Límite:** los datos están solo en ese móvil (ver [qué no hace](#qué-hace-y-qué-no)). Para varios móviles o tu familia,
+> mira [un clic](one-click.md) o [tu propio servidor](self-hosting.md).
 
-## Ponla en marcha (30 segundos)
+## Empieza en 3 pasos
 
-- **Android (Chrome):** abre el enlace y en el menú **⋮ → Instalar aplicación** (o *Añadir a pantalla de inicio*).
-- **iPhone (Safari):** abre el enlace y pulsa **Compartir ⬆︎ → Añadir a pantalla de inicio**.
+1. **Abre [davidniin.github.io/autolog/app](https://davidniin.github.io/autolog/app/) en el móvil.**
+2. **Añádela a la pantalla de inicio:**
+   - **Android (Chrome):** menú **⋮ → Instalar aplicación** (o *Añadir a pantalla de inicio*).
+   - **iPhone (Safari):** botón **Compartir ⬆︎ → Añadir a pantalla de inicio**.
+3. **Ábrela desde el icono nuevo**, crea tu vehículo y apunta tu primer repostaje. Funciona sin cobertura.
 
-Abre AutoLog desde el icono nuevo. Funciona sin cobertura.
+Tus datos se guardan en el propio móvil y no se envían a ningún sitio.
 
 ## Qué hace y qué no
 
@@ -24,6 +29,9 @@ Abre AutoLog desde el icono nuevo. Funciona sin cobertura.
 | Varias personas, cada una con su clave | ❌ | ✅ |
 | Avisos push y calendario de avisos | ❌ | ✅ |
 | Fotos y PDF adjuntos a los gastos | ❌ (el escáner sí las lee) | ✅ |
+
+**¿Por qué no?** Compartir entre móviles o personas y los avisos push necesitan un servidor que los reparta, así que no
+son posibles solo en el móvil. Las fotos adjuntas sí se podrían guardar en el propio móvil: está en la hoja de ruta.
 
 ## Cuida tus datos
 

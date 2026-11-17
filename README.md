@@ -18,6 +18,44 @@ Either way, your data is never on someone else's server.
   <img src="docs/screenshots/dark-summary.png" width="220" alt="Dark mode">
 </p>
 
+## Start in 3 steps (free, no server)
+
+1. **Open [AutoLog](https://davidniin.github.io/autolog/app/) on your phone.**
+2. **Add it to your home screen.** Android (Chrome): menu ⋮ → *Install app*. iPhone (Safari): Share ⬆︎ → *Add to Home Screen*.
+3. **Create your vehicle** and log your first fill-up. Done.
+
+No account, no sign-up and nothing to install on a computer. Your data stays **only on that phone**: make a backup now and
+then (AutoLog reminds you after a month). Limits and details: [phone-only guide](docs/en/phone-only.md).
+Just looking? Try the [live demo](https://davidniin.github.io/autolog/demo/) (made-up data, nothing is saved).
+
+## Want more? Pick a guide
+
+To use it on **several phones**, share it with your family, or have **photo attachments and push reminders**, you need
+your own copy online. Pick the one that fits you (easiest first):
+
+| | You are… | Guide |
+|---|---|---|
+| 🟢 | Not technical, you just want it online | **[One click with Render](docs/en/one-click.md#render)**: a button, then copy two things (paid plan) |
+| 🟡 | You have a home server with CasaOS or Umbrel, or use Coolify | **[One-click apps](docs/en/one-click.md)** |
+| 🟠 | You have a Raspberry Pi, a NAS or a PC, or want your own domain | **[Your own server](docs/en/self-hosting.md)** (Docker) |
+| 🔴 | You use a cloud platform (Fly.io, Railway, Cloud Run…) | **[Cloud](docs/en/cloud.md)** |
+
+[![Deploy to Render](https://render.com/images/deploy-to-render-button.svg)](https://render.com/deploy?repo=https://github.com/davidniin/autolog)
+
+You can start on the phone and move up later: export a backup in ⚙ Settings and import it on the new setup.
+
+<details>
+<summary>Quick start with Docker (for the technically inclined)</summary>
+
+```sh
+git clone https://github.com/davidniin/autolog.git && cd autolog
+cp .env.example .env          # set AUTOLOG_TOKEN (openssl rand -hex 24) and POSTGRES_PASSWORD
+docker compose up -d --build  # app on 127.0.0.1:8791 + its own PostgreSQL
+```
+
+Then put HTTPS in front of it (Tailscale, Caddy, Cloudflare Tunnel…): it is required to install it on the phone.
+</details>
+
 ## Features
 
 - **Fill-ups and charges** with real consumption (full-to-full): petrol, diesel, LPG, **electric and plug-in hybrid** (kWh).
@@ -42,52 +80,6 @@ Either way, your data is never on someone else's server.
 
 Attachments (photos and PDFs), push reminders, the calendar feed and sharing between phones or people need your own
 server; the [phone-only mode](docs/en/phone-only.md) leaves them out.
-
-## Start now (no server)
-
-**[Open AutoLog](https://davidniin.github.io/autolog/app/)** on your phone, then tap *Add to Home Screen* (Android:
-menu ⋮ → *Install app*; iPhone: Share ⬆︎ → *Add to Home Screen*). That's it: no account, no server, nothing to install.
-Your data is saved **only on that phone**, so make a backup now and then (AutoLog reminds you after a month).
-
-The limits (one phone, no photo attachments, no push reminders) and how to move to a server later are in
-[docs/en/phone-only.md](docs/en/phone-only.md).
-
-Just curious? **[Live demo](https://davidniin.github.io/autolog/demo/)** — the real app with made-up data. Nothing is
-saved and nothing is sent anywhere. Locally: run it (see [Development](#development)) and open
-`http://localhost:5173/?demo=1`.
-
-## Which way is for me?
-
-| I want… | Choose |
-|---|---|
-| To use it myself, on one phone, right now | **[Phone only](docs/en/phone-only.md)** (above) |
-| Several phones, my family, photos and push reminders — without typing commands | **[One click](docs/en/one-click.md)** |
-| Full control on my own server, NAS or Raspberry Pi | **[Own server](docs/en/self-hosting.md)** (Docker) |
-
-You can start on the phone and move up later: export a backup in ⚙ Settings and import it on the new setup.
-
-## Install your own
-
-For several phones or people, AutoLog is **self-hosted**: everyone runs their own copy. There is no central service and
-nobody else sees your data.
-
-| Where | Guide |
-|---|---|
-| Your own server / NAS / Raspberry Pi / VPS (Docker) | [docs/en/self-hosting.md](docs/en/self-hosting.md) |
-| Any cloud provider (container + PostgreSQL) | [docs/en/cloud.md](docs/en/cloud.md) |
-| **One click:** CasaOS, Umbrel, Coolify, Render | [docs/en/one-click.md](docs/en/one-click.md) |
-
-[![Deploy to Render](https://render.com/images/deploy-to-render-button.svg)](https://render.com/deploy?repo=https://github.com/davidniin/autolog)
-
-Quick start with Docker:
-
-```sh
-git clone https://github.com/davidniin/autolog.git && cd autolog
-cp .env.example .env          # set AUTOLOG_TOKEN (openssl rand -hex 24) and POSTGRES_PASSWORD
-docker compose up -d --build  # app on 127.0.0.1:8791 + its own PostgreSQL
-```
-
-Then put HTTPS in front of it (Tailscale, Caddy, Cloudflare Tunnel…) — required to install it on the phone.
 
 ## Privacy and security
 

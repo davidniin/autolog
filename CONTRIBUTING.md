@@ -62,6 +62,19 @@ The phone-only app alone: `npm run build:app`.
 - **Never include real personal data** in code, tests, fixtures or screenshots: no real plates, names, invoices or
   addresses. Use the demo mode for screenshots and made-up data in tests.
 
+## Publishing a version (maintainers)
+
+The deploy templates pin an exact image version, so a release touches several files. Change the number in all of them:
+
+- `web/package.json` and `server/package.json` (`version`, and the same in their `package-lock.json`), and `VERSION` in
+  `server/src/index.js`.
+- The image tag `ghcr.io/davidniin/autolog:X.Y` in `render.yaml`, `deploy/casaos/docker-compose.yml`,
+  `deploy/coolify/docker-compose.yml` and `deploy/umbrel/davidniin-autolog/docker-compose.yml`, and `version` in
+  `deploy/umbrel/davidniin-autolog/umbrel-app.yml`.
+- Then tag it: `git tag vX.Y.Z && git push origin vX.Y.Z`. `.github/workflows/release.yml` publishes the image
+  (`:X.Y.Z`, `:X.Y` and `:latest`). After the first release, make the package **public** in GitHub → Packages, or the
+  one-click templates can't download it.
+
 ## Commits
 
 Short, imperative summary (`Add CSV export`, `Fix km check for same-day fill-ups`). Reference the issue if there is one
@@ -135,6 +148,20 @@ app solo móvil: `npm run build:app`.
 4. Pasa `npm test` en `web/` y añade tu idioma a la comprobación de claves de `web/test/i18n.test.js`.
 - **Nunca pongas datos personales reales** en código, tests, datos de ejemplo o capturas: ni matrículas, ni nombres,
   ni facturas, ni direcciones reales. Usa el modo demo para las capturas y datos inventados en los tests.
+
+## Publicar una versión (mantenedores)
+
+Las plantillas de despliegue fijan una versión exacta de la imagen, así que una versión toca varios ficheros. Cambia el
+número en todos:
+
+- `web/package.json` y `server/package.json` (`version`, y lo mismo en sus `package-lock.json`), y `VERSION` en
+  `server/src/index.js`.
+- La etiqueta de la imagen `ghcr.io/davidniin/autolog:X.Y` en `render.yaml`, `deploy/casaos/docker-compose.yml`,
+  `deploy/coolify/docker-compose.yml` y `deploy/umbrel/davidniin-autolog/docker-compose.yml`, y `version` en
+  `deploy/umbrel/davidniin-autolog/umbrel-app.yml`.
+- Después crea la etiqueta: `git tag vX.Y.Z && git push origin vX.Y.Z`. `.github/workflows/release.yml` publica la imagen
+  (`:X.Y.Z`, `:X.Y` y `:latest`). Tras la primera versión, haz el paquete **público** en GitHub → Packages; si no, las
+  plantillas de un clic no pueden descargarlo.
 
 ## Commits
 

@@ -2,14 +2,14 @@
 
 **English** · [Español](../es/cloud.md)
 
-> **Just want to use AutoLog yourself, on one phone?** No cloud needed: open the [no-server app](phone-only.md).
-> This guide is technical; if you'd rather press a button, see [one-click](one-click.md).
+> **Who it's for:** anyone who wants to run AutoLog on a cloud platform (Fly.io, Railway, Cloud Run, Kubernetes…) and
+> is comfortable with containers and environment variables.
+> **Level:** 🔴 technical. **Time:** 30+ minutes.
+> **Other options:** no server, phone only → [phone only](phone-only.md) · a button, no commands (Render) →
+> [one-click](one-click.md) · a VPS or Raspberry Pi → [your own server](self-hosting.md).
 
 AutoLog is a single Docker container plus a PostgreSQL database, so it runs on almost any cloud. This guide lists
 what the platform must provide and the settings to use; follow your provider's own docs for the clicks.
-
-If your provider gives you a plain virtual machine (VPS), it's simpler to follow [self-hosting.md](self-hosting.md)
-on it. On **Render** there's a one-click button, and on **Coolify** a ready-made template: [one-click.md](one-click.md).
 
 ## Checklist: what your platform needs
 
@@ -46,10 +46,12 @@ The Dockerfile already sets `STATIC_DIR` and `FILES_DIR=/data/files`. **Never** 
 
 ## Steps (general)
 
-1. **Fork** this repository (or use the image from `ghcr.io/davidniin/autolog` if the maintainers publish one).
+1. **Choose where the app comes from.** The simplest is the prebuilt image `ghcr.io/davidniin/autolog:0.5` (to update,
+   change that number to the latest version in [Releases](https://github.com/davidniin/autolog/releases)). Or **fork**
+   this repository and deploy with the `Dockerfile`.
 2. **Create the database**: a managed PostgreSQL, or a PostgreSQL container with its own volume. Copy its connection
    URL. Managed databases usually need `?sslmode=require` at the end.
-3. **Create the app** from your fork using the `Dockerfile`. Add the variables above, a volume at `/data` and the
+3. **Create the app** from the image (or from your fork using the `Dockerfile`). Add the variables above, a volume at `/data` and the
    health check.
 4. **Deploy** and open `https://<your-app>/v1/health`: it should say `"db":true,"auth":true`.
 5. **Install it on the phone**: open `https://<your-app>/?token=<AUTOLOG_TOKEN>` once, then *Install app* (Android) or

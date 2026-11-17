@@ -2,15 +2,20 @@
 
 **English** · [Español](../es/phone-only.md)
 
-The easiest way to use AutoLog: open **https://davidniin.github.io/autolog/app/** on your phone. No account, no sign-up
-and nothing to install on a server. Your data is saved in the phone's own storage and never sent anywhere.
+> **Who it's for:** anyone. It's the easiest way: no account, no sign-up and no server to set up.
+> **Level:** 🟢 none. **Time:** 1 minute. **What you need:** a phone with Chrome (Android) or Safari (iPhone).
+> **Limit:** your data is only on that phone (see [what it can't do](#what-it-does-and-doesnt-do)). For several phones or
+> your family, see [one-click](one-click.md) or [your own server](self-hosting.md).
 
-## Set it up (30 seconds)
+## Start in 3 steps
 
-- **Android (Chrome):** open the link, then menu **⋮ → Install app** (or *Add to Home screen*).
-- **iPhone (Safari):** open the link, tap **Share ⬆︎ → Add to Home Screen**.
+1. **Open [davidniin.github.io/autolog/app](https://davidniin.github.io/autolog/app/) on your phone.**
+2. **Add it to your home screen:**
+   - **Android (Chrome):** menu **⋮ → Install app** (or *Add to Home screen*).
+   - **iPhone (Safari):** **Share ⬆︎ → Add to Home Screen**.
+3. **Open it from the new icon**, create your vehicle and log your first fill-up. It works offline.
 
-Open AutoLog from the new icon. It works offline.
+Your data is saved in the phone's own storage and never sent anywhere.
 
 ## What it does and doesn't do
 
@@ -24,6 +29,9 @@ Open AutoLog from the new icon. It works offline.
 | Several people with their own password | ❌ | ✅ |
 | Push reminders and the calendar feed | ❌ | ✅ |
 | Photos and PDFs attached to expenses | ❌ (the scanner still reads them) | ✅ |
+
+**Why not?** Sharing between phones or people and push reminders need a server to deliver them, so they are not possible
+on the phone alone. Attached photos could be stored on the phone itself: it is on the roadmap.
 
 ## Keep your data safe
 
