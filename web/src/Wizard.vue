@@ -4,7 +4,7 @@
 // También se puede restaurar una copia o ver la demo.
 import { ref, computed } from 'vue';
 import { t, L, LANGS, setLang } from './i18n/index.js';
-import { S, putSettings, DEMO, restoreBackup, pull } from './store.js';
+import { S, putSettings, DEMO, LOCAL, restoreBackup, pull } from './store.js';
 import { PRESETS, currencyList, defaultPrefs } from './units.js';
 import { planImport, planCounts, applyImport } from './dataio.js';
 
@@ -59,10 +59,11 @@ async function restore(ev) {
       <div class="chips wiz-langs" role="group" :aria-label="t('settings.language')">
         <button v-for="[code, name] in LANGS" :key="code" type="button" :lang="code" :class="{ on: L.lang === code }" :aria-pressed="L.lang === code" @click="setLang(code)">{{ name }}</button>
       </div>
+      <p v-if="LOCAL" class="hint">🔒 {{ t('wizard.localNote') }}</p>
       <button class="primary wiz-main" @click="next">{{ t('wizard.start') }}</button>
       <div class="wiz-alt">
         <label class="link">📥 {{ t('wizard.restore') }}<input type="file" accept=".zip,.json,application/zip,application/json" @change="restore" /></label>
-        <a v-if="!DEMO" class="link" href="/?demo=1">🧪 {{ t('wizard.demo') }}</a>
+        <a v-if="!DEMO && !LOCAL" class="link" href="/?demo=1">🧪 {{ t('wizard.demo') }}</a>
       </div>
       <p v-if="restoreMsg" class="hint">{{ restoreMsg }}</p>
     </template>

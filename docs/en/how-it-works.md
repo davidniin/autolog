@@ -17,6 +17,10 @@ Phone (PWA) ──HTTPS──▶ autolog (Node + Hono, port 8791) ──▶ Post
   is overwritten. Record ids are generated on the phone, so re-sending a change never duplicates it.
 - **Server** (`server/`): Node 22+ and Hono. Serves the `/v1` API and the built web app from one container. Tables
   (`autolog_*`) are created automatically on start.
+- **Phone-only mode** (no server): the same web app built with `vite build --mode phone` (`npm run build:app`,
+  published at `/app/`). `LOCAL` in `web/src/store.js` switches off everything that needs a server (sign-in, sync,
+  attachments, push, people, calendar feed); data stays in the phone's `localStorage`. It reminds you to make a
+  backup after a month (`lastBackup` / `since`). See [phone-only.md](phone-only.md).
 
 ## Languages
 
@@ -45,7 +49,8 @@ In **⚙ Settings → Your data**:
   (`GET /v1/backup`, streamed). Restore it from the same menu or from the first-run wizard ("I have a backup"):
   the server **merges** it (`POST /v1/restore`): it adds whatever is missing and never changes or deletes what you
   already have, so restoring twice is safe. Max size `RESTORE_MAX_MB` (default 2048). Code: `server/src/backup.js`.
-- **Backup without photos (JSON):** the same data without attachments; works offline.
+- **Backup without photos (JSON):** the same data without attachments; works offline. It is the only backup in the
+  [phone-only mode](phone-only.md), and importing it on a server moves you there.
 - **CSV of fill-ups / expenses** for Excel or Google Sheets, always in km, litres and the installation's currency:
   - fill-ups: `vehicle, date, km, liters, total, full_tank, station, note`
   - expenses: `vehicle, date, km, category, title, amount, note`
@@ -214,9 +219,10 @@ that is hard to use with a screen reader or keyboard.
 the real data stored on the phone. Useful to try the app and for screenshots. *Exit* clears it.
 
 The **landing page** (`site/`) embeds a **live demo**: a "demo only" build of the app (`vite build --mode demo`) that
-is always in demo mode, has no service worker and can't be installed. Build both into `site/dist/` with
-`cd web && npm run build:site`; `.github/workflows/pages.yml` publishes them on GitHub Pages (`/` landing, `/demo/`
-app). The repository URL used by every link of the landing is the `REPO` constant in `site/landing.js`. The demo
+is always in demo mode, has no service worker and can't be installed. The same build also produces the **no-server
+phone app** (`--mode phone`, installable, with relative paths and its own manifest `site/app.webmanifest`). Build all
+of them into `site/dist/` with `cd web && npm run build:site`; `.github/workflows/pages.yml` publishes them on GitHub
+Pages (`/` landing, `/demo/` demo, `/app/` phone app). The repository URL used by every link of the landing is the `REPO` constant in `site/landing.js`. The demo
 accepts `?lang=es|en`.
 
 ## API

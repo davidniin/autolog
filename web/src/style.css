@@ -221,6 +221,7 @@ h3, h2.sec { margin: 24px 2px 10px; font-size: 13px; font-weight: 700; text-tran
 
 /* ---- ficha de edición y clave */
 .sheet-bg, .gate { position: fixed; inset: 0; z-index: 10; background: rgba(8, 12, 24, 0.5); display: flex; align-items: flex-end; justify-content: center; }
+.sheet-bg { background: rgba(8, 12, 24, calc(0.5 * var(--dim, 1))); }
 .gate { align-items: center; padding: 16px; background: var(--bg); }
 .sheet, .gate form {
   width: 100%; max-width: 560px; display: grid; gap: 14px 12px;
@@ -387,8 +388,8 @@ p.err.full { padding: 10px 12px; border-radius: 12px; background: var(--danger-s
 .gear { display: grid; place-items: center; width: 34px; height: 34px; border-radius: 50%; background: var(--card); border: 1px solid var(--line); color: var(--muted); font-size: 17px; line-height: 1; transition: transform 0.3s var(--ease); }
 .gear:active { transform: rotate(60deg); }
 .sheet .field .form-note { display: block; margin-top: 2px; }
-.settings-units { gap: 8px; }
-.lbl.sub { margin-top: 6px; font-size: 12px; text-transform: uppercase; letter-spacing: 0.05em; }
+.sheet .settings-sub { margin: 8px 0 -4px; font-size: 13px; text-transform: uppercase; letter-spacing: 0.05em; color: var(--muted); }
+.sheet .form-note.full { margin: -2px 0 4px; }
 .inp select { flex: 1; width: 100%; min-width: 0; text-overflow: ellipsis; min-height: 47px; padding: 0 12px; border: 0; background: transparent; color: var(--text); font-size: 16px; outline: none; }
 /* ---- tus datos (exportar / importar) */
 .io-btns { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
@@ -515,3 +516,11 @@ p.err.full { padding: 10px 12px; border-radius: 12px; background: var(--danger-s
 .people-add { display: flex; gap: 8px; align-items: center; }
 .people-add .inp { flex: 1; min-width: 0; min-height: 44px; }
 .people-add .inp input { min-height: 41px; }
+
+/* ---- ayuda dentro de Ajustes (preguntas que se despliegan) */
+.help details { border-bottom: 1px solid var(--line); }
+.help summary { display: flex; align-items: center; min-height: 48px; padding: 4px 0; font-size: 15px; font-weight: 600; color: var(--text); cursor: pointer; }
+.help details p { margin: 0 0 10px; font-size: 14px; line-height: 1.5; color: var(--muted); }
+.help details a { display: inline-block; margin: 0 0 12px; font-size: 14px; font-weight: 600; }
+.help summary::after { content: "＋"; margin-left: auto; padding-left: 12px; color: var(--muted); font-weight: 400; }
+.help details[open] > summary::after { content: "－"; }

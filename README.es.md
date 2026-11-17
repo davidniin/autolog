@@ -7,8 +7,9 @@
 [![Invítame a un café](https://img.shields.io/badge/inv%C3%ADtame%20a%20un%20caf%C3%A9-☕-ffdd00)](https://buymeacoffee.com/davidniin)
 
 Apunta los repostajes, gastos y avisos de tu coche o tu moto, y mira cuánto consume y cuánto te cuesta de verdad.
-AutoLog es una web que se instala en el móvil (PWA) y que **alojas tú**: tus datos están en tu servidor, no en el de
-otro.
+AutoLog es una app gratuita que abres en el navegador del móvil y añades a la pantalla de inicio. Úsala **ahora mismo,
+sin registrarte y sin servidor** (tus datos se quedan en tu móvil), o monta tu propia copia para compartirla entre
+móviles y personas. De cualquier forma, tus datos nunca están en el servidor de otro.
 
 <p align="center">
   <img src="docs/screenshots/light-summary.png" width="220" alt="Resumen: ficha del vehículo y avisos">
@@ -40,16 +41,37 @@ otro.
 - **Español e inglés** (según el idioma del móvil; se cambia en ⚙ Ajustes), modo claro y oscuro, instalable en
   Android y iPhone, varios vehículos.
 
-## Pruébala
+Los adjuntos (fotos y PDF), los avisos push, el calendario y compartir entre móviles o personas necesitan tu propio
+servidor; el [modo solo móvil](docs/es/phone-only.md) los deja fuera.
 
-**[Demo en vivo](https://davidniin.github.io/autolog/)**: la app de verdad con datos inventados, en tu navegador. No se
-guarda nada ni se envía nada.
+## Empieza ya (sin servidor)
 
-En local: arráncala (ver [Desarrollo](#desarrollo)) y abre `http://localhost:5173/?demo=1`.
+**[Abre AutoLog](https://davidniin.github.io/autolog/app/)** en el móvil y pulsa *Añadir a pantalla de inicio* (Android:
+menú ⋮ → *Instalar aplicación*; iPhone: Compartir ⬆︎ → *Añadir a pantalla de inicio*). Ya está: sin cuenta, sin servidor
+y sin instalar nada. Tus datos se guardan **solo en ese móvil**, así que haz una copia de vez en cuando (AutoLog te lo
+recuerda pasado un mes).
+
+Los límites (un solo móvil, sin fotos adjuntas, sin avisos push) y cómo pasar a un servidor más adelante están en
+[docs/es/phone-only.md](docs/es/phone-only.md).
+
+¿Solo quieres verla? **[Demo en vivo](https://davidniin.github.io/autolog/demo/)**: la app de verdad con datos
+inventados. No se guarda nada ni se envía nada. En local: arráncala (ver [Desarrollo](#desarrollo)) y abre
+`http://localhost:5173/?demo=1`.
+
+## ¿Cuál me conviene?
+
+| Quiero… | Elige |
+|---|---|
+| Usarla yo, en un móvil, ahora mismo | **[Solo móvil](docs/es/phone-only.md)** (arriba) |
+| Varios móviles, mi familia, fotos y avisos push, sin escribir comandos | **[Un clic](docs/es/one-click.md)** |
+| Control total en mi servidor, NAS o Raspberry Pi | **[Servidor propio](docs/es/self-hosting.md)** (Docker) |
+
+Puedes empezar en el móvil y subir de nivel después: exporta una copia en ⚙ Ajustes e impórtala en la nueva instalación.
 
 ## Instala la tuya
 
-AutoLog es **autoalojada**: cada persona monta su propia copia. No hay un servicio central y nadie más ve tus datos.
+Para varios móviles o personas, AutoLog es **autoalojada**: cada persona monta su propia copia. No hay un servicio
+central y nadie más ve tus datos.
 
 | Dónde | Guía |
 |---|---|
@@ -71,11 +93,13 @@ Después ponle HTTPS delante (Tailscale, Caddy, Cloudflare Tunnel…): hace falt
 
 ## Privacidad y seguridad
 
-- Tus datos se quedan en **tu** PostgreSQL y en **tu** disco. La app no tiene analítica ni rastreo.
-- Las únicas peticiones fuera de tu servidor son la descarga, una sola vez, del modelo del OCR (Hugging Face) y de su
-  motor (jsdelivr), y las notificaciones push (a través de los servicios de Google, Apple o Mozilla, como cualquier web).
-- Para entrar hace falta una clave (`AUTOLOG_TOKEN`, mínimo 16 caracteres); sin ella el servidor no arranca. Los
-  intentos fallidos repetidos se bloquean, y se envían cabeceras de seguridad (CSP…).
+- Solo móvil: tus datos se quedan en el almacenamiento del propio móvil y no se envían a ningún sitio. Con tu servidor:
+  en **tu** PostgreSQL y en **tu** disco. En ambos casos la app no tiene analítica ni rastreo.
+- Las únicas peticiones externas son la descarga, una sola vez, del modelo del OCR (Hugging Face) y de su motor
+  (jsdelivr) y, en tu servidor, las notificaciones push (a través de los servicios de Google, Apple o Mozilla, como
+  cualquier web).
+- En tu servidor, para entrar hace falta una clave (`AUTOLOG_TOKEN`, mínimo 16 caracteres); sin ella el servidor no
+  arranca. Los intentos fallidos repetidos se bloquean, y se envían cabeceras de seguridad (CSP…).
 - ¿Has encontrado una vulnerabilidad? Avisa en privado: ver [SECURITY.md](SECURITY.md).
 
 ## Cómo funciona
@@ -89,6 +113,8 @@ Móvil (PWA) ──HTTPS──▶ autolog (Node + Hono, puerto 8791) ──▶ P
 ```
 
 - `web/` — PWA con Vue 3 + Vite. `server/` — Node 22+ y Hono: la API `/v1` y la web compilada, en un solo contenedor.
+- La app solo móvil es el mismo código de `web/` compilado sin servidor (`npm run build:app`): todo queda en el
+  `localStorage` del móvil.
 
 ## Desarrollo
 
@@ -96,7 +122,8 @@ Móvil (PWA) ──HTTPS──▶ autolog (Node + Hono, puerto 8791) ──▶ P
 cd server && npm install && npm run dev   # :8791 — necesita PostgreSQL (DATABASE_URL en server/.env)
 cd web && npm install && npm run dev      # :5173, reenvía /v1 a :8791
 npm test                                  # en web/ y en server/
-cd web && npm run build:site              # landing page + demo en vivo → site/dist/
+cd web && npm run build:app               # la app solo móvil, sin servidor → site/dist/app/
+cd web && npm run build:site              # landing + demo en vivo + app solo móvil → site/dist/
 ```
 
 En desarrollo puedes poner `ALLOW_NO_AUTH=1` en `server/.env`.
@@ -113,6 +140,7 @@ Las ideas, los avisos de fallos y los pull requests son bienvenidos, en español
 3. Integración con Home Assistant.
 4. Publicar las plantillas de un clic en las tiendas oficiales de CasaOS, Umbrel y Coolify.
 5. Documentación de la API (OpenAPI).
+6. Fotos y adjuntos en el modo solo móvil.
 
 ## Apoya el proyecto
 

@@ -119,6 +119,20 @@ h1, h2, h3 { font-family: var(--display); letter-spacing: -0.025em; line-height:
 }
 @media (max-width: 520px) { .grid { grid-template-columns: 1fr; } .shots { justify-content: flex-start; } .shots img { width: 180px; } }
 
+/* three ways to start */
+.ways { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; align-items: stretch; margin-top: 34px; }
+.way { position: relative; display: grid; align-content: start; justify-items: start; gap: 12px; padding: 26px; border-radius: var(--r); background: var(--card); border: 1px solid var(--line); }
+.way.main { border: 2px solid var(--accent); box-shadow: var(--shadow); }
+.way h3 { margin: 0; font-size: 22px; }
+.way p { margin: 0; color: var(--muted); font-size: 16px; }
+.way .way-tag { margin: 0; padding: 3px 10px; border-radius: 999px; background: var(--accent-soft); color: var(--accent); font-size: 13px; font-weight: 800; }
+.way .btn { margin-top: 6px; }
+.way small { color: var(--muted); font-size: 13.5px; }
+.adv { margin-top: 28px; border-top: 1px solid var(--line); padding-top: 10px; }
+.adv summary { padding: 14px 0; color: var(--accent); font-weight: 700; cursor: pointer; }
+.adv .steps { margin: 18px 0 8px; }
+@media (max-width: 900px) { .ways { grid-template-columns: 1fr; } .way .btn { width: 100%; } }
+
 /* ---- mobile polish ---- */
 html { -webkit-text-size-adjust: 100%; }
 a, button, summary { touch-action: manipulation; -webkit-tap-highlight-color: transparent; }

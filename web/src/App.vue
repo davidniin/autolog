@@ -1,10 +1,11 @@
 <script setup>
 // AutoLog: selector de vehículo arriba, pestañas abajo (Resumen, Repostajes, Gastos, Costes).
 import { ref, computed, onMounted } from 'vue';
-import { S, put, del, newId, setCurrent, setToken, DEMO, DEMO_ONLY, exitDemo } from './store.js';
+import { S, put, del, newId, setCurrent, setToken, DEMO, DEMO_ONLY, LOCAL, exitDemo, markBackup } from './store.js';
 import { FORMS, optEmoji } from './forms.js';
 import { energyStats, energiesOf, currentKm, nextDue } from './calc.js';
 import { I, install, hideIosTip } from './install.js';
+import { backupJSON, download, fileName } from './dataio.js';
 import { t } from './i18n/index.js';
 import { buzz } from './dialog.js';
 import { stage } from './undo.js';
@@ -45,9 +46,21 @@ const energies = computed(() => energiesOf(veh.value)); // ['fuel'], ['kwh'] o l
 const tabLabel = (id) => (id === 'fuel' && energies.value[0] === 'kwh' && energies.value.length === 1 ? t('app.tabs.charges') : t('app.tabs.' + id));
 const km = computed(() => (veh.value ? currentKm(veh.value, fills.value, exps.value) : 0));
 
-const status = computed(() => DEMO ? { cls: 'demo', txt: t('app.status.demo') } :
+const status = computed(() => DEMO ? { cls: 'demo', txt: t('app.status.demo') } : LOCAL ? { cls: '', txt: t('local.status') } :
   S.queue.length ? { cls: S.online ? 'busy' : 'off', txt: S.online ? t('app.status.saving') : t('app.status.pending', { n: S.queue.length }) }
     : { cls: S.online ? '' : 'off', txt: S.online ? t('app.status.synced') : t('app.status.offline') });
+
+// Sin servidor: los datos solo están en este móvil; pasado un mes sin copia se avisa (con un botón para hacerla)
+const backupDue = computed(() => {
+  if (!LOCAL || !S.vehicles.length) return false;
+  const base = Date.parse(S.lastBackup || S.since);
+  return Number.isFinite(base) && Date.now() - base > 30 * 864e5;
+});
+function backupNow() {
+  download(fileName('backup', 'json'), backupJSON(), 'application/json');
+  markBackup();
+  notify(t('local.backupDone'));
+}
 
 // Textos con negrita (vienen de los diccionarios, no del usuario)
 const iosTip = computed(() => t('app.iosTip', { icon: '<span class="ios-share" aria-label="' + t('app.iosShare') + '">⬆︎</span>' }));
@@ -194,6 +207,11 @@ function login() {
     <div v-if="S.conflicts.length" class="conflict-bar" role="alert">
       <span>⚠ {{ t('conflict.bar', { n: S.conflicts.length }) }}</span>
       <button class="link" @click="conflicts = true">{{ t('conflict.review') }}</button>
+    </div>
+
+    <div v-if="backupDue" class="demo-bar backup-bar">
+      <span>💾 {{ t('local.banner') }}</span>
+      <button class="link" @click="backupNow">{{ t('local.backupNow') }}</button>
     </div>
 
     <div v-if="DEMO" class="demo-bar">

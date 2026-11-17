@@ -1,13 +1,15 @@
 // Service worker mínimo: la app abre aunque no haya cobertura (p. ej. en una gasolinera). La API (/v1) nunca se cachea aquí:
 // los datos sin red los guarda la propia app en localStorage (src/store.js).
-const CACHE = 'autolog-v4';
+const CACHE = 'autolog-v5';
+// Raíz de la app: '/' con servidor propio, '/autolog/app/' en la versión sin servidor de la web (así el mismo SW vale para las dos)
+const BASE = self.registration.scope;
 // Motor del lector de facturas (onnxruntime-web, versión fija): se guarda para poder escanear sin cobertura.
 // Los modelos del lector los guarda la propia librería en su caché (runonweb-ppocrv6), que aquí no se toca.
 const ORT = 'https://cdn.jsdelivr.net/npm/onnxruntime-web@';
 const ORT_CACHE = 'autolog-ort';
 
 self.addEventListener('install', (e) => {
-  e.waitUntil(caches.open(CACHE).then((c) => c.addAll(['/', '/manifest.webmanifest', '/icon-192.png'])).then(() => self.skipWaiting()));
+  e.waitUntil(caches.open(CACHE).then((c) => c.addAll([BASE, BASE + 'manifest.webmanifest', BASE + 'icon-192.png'])).then(() => self.skipWaiting()));
 });
 self.addEventListener('activate', (e) => {
   // Solo se borran las cachés antiguas de la app (autolog-vN), nunca las de los modelos
@@ -29,8 +31,8 @@ self.addEventListener('fetch', (e) => {
   // Páginas: red primero (para tener siempre la última versión), caché si no hay red
   if (e.request.mode === 'navigate') {
     e.respondWith(fetch(e.request)
-      .then((r) => { const copy = r.clone(); caches.open(CACHE).then((c) => c.put('/', copy)); return r; })
-      .catch(() => caches.match('/')));
+      .then((r) => { const copy = r.clone(); caches.open(CACHE).then((c) => c.put(BASE, copy)); return r; })
+      .catch(() => caches.match(BASE)));
     return;
   }
   // assets/ (nombre con hash), iconos: caché primero
@@ -47,16 +49,16 @@ self.addEventListener('push', (e) => {
   e.waitUntil(self.registration.showNotification(d.title || 'AutoLog', {
     body: d.body || '',
     tag: d.tag, // el mismo aviso sustituye al anterior en vez de acumularse
-    icon: '/icon-192.png',
-    badge: '/icon-192.png',
-    data: { url: d.url || '/' },
+    icon: BASE + 'icon-192.png',
+    badge: BASE + 'icon-192.png',
+    data: { url: d.url || BASE },
   }));
 });
 
 // Tocar la notificación abre la app (o la trae al frente si ya estaba abierta)
 self.addEventListener('notificationclick', (e) => {
   e.notification.close();
-  const url = (e.notification.data && e.notification.data.url) || '/';
+  const url = (e.notification.data && e.notification.data.url) || BASE;
   e.waitUntil(self.clients.matchAll({ type: 'window', includeUncontrolled: true }).then((list) => {
     const w = list.find((c) => new URL(c.url).origin === location.origin);
     return w ? w.focus() : self.clients.openWindow(url);

@@ -2,6 +2,9 @@
 
 [English](../en/cloud.md) · **Español**
 
+> **¿Solo quieres usar AutoLog tú, en un móvil?** No hace falta ninguna nube: abre [la app sin servidor](phone-only.md).
+> Esta guía es técnica; si prefieres un botón, mira [un clic](one-click.md).
+
 AutoLog es un solo contenedor Docker más una base de datos PostgreSQL, así que funciona en casi cualquier nube. Esta
 guía dice qué tiene que ofrecer la plataforma y qué configurar; para los clics, sigue la documentación de tu proveedor.
 

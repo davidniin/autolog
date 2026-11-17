@@ -13,10 +13,16 @@ const dropUnusedWasm = {
   },
 };
 
-// Build "solo demo" para la landing (npm run build:site): sin manifest, para que no se ofrezca instalar la demo
+// Build "solo demo" para la landing (npm run build:site): sin manifest, para que no se ofrezca instalar la demo.
+// Build "sin servidor" (npm run build:app, /app/ en la landing): se instala, y vive en una subcarpeta, así que
+// el manifest y los iconos se piden con ruta relativa.
 const demoHtml = (mode) => ({
   name: 'demo-html',
-  transformIndexHtml: (html) => (mode === 'demo' ? html.replace(/\s*<link rel="manifest"[^>]*>/, '') : html),
+  transformIndexHtml: (html) => {
+    if (mode === 'demo') return html.replace(/\s*<link rel="manifest"[^>]*>/, '');
+    if (mode === 'phone') return html.replace(/href="\/(manifest\.webmanifest|icon\.svg|apple-touch-icon\.png)"/g, 'href="./$1"');
+    return html;
+  },
 });
 
 // En desarrollo, /v1 va al servidor local (cd server && npm run dev)

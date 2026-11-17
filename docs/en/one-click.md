@@ -2,6 +2,17 @@
 
 **English** · [Español](../es/one-click.md)
 
+> **Just want to use AutoLog yourself, on one phone?** You don't need any of this: open the [no-server app](phone-only.md).
+> These templates are for using it from **several phones**, sharing it with your family, or having photo attachments and
+> push reminders.
+
+## Which one is for me?
+
+- **I have no server and don't want one at home → [Render](#render).** One button and a few minutes; the simplest, but paid.
+- **I already have a home server with CasaOS or Umbrel → [CasaOS](#casaos) / [Umbrel](#umbrel).** Free; install from their
+  app store.
+- **I already use Coolify (or have a VPS) → [Coolify](#coolify).** It gives you HTTPS out of the box.
+
 Ready-made templates so you don't have to write a `.env` or a `docker-compose.yml` yourself. They all follow the same
 security rules:
 
@@ -60,14 +71,53 @@ AutoLog's own password protects it.
 
 [![Deploy to Render](https://render.com/images/deploy-to-render-button.svg)](https://render.com/deploy?repo=https://github.com/davidniin/autolog)
 
-1. Press the button, sign in to Render and confirm. The blueprint ([`render.yaml`](../../render.yaml)) creates AutoLog
-   with a 1 GB disk for attachments and a PostgreSQL database.
-2. Render generates the owner password (`AUTOLOG_TOKEN`, in the service's **Environment** tab). The database accepts no
-   connections from the internet (`ipAllowList: []`).
-3. Open `https://<your-app>.onrender.com/?token=<password>` once on your phone.
+The simplest way if you have no server: you type no commands. **How long:** about 10 minutes the first time.
+**How much:** Render charges for the disk and the database (see [Costs](#render-costs)).
 
-**Costs:** the disk for attachments needs a paid instance (`starter`) and the database a paid plan. Check Render's
-current prices before deploying. Render takes care of HTTPS and of database backups on paid plans.
+### Step by step
+
+1. **Press the button above.** Render opens. If you have no account, create one (you can sign in with GitHub or Google).
+2. **Confirm the deployment.** Render shows what it is going to create: the AutoLog app and a database. Give it a name if
+   asked (anything) and press the create/deploy button (*Deploy Blueprint*). If it asks for a card, it is because these
+   services are paid.
+3. **Wait.** The first build takes a few minutes. When it finishes, the app shows as *Live*.
+4. **Get your password.** In Render's dashboard open the app (AutoLog) → **Environment** tab → find `AUTOLOG_TOKEN` and
+   reveal its value. **It's your password:** copy it and keep it in a password manager or somewhere safe.
+5. **Get your address.** At the top of the app's page Render shows its address: something like
+   `https://autolog-xxxx.onrender.com`.
+6. **Open it on your phone with your password.** In the phone's browser type the address followed by `/?token=` and your
+   password:
+
+   ```
+   https://autolog-xxxx.onrender.com/?token=YOUR-PASSWORD
+   ```
+
+   The first time AutoLog guides you to create your first vehicle. The password is saved on the phone and disappears from
+   the address bar.
+7. **Install it on the phone.** Android (Chrome): menu ⋮ → *Install app*. iPhone (Safari): *Share ⬆︎ → Add to Home Screen*.
+
+To use it on another phone, or for your family, repeat step 6 on that phone with the same address and password (or add a
+new person in **⚙ Settings → People with access**, with their own password).
+
+> Render's button names may change over time; the idea is always the same: create, wait for *Live*, copy the password and
+> the address.
+
+### Something wrong?
+
+| If you see… | Do this |
+|---|---|
+| The phone keeps asking for the password | It doesn't match: copy it again from **Environment** and open `/?token=…` again |
+| The page is slow to open the first time after a while | Normal on some Render plans (the app "sleeps"); wait a few seconds |
+| No *Install* option | The page has to be opened with `https://` |
+| I want to keep my data safe | **⚙ Settings → Your data → Backup with photos (ZIP)** |
+
+### Render costs
+
+The disk for attachments needs a paid instance (`starter`) and the database a paid plan. Check Render's current prices
+before deploying. Render handles HTTPS and, on paid plans, database backups. The blueprint
+([`render.yaml`](../../render.yaml)) creates the app with a 1 GB disk and a PostgreSQL database that doesn't accept
+connections from the internet (`ipAllowList: []`). If you only want to try it for free, use the
+[no-server app](phone-only.md).
 
 ## Updating
 

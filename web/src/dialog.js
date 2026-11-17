@@ -7,35 +7,49 @@ import { onMounted, onBeforeUnmount, nextTick } from 'vue';
 
 const FOCUSABLE = 'a[href], button:not([disabled]), input:not([disabled]):not([type=hidden]), select:not([disabled]), textarea:not([disabled]), summary, [tabindex]:not([tabindex="-1"])';
 
-// Deslizar la ficha hacia abajo la cierra (como en las apps nativas). Solo si la ficha está arriba del todo,
-// para no pelear con el scroll; en ordenador no hace nada (es un gesto táctil).
+// Deslizar la ficha hacia abajo la cierra (como en las apps nativas). Se puede agarrar desde el asa y el título
+// (aunque la ficha esté desplazada) o desde cualquier sitio si la ficha está arriba del todo, para no pelear con el
+// scroll. En ordenador no hace nada (es un gesto táctil). El fondo se aclara mientras se arrastra.
+const GRAB = 76; // px de arriba que cuentan como "asa"
 function swipeToClose(root, onClose) {
   const sheet = root.classList.contains('sheet') ? root : root.querySelector('.sheet');
   if (!sheet) return () => {};
-  let y0 = 0, t0 = 0, dy = 0, drag = false, active = false;
+  const bg = sheet.closest('.sheet-bg');
+  let x0 = 0, y0 = 0, t0 = 0, dy = 0, drag = false, active = false;
+  const dim = (v) => { if (bg) bg.style.setProperty('--dim', String(v)); };
   const start = (e) => {
-    if (e.touches.length !== 1 || sheet.scrollTop > 0) { active = false; return; }
-    active = true; drag = false; dy = 0; y0 = e.touches[0].clientY; t0 = Date.now();
+    active = false;
+    if (e.touches.length !== 1) return;
+    const y = e.touches[0].clientY;
+    const handle = y - sheet.getBoundingClientRect().top < GRAB;
+    if (sheet.scrollTop > 0 && !handle) return;
+    active = true; drag = false; dy = 0; x0 = e.touches[0].clientX; y0 = y; t0 = Date.now();
   };
   const move = (e) => {
     if (!active) return;
+    const dx = e.touches[0].clientX - x0;
     dy = e.touches[0].clientY - y0;
-    if (dy <= 0) { if (drag) sheet.style.transform = ''; if (!drag) active = false; return; }
-    if (!drag && sheet.scrollTop > 0) { active = false; return; }
+    if (!drag) {
+      if (Math.abs(dx) > Math.abs(dy) && Math.abs(dx) > 8) { active = false; return; } // gesto lateral: no es para cerrar
+      if (dy <= 6) return;
+    }
+    if (dy <= 0) dy = 0;
     drag = true;
     if (e.cancelable) e.preventDefault();
     sheet.style.transition = 'none';
     sheet.style.transform = 'translateY(' + dy + 'px)';
+    dim(Math.max(0, 1 - dy / Math.max(240, sheet.offsetHeight)));
   };
   const end = () => {
     if (!active || !drag) { active = false; return; }
     active = false;
     sheet.style.transition = 'transform 0.22s cubic-bezier(0.2, 0.8, 0.2, 1)';
     const fast = dy / Math.max(1, Date.now() - t0) > 0.6; // px/ms
-    if (dy > 120 || (fast && dy > 40)) {
+    if (dy > Math.min(140, sheet.offsetHeight * 0.3) || (fast && dy > 40)) {
       sheet.style.transform = 'translateY(100%)';
+      dim(0);
       setTimeout(onClose, 160);
-    } else sheet.style.transform = '';
+    } else { sheet.style.transform = ''; dim(1); }
   };
   sheet.addEventListener('touchstart', start, { passive: true });
   sheet.addEventListener('touchmove', move, { passive: false });

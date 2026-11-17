@@ -2,6 +2,10 @@
 
 **English** · [Español](../es/self-hosting.md)
 
+> **Just want to use AutoLog yourself, on one phone?** You don't need any of this: open the [no-server app](phone-only.md).
+> This guide is for people who want several phones or people, photo attachments and push reminders, and don't mind
+> using a terminal. If you'd rather avoid the terminal, see [one-click](one-click.md).
+
 Any machine that runs Docker works: a home server, a NAS, a Raspberry Pi 4/5 or a VPS from any provider.
 For a cloud platform without a shell (PaaS), see [cloud.md](cloud.md). Using CasaOS, Umbrel or Coolify? There are
 ready-made templates: [one-click.md](one-click.md).

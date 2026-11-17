@@ -2,6 +2,10 @@
 
 [English](../en/self-hosting.md) · **Español**
 
+> **¿Solo quieres usar AutoLog tú, en un móvil?** No necesitas nada de esto: abre [la app sin servidor](phone-only.md).
+> Esta guía es para quien quiere varios móviles o personas, fotos adjuntas y avisos push, y no le importa usar la terminal.
+> Sin terminal, mira [un clic](one-click.md).
+
 Vale cualquier máquina con Docker: un servidor en casa, un NAS, una Raspberry Pi 4/5 o un VPS de cualquier proveedor.
 Para una plataforma en la nube sin acceso por terminal (PaaS), mira [cloud.md](cloud.md). ¿Usas CasaOS, Umbrel o
 Coolify? Hay plantillas listas: [one-click.md](one-click.md).

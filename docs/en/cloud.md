@@ -2,6 +2,9 @@
 
 **English** · [Español](../es/cloud.md)
 
+> **Just want to use AutoLog yourself, on one phone?** No cloud needed: open the [no-server app](phone-only.md).
+> This guide is technical; if you'd rather press a button, see [one-click](one-click.md).
+
 AutoLog is a single Docker container plus a PostgreSQL database, so it runs on almost any cloud. This guide lists
 what the platform must provide and the settings to use; follow your provider's own docs for the clicks.
 

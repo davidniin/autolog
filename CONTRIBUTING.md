@@ -26,8 +26,9 @@ cd server && npm install && npm run dev     # http://localhost:8791
 cd web && npm install && npm run dev        # http://localhost:5173 (proxies /v1 to :8791)
 ```
 
-Without a server, `http://localhost:5173/?demo=1` opens the app with made-up data. The landing page and its live
-demo: `cd web && npm run build:site`, then serve `site/dist/` with any static server.
+Without a server, `http://localhost:5173/?demo=1` opens the app with made-up data. The landing page, its live demo and
+the no-server phone app (`/app/`): `cd web && npm run build:site`, then serve `site/dist/` with any static server.
+The phone-only app alone: `npm run build:app`.
 
 ## Making a change
 
@@ -36,7 +37,7 @@ demo: `cd web && npm run build:site`, then serve `site/dist/` with any static se
 3. Add or update tests: `web/test/` (Vitest) and `server/test/` (`node:test`).
 4. Check that everything passes:
    ```sh
-   cd web && npm test && npm run build
+   cd web && npm test && npm run build && npm run build:app
    cd server && npm test
    ```
 5. Update the docs if behaviour changes (`docs/en` **and** `docs/es`; if you only write one language, say so in the PR
@@ -99,8 +100,9 @@ cd server && npm install && npm run dev     # http://localhost:8791
 cd web && npm install && npm run dev        # http://localhost:5173 (reenvía /v1 a :8791)
 ```
 
-Sin servidor, `http://localhost:5173/?demo=1` abre la app con datos inventados. La landing page y su demo en vivo:
-`cd web && npm run build:site`, y sirve `site/dist/` con cualquier servidor estático.
+Sin servidor, `http://localhost:5173/?demo=1` abre la app con datos inventados. La landing page, su demo en vivo y la
+app solo móvil (`/app/`): `cd web && npm run build:site`, y sirve `site/dist/` con cualquier servidor estático. Solo la
+app solo móvil: `npm run build:app`.
 
 ## Hacer un cambio
 
@@ -109,7 +111,7 @@ Sin servidor, `http://localhost:5173/?demo=1` abre la app con datos inventados. 
 3. Añade o actualiza tests: `web/test/` (Vitest) y `server/test/` (`node:test`).
 4. Comprueba que todo pasa:
    ```sh
-   cd web && npm test && npm run build
+   cd web && npm test && npm run build && npm run build:app
    cd server && npm test
    ```
 5. Actualiza la documentación si cambia el comportamiento (`docs/es` **y** `docs/en`; si solo escribes en un idioma,

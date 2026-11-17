@@ -26,6 +26,7 @@ jobs:
           npm ci
           npm test
           npm run build
+          npm run build:app   # the no-server phone app (published at /app/ on the landing)
       - name: Server — install, test
         working-directory: server
         run: |
